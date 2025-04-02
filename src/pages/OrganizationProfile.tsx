@@ -13,9 +13,52 @@ import GalleryTab from '@/components/organizations/profile/GalleryTab';
 import ContactSidebar from '@/components/organizations/profile/ContactSidebar';
 import SponsorshipCard from '@/components/organizations/profile/SponsorshipCard';
 
+// Define a proper interface for the organization data
+interface OrganizationData {
+  id: string; // Changed from number to string to match Supabase UUID
+  name: string;
+  description: string;
+  logo: string;
+  cover: string;
+  location: string;
+  email: string;
+  phone: string;
+  website: string;
+  socialMedia: {
+    facebook: string;
+    twitter: string;
+    linkedin: string;
+    instagram: string;
+  };
+  category: string;
+  followers: number;
+  foundationYear: number;
+  achievements: string[];
+  team: {
+    id: number;
+    name: string;
+    position: string;
+    avatar: string;
+  }[];
+  upcomingEvents: {
+    id: number;
+    title: string;
+    date: string;
+    image: string;
+  }[];
+  pastEvents: {
+    id: number;
+    title: string;
+    date: string;
+    image: string;
+  }[];
+  gallery: string[];
+  user_id?: string; // Added user_id property as optional
+}
+
 // Example organization data (jako dane awaryjne, gdy nie można pobrać danych z bazy)
-const fallbackOrganizationData = {
-  id: 101,
+const fallbackOrganizationData: OrganizationData = {
+  id: '101', // Changed from number to string
   name: 'Fundacja Szczęśliwe Dzieciństwo',
   description: 'Nasza fundacja wspiera dzieci z domów dziecka i rodzin zastępczych. Organizujemy wydarzenia, wycieczki i zapewniamy materiały edukacyjne. Celem naszej działalności jest zapewnienie dzieciom pozbawionym opieki rodzicielskiej szansy na lepszą przyszłość.\n\nOd 2010 roku zrealizowaliśmy ponad 50 projektów, które objęły swoim wsparciem ponad 1000 dzieci. Naszym priorytetem jest edukacja, rozwój talentów oraz wsparcie psychologiczne.',
   logo: 'https://images.unsplash.com/photo-1607799279861-4dd421887fb3?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
@@ -99,7 +142,8 @@ const fallbackOrganizationData = {
     'https://images.unsplash.com/photo-1472162072942-cd5147eb3902?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
     'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
     'https://images.unsplash.com/photo-1516627145497-ae6968895b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
-  ]
+  ],
+  user_id: '' // Added empty user_id
 };
 
 const OrganizationProfile = () => {
@@ -108,7 +152,7 @@ const OrganizationProfile = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [following, setFollowing] = useState(false);
-  const [organization, setOrganization] = useState(fallbackOrganizationData);
+  const [organization, setOrganization] = useState<OrganizationData>(fallbackOrganizationData);
   const [loading, setLoading] = useState(true);
   
   // Pobierz dane organizacji z Supabase
@@ -158,7 +202,7 @@ const OrganizationProfile = () => {
         }
         
         // Przekształć dane z Supabase na format używany w komponencie
-        const formattedData = {
+        const formattedData: OrganizationData = {
           ...fallbackOrganizationData,
           id: data.id,
           name: data.name || 'Organizacja bez nazwy',
@@ -169,6 +213,7 @@ const OrganizationProfile = () => {
           email: data.contact_email || 'Brak adresu email',
           phone: data.phone || 'Brak numeru telefonu',
           website: data.website || 'https://www.example.com',
+          user_id: data.user_id || '', // Include user_id from database
           // Pozostałe dane pozostawiamy z domyślnego obiektu
         };
         
