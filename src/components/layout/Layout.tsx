@@ -16,11 +16,15 @@ const Layout = ({ children, scrollToTop = true, preventScroll = false }: LayoutP
       window.scrollTo(0, 0);
     }
 
+    // Apply scroll prevention if requested
     if (preventScroll) {
+      // Store the original overflow style
+      const originalStyle = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       
+      // Cleanup function to restore original overflow style
       return () => {
-        document.body.style.overflow = '';
+        document.body.style.overflow = originalStyle;
       };
     }
   }, [scrollToTop, preventScroll]);

@@ -287,6 +287,8 @@ const AddEvent = () => {
         }
       };
 
+      console.log('Sending event payload:', eventPayload);
+
       const { data: eventResult, error: eventError } = await supabase
         .from('events')
         .insert(eventPayload)

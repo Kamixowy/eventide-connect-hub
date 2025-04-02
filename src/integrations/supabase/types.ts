@@ -88,41 +88,56 @@ export type Database = {
       }
       events: {
         Row: {
+          audience: string[] | null
+          category: string | null
           created_at: string
           description: string
+          detailed_location: string | null
           end_date: string | null
           expected_participants: number | null
           id: string
           image_url: string | null
           location: string | null
           organization_id: string
+          social_media: Json | null
           start_date: string
+          tags: string[] | null
           title: string
           updated_at: string
         }
         Insert: {
+          audience?: string[] | null
+          category?: string | null
           created_at?: string
           description: string
+          detailed_location?: string | null
           end_date?: string | null
           expected_participants?: number | null
           id?: string
           image_url?: string | null
           location?: string | null
           organization_id: string
+          social_media?: Json | null
           start_date: string
+          tags?: string[] | null
           title: string
           updated_at?: string
         }
         Update: {
+          audience?: string[] | null
+          category?: string | null
           created_at?: string
           description?: string
+          detailed_location?: string | null
           end_date?: string | null
           expected_participants?: number | null
           id?: string
           image_url?: string | null
           location?: string | null
           organization_id?: string
+          social_media?: Json | null
           start_date?: string
+          tags?: string[] | null
           title?: string
           updated_at?: string
         }
