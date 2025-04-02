@@ -35,6 +35,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import Layout from '@/components/layout/Layout';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 
 const categories = [
   "Charytatywne",
@@ -74,6 +76,7 @@ type SponsorshipOption = {
 const AddEvent = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
@@ -182,7 +185,7 @@ const AddEvent = () => {
     handleSponsorshipOptionChange(id, field, value);
   };
   
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
     if (!title || !category || !description || !startDate || !city || !voivodeship) {
@@ -193,34 +196,142 @@ const AddEvent = () => {
       });
       return;
     }
-    
-    const eventData = {
-      title,
-      category,
-      description,
-      startDate,
-      endDate,
-      location: `${city}, ${voivodeship}`,
-      detailedLocation: location,
-      attendees: parseInt(attendees),
-      audience: selectedAudience,
-      tags,
-      socialMedia: {
-        facebook: fbEvent,
-        linkedin: linkedinEvent
-      },
-      sponsorshipOptions,
-      banner: bannerImage
-    };
-    
-    console.log('Event data:', eventData);
-    
-    toast({
-      title: "Wydarzenie dodane",
-      description: "Twoje wydarzenie zostało pomyślnie dodane",
-    });
-    
-    navigate('/wydarzenia');
+
+    if (!user) {
+      toast({
+        title: "Błąd autoryzacji",
+        description: "Musisz być zalogowany, aby dodać wydarzenie",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // 1. First get the organization ID for this user
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (orgError) {
+        console.error('Error fetching organization:', orgError);
+        toast({
+          title: "Błąd",
+          description: "Nie udało się pobrać danych organizacji. Upewnij się, że jesteś zalogowany jako organizacja.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const organizationId = orgData.id;
+
+      // 2. Upload the banner image if provided
+      let imageUrl = null;
+      if (bannerImage) {
+        const fileExt = bannerImage.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const filePath = `event-banners/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('events')
+          .upload(filePath, bannerImage);
+
+        if (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          toast({
+            title: "Błąd przesyłania zdjęcia",
+            description: "Nie udało się przesłać zdjęcia wydarzenia",
+            variant: "destructive"
+          });
+          // Continue without the image
+        } else {
+          const { data } = supabase.storage
+            .from('events')
+            .getPublicUrl(filePath);
+          
+          imageUrl = data.publicUrl;
+        }
+      }
+
+      // 3. Insert the event into the database
+      const eventData = {
+        title,
+        category,
+        description,
+        start_date: startDate,
+        end_date: endDate || null,
+        location: `${city}, ${voivodeship}`,
+        detailed_location: location,
+        expected_participants: attendees ? parseInt(attendees) : null,
+        organization_id: organizationId,
+        audience: selectedAudience,
+        tags,
+        image_url: imageUrl,
+        social_media: {
+          facebook: fbEvent,
+          linkedin: linkedinEvent
+        }
+      };
+
+      const { data: eventData, error: eventError } = await supabase
+        .from('events')
+        .insert(eventData)
+        .select('id')
+        .single();
+
+      if (eventError) {
+        console.error('Error creating event:', eventError);
+        toast({
+          title: "Błąd tworzenia wydarzenia",
+          description: "Nie udało się utworzyć wydarzenia",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const eventId = eventData.id;
+
+      // 4. Insert sponsorship options if any
+      if (sponsorshipOptions.length > 0) {
+        const sponsorshipData = sponsorshipOptions
+          .filter(option => option.title.trim() !== '') // Only add options with a title
+          .map(option => ({
+            title: option.title,
+            description: option.description,
+            price_from: option.priceFrom ? parseFloat(option.priceFrom) : 0,
+            price_to: option.priceTo ? parseFloat(option.priceTo) : null,
+            benefits: option.benefits,
+            event_id: eventId
+          }));
+
+        if (sponsorshipData.length > 0) {
+          const { error: sponsorshipError } = await supabase
+            .from('sponsorship_options')
+            .insert(sponsorshipData);
+
+          if (sponsorshipError) {
+            console.error('Error creating sponsorship options:', sponsorshipError);
+            // Continue without stopping the flow, at least the event was created
+          }
+        }
+      }
+
+      // Success message and redirect
+      toast({
+        title: "Wydarzenie dodane",
+        description: "Twoje wydarzenie zostało pomyślnie dodane",
+      });
+      
+      navigate('/moje-wydarzenia');
+    } catch (error) {
+      console.error('Error in event creation:', error);
+      toast({
+        title: "Błąd",
+        description: "Wystąpił nieoczekiwany błąd podczas dodawania wydarzenia",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
