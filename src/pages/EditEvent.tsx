@@ -49,6 +49,13 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+// Type for social media object
+type SocialMedia = {
+  facebook?: string;
+  linkedin?: string;
+  [key: string]: string | undefined;
+};
+
 const EditEvent = () => {
   const { id } = useParams();
   const { toast } = useToast();
@@ -124,6 +131,9 @@ const EditEvent = () => {
         
         setEvent(eventData);
         
+        // Extract social media values from JSON
+        const socialMedia = eventData.social_media as SocialMedia || {};
+        
         // Set form values from event data
         form.reset({
           title: eventData.title || '',
@@ -137,8 +147,8 @@ const EditEvent = () => {
           audience: eventData.audience ? eventData.audience.join(', ') : '',
           tags: eventData.tags ? eventData.tags.join(', ') : '',
           image_url: eventData.image_url || '',
-          facebook: eventData.social_media?.facebook || '',
-          linkedin: eventData.social_media?.linkedin || '',
+          facebook: socialMedia.facebook || '',
+          linkedin: socialMedia.linkedin || '',
         });
 
         setUploadedImageUrl(eventData.image_url || null);
@@ -175,7 +185,7 @@ const EditEvent = () => {
         : [];
       
       // Format social media links
-      const socialMedia = {
+      const socialMedia: SocialMedia = {
         facebook: data.facebook || '',
         linkedin: data.linkedin || '',
       };
