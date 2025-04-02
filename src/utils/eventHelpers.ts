@@ -20,8 +20,10 @@ export const uploadEventImage = async (file: File): Promise<string | null> => {
     const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
     const filePath = `event-banners/${fileName}`;
     
-    // Upload to the "events" bucket instead of trying to create a new bucket
-    const { error: uploadError } = await supabase.storage
+    console.log('Uploading file to Supabase Storage bucket "events"');
+    
+    // Upload to the "events" bucket
+    const { error: uploadError, data } = await supabase.storage
       .from('events')
       .upload(filePath, file);
       
@@ -30,12 +32,16 @@ export const uploadEventImage = async (file: File): Promise<string | null> => {
       throw uploadError;
     }
     
+    console.log('File uploaded successfully, getting public URL');
+    
     // Get the public URL
-    const { data } = supabase.storage
+    const { data: urlData } = supabase.storage
       .from('events')
       .getPublicUrl(filePath);
       
-    return data.publicUrl;
+    console.log('Public URL obtained:', urlData.publicUrl);
+    
+    return urlData.publicUrl;
   } catch (error) {
     console.error('Error uploading image:', error);
     let errorMessage = 'Nie udało się przesłać zdjęcia. Spróbuj ponownie.';

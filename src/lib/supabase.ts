@@ -5,11 +5,11 @@ import { supabase, isSupabaseConfigured } from '@/integrations/supabase/client';
 // Console log for debugging purposes
 console.log('Supabase Configured:', isSupabaseConfigured() ? 'Yes ✓' : 'No ✗');
 
-// Create function to check if storage bucket exists and create if not
+// Create function to check if storage bucket exists
 export const ensureStorageBuckets = async () => {
   try {
     if (!isSupabaseConfigured()) {
-      console.log('Supabase not configured, skipping bucket creation');
+      console.log('Supabase not configured, skipping bucket check');
       return;
     }
     
@@ -24,20 +24,16 @@ export const ensureStorageBuckets = async () => {
     const eventsBucketExists = buckets?.some(bucket => bucket.name === 'events');
     
     if (!eventsBucketExists) {
-      console.log('Events bucket does not exist, but we will not try to create it automatically');
-      console.log('Please create the "events" bucket manually in the Supabase dashboard');
-      
-      // We don't try to create bucket automatically because it often fails due to permissions
-      // Instead, we recommend the user to create it manually in the Supabase dashboard
+      console.log('Events bucket not found. Please make sure you have created the bucket in Supabase dashboard.');
     } else {
-      console.log('Events bucket already exists');
+      console.log('Events bucket found and ready for use');
     }
   } catch (error) {
-    console.error('Error ensuring storage buckets:', error);
+    console.error('Error checking storage buckets:', error);
   }
 };
 
-// Call this function on app initialization, but don't block the main thread
+// Check for the events bucket on app initialization
 if (isSupabaseConfigured()) {
   // Use setTimeout to move this to the next event loop tick
   setTimeout(() => {

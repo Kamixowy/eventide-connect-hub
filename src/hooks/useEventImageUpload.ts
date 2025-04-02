@@ -20,9 +20,11 @@ export const useEventImageUpload = () => {
         description: "Trwa przesyłanie zdjęcia...",
       });
       
+      console.log('Starting image upload in useEventImageUpload hook');
       const imageUrl = await uploadEventImage(file);
       
       if (imageUrl) {
+        console.log('Image upload successful, URL:', imageUrl);
         setUploadedImageUrl(imageUrl);
         toast({
           title: "Sukces",
@@ -32,7 +34,7 @@ export const useEventImageUpload = () => {
         throw new Error("Nie udało się przesłać zdjęcia");
       }
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('Error uploading image in hook:', error);
       toast({
         title: "Błąd",
         description: "Nie udało się przesłać zdjęcia. Spróbuj ponownie.",
