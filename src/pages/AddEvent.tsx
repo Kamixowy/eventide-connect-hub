@@ -255,7 +255,7 @@ const AddEvent = () => {
       }
 
       // 3. Insert the event into the database
-      const eventData = {
+      const eventPayload = {
         title,
         category,
         description,
@@ -274,9 +274,9 @@ const AddEvent = () => {
         }
       };
 
-      const { data: eventData, error: eventError } = await supabase
+      const { data: eventResult, error: eventError } = await supabase
         .from('events')
-        .insert(eventData)
+        .insert(eventPayload)
         .select('id')
         .single();
 
@@ -290,7 +290,7 @@ const AddEvent = () => {
         return;
       }
 
-      const eventId = eventData.id;
+      const eventId = eventResult.id;
 
       // 4. Insert sponsorship options if any
       if (sponsorshipOptions.length > 0) {
@@ -299,9 +299,7 @@ const AddEvent = () => {
           .map(option => ({
             title: option.title,
             description: option.description,
-            price_from: option.priceFrom ? parseFloat(option.priceFrom) : 0,
-            price_to: option.priceTo ? parseFloat(option.priceTo) : null,
-            benefits: option.benefits,
+            price: parseFloat(option.priceFrom) || 0, // Convert to price field
             event_id: eventId
           }));
 
