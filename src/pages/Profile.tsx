@@ -42,6 +42,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
+import { cn } from "@/lib/utils";
 
 const profileFormSchema = z.object({
   organizationName: z.string().min(2, {
