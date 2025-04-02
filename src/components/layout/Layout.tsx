@@ -9,7 +9,7 @@ interface LayoutProps {
 }
 
 const Layout = ({ children, scrollToTop = true }: LayoutProps) => {
-  // Przewinięcie do góry strony, jeśli scrollToTop = true
+  // Only scroll to top if explicitly requested
   if (scrollToTop) {
     window.scrollTo(0, 0);
   }

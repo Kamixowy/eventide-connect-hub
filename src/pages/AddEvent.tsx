@@ -123,19 +123,45 @@ const AddEvent = () => {
       
       if (isFormElement) {
         e.stopPropagation();
+        e.preventDefault();
       }
     };
+
+    const preventInputScroll = () => {
+      window.scrollTo(document.documentElement.scrollLeft, document.documentElement.scrollTop);
+      return true;
+    };
+
+    document.addEventListener('wheel', preventScroll, { passive: false });
+    document.addEventListener('touchmove', preventScroll, { passive: false });
+    document.addEventListener('keydown', (e) => {
+      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Space'].includes(e.key)) {
+        const activeElement = document.activeElement;
+        if (activeElement && 
+           (activeElement.tagName === 'INPUT' || 
+            activeElement.tagName === 'TEXTAREA' || 
+            activeElement.tagName === 'SELECT')) {
+          e.stopPropagation();
+        }
+      }
+    }, { capture: true });
 
     const formElement = formRef.current;
     if (formElement) {
       formElement.addEventListener('focus', preventScroll, true);
       formElement.addEventListener('click', preventScroll, true);
+      formElement.addEventListener('input', preventInputScroll, true);
     }
 
     return () => {
+      document.removeEventListener('wheel', preventScroll);
+      document.removeEventListener('touchmove', preventScroll);
+      document.removeEventListener('keydown', preventScroll);
+
       if (formElement) {
         formElement.removeEventListener('focus', preventScroll, true);
         formElement.removeEventListener('click', preventScroll, true);
+        formElement.removeEventListener('input', preventInputScroll, true);
       }
     };
   }, []);
@@ -237,7 +263,6 @@ const AddEvent = () => {
     }
 
     try {
-      // 1. First get the organization ID for this user
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .select('id')
@@ -256,7 +281,6 @@ const AddEvent = () => {
 
       const organizationId = orgData.id;
 
-      // 2. Upload the banner image if provided
       let imageUrl = null;
       if (bannerImage) {
         const fileExt = bannerImage.name.split('.').pop();
@@ -274,7 +298,6 @@ const AddEvent = () => {
             description: "Nie udało się przesłać zdjęcia wydarzenia",
             variant: "destructive"
           });
-          // Continue without the image
         } else {
           const { data } = supabase.storage
             .from('events')
@@ -284,7 +307,6 @@ const AddEvent = () => {
         }
       }
 
-      // 3. Insert the event into the database
       const eventPayload = {
         title,
         category,
@@ -322,14 +344,13 @@ const AddEvent = () => {
 
       const eventId = eventResult.id;
 
-      // 4. Insert sponsorship options if any
       if (sponsorshipOptions.length > 0) {
         const sponsorshipData = sponsorshipOptions
-          .filter(option => option.title.trim() !== '') // Only add options with a title
+          .filter(option => option.title.trim() !== '')
           .map(option => ({
             title: option.title,
             description: option.description,
-            price: parseFloat(option.priceFrom) || 0, // Convert to price field
+            price: parseFloat(option.priceFrom) || 0,
             event_id: eventId
           }));
 
@@ -340,18 +361,15 @@ const AddEvent = () => {
 
           if (sponsorshipError) {
             console.error('Error creating sponsorship options:', sponsorshipError);
-            // Continue without stopping the flow, at least the event was created
           }
         }
       }
 
-      // Success message and redirect to the event page
       toast({
         title: "Wydarzenie dodane",
         description: "Twoje wydarzenie zostało pomyślnie dodane",
       });
       
-      // Navigate to the event details page instead of my-events page
       navigate(`/wydarzenia/${eventId}`);
     } catch (error) {
       console.error('Error in event creation:', error);
@@ -368,7 +386,7 @@ const AddEvent = () => {
   };
 
   return (
-    <Layout>
+    <Layout scrollToTop={false}>
       <div className="container py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">Dodaj nowe wydarzenie</h1>
