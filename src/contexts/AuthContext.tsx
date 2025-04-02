@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
@@ -23,29 +22,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if there's a demo user in localStorage
     const storedDemoUser = localStorage.getItem('demoUser');
     if (storedDemoUser) {
       try {
         setUser(JSON.parse(storedDemoUser) as User);
         setLoading(false);
-        return; // Skip Supabase auth check if we have a demo user
+        return;
       } catch (e) {
         console.error('Error parsing demo user:', e);
-        localStorage.removeItem('demoUser'); // Remove invalid demo user
+        localStorage.removeItem('demoUser');
       }
     }
 
-    // Only check Supabase auth if it's properly configured
     if (isSupabaseConfigured()) {
-      // Check current session after loading
       supabase.auth.getSession().then(({ data: { session } }) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
       });
 
-      // Listen for auth changes
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
@@ -54,7 +49,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return () => subscription.unsubscribe();
     } else {
-      // If Supabase is not configured, just set loading to false
       setLoading(false);
     }
   }, []);
@@ -89,18 +83,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: new Error('Supabase not configured'), data: null };
     }
     
-    // Use emailRedirect: false to prevent sending confirmation emails
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: metadata,
-        emailRedirect: false,
+        emailRedirectTo: '',
       }
     });
     
     if (!error) {
-      // Auto sign in after registration since we're not doing email confirmation
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -123,7 +115,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    // Check if we have a demo user
     if (localStorage.getItem('demoUser')) {
       localStorage.removeItem('demoUser');
       setUser(null);
@@ -133,7 +124,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    // Otherwise use Supabase
     if (isSupabaseConfigured()) {
       await supabase.auth.signOut();
     }
@@ -143,29 +133,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  // Enhanced demo login that also creates a profile in Supabase for demo users
   const demoLogin = async (type: 'organization' | 'sponsor') => {
-    // Create a demo user object
     const demoUser = {
       id: type === 'organization' ? 'demo-org-1' : 'demo-sponsor-1',
       email: type === 'organization' ? 'demo-org@n-go.pl' : 'demo-sponsor@n-go.pl',
-      app_metadata: {}, // Required field
-      aud: 'authenticated', // Required field
-      created_at: new Date().toISOString(), // Required field
+      app_metadata: {},
+      aud: 'authenticated',
+      created_at: new Date().toISOString(),
       user_metadata: {
         name: type === 'organization' ? 'Demo Organizacja' : 'Demo Sponsor',
         userType: type
       }
-    } as User; // Cast to User type
+    } as User;
     
-    // Store in localStorage for persistence
     localStorage.setItem('demoUser', JSON.stringify(demoUser));
     
-    // If Supabase is configured, we can also try to create a profile for the demo user
-    // This is optional and won't affect the app functionality if it fails
     if (isSupabaseConfigured()) {
       try {
-        // Check if profile already exists
         const { data: existingProfile } = await supabase
           .from('profiles')
           .select('*')
@@ -173,7 +157,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
           
         if (!existingProfile) {
-          // Create a profile for the demo user if it doesn't exist
           await supabase.from('profiles').insert({
             id: demoUser.id,
             email: demoUser.email,
@@ -181,7 +164,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             user_type: demoUser.user_metadata.userType
           });
           
-          // If it's an organization, create an organization record as well
           if (type === 'organization') {
             await supabase.from('organizations').insert({
               user_id: demoUser.id,
@@ -191,17 +173,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         console.error('Error creating demo profile in Supabase:', error);
-        // Continue with local demo login even if Supabase profile creation fails
       }
     }
     
-    // Show toast with demo login info
     toast({
       title: `Zalogowano jako demo ${type === 'organization' ? 'organizacji' : 'sponsora'}`,
       description: "Przekierowujemy Cię do panelu...",
     });
     
-    // Set the user
     setUser(demoUser);
     
     return Promise.resolve();
