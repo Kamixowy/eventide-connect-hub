@@ -25,6 +25,7 @@ export const updateEvent = async (id: string, data: EventFormValues, imageUrl: s
   // Format social media links
   const socialMedia: SocialMedia = {
     facebook: data.facebook || '',
+    instagram: data.instagram || '',
     linkedin: data.linkedin || '',
   };
   

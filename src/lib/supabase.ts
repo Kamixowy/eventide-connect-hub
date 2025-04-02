@@ -24,24 +24,11 @@ export const ensureStorageBuckets = async () => {
     const eventsBucketExists = buckets?.some(bucket => bucket.name === 'events');
     
     if (!eventsBucketExists) {
-      try {
-        // Create the events bucket
-        const { error } = await supabase.storage
-          .createBucket('events', {
-            public: true, // Make files publicly accessible
-            fileSizeLimit: 5 * 1024 * 1024, // 5MB limit
-          });
-        
-        if (error) {
-          console.error('Error creating events bucket:', error);
-          // Don't throw an error as this might be due to RLS policies
-          // and we still want the app to function
-        } else {
-          console.log('Events storage bucket created successfully');
-        }
-      } catch (bucketError) {
-        console.error('Error creating events bucket:', bucketError);
-      }
+      console.log('Events bucket does not exist, but we will not try to create it automatically');
+      console.log('Please create the "events" bucket manually in the Supabase dashboard');
+      
+      // We don't try to create bucket automatically because it often fails due to permissions
+      // Instead, we recommend the user to create it manually in the Supabase dashboard
     } else {
       console.log('Events bucket already exists');
     }

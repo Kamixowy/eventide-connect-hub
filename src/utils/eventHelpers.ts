@@ -18,29 +18,21 @@ export const uploadEventImage = async (file: File): Promise<string | null> => {
 
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
+    const filePath = `event-banners/${fileName}`;
     
-    // Check if the event_images bucket exists, if not create it
-    const { data: buckets } = await supabase.storage.listBuckets();
-    const eventImagesBucket = buckets?.find(b => b.name === 'event_images');
-    
-    if (!eventImagesBucket) {
-      const { error: bucketError } = await supabase.storage.createBucket('event_images', {
-        public: true,
-      });
-      if (bucketError) throw bucketError;
-    }
-    
-    // Upload the file
+    // Upload to the "events" bucket instead of trying to create a new bucket
     const { error: uploadError } = await supabase.storage
-      .from('event_images')
+      .from('events')
       .upload(filePath, file);
       
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('Error uploading image:', uploadError);
+      throw uploadError;
+    }
     
     // Get the public URL
     const { data } = supabase.storage
-      .from('event_images')
+      .from('events')
       .getPublicUrl(filePath);
       
     return data.publicUrl;

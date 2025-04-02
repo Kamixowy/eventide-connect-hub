@@ -16,6 +16,7 @@ export const createEvent = async (
   const socialMedia = {
     facebook: data.facebook || '',
     linkedin: data.linkedin || '',
+    instagram: data.instagram || '',
   };
   
   // Create event payload
@@ -93,7 +94,8 @@ export const uploadEventBanner = async (file: File): Promise<string | null> => {
   const fileName = `${crypto.randomUUID()}.${fileExt}`;
   const filePath = `event-banners/${fileName}`;
 
-  const { data, error: uploadError } = await supabase.storage
+  // Upload to events bucket
+  const { error: uploadError } = await supabase.storage
     .from('events')
     .upload(filePath, file);
 
