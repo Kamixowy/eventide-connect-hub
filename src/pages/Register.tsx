@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Register = () => {
   const [searchParams] = useSearchParams();
@@ -22,6 +23,8 @@ const Register = () => {
   );
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { signUp } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const type = searchParams.get('type') as 'organization' | 'sponsor';
@@ -42,16 +45,47 @@ const Register = () => {
       return;
     }
     
+    if (password.length < 6) {
+      toast({
+        title: "Błąd rejestracji",
+        description: "Hasło musi mieć co najmniej 6 znaków",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
-    // Symulacja rejestracji
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // Prepare user metadata
+      const metadata = {
+        name: `${firstName} ${lastName}`,
+        userType: accountType,
+        companyName
+      };
+      
+      // Register the user using our AuthContext
+      const { error } = await signUp(email, password, metadata);
+      
+      if (error) {
+        toast({
+          title: "Błąd rejestracji",
+          description: error.message || "Wystąpił problem podczas rejestracji. Spróbuj ponownie później.",
+          variant: "destructive",
+        });
+      } else {
+        // Registration and auto-login successful, redirect to home
+        navigate('/');
+      }
+    } catch (error: any) {
       toast({
-        title: "Rejestracja zakończona pomyślnie",
-        description: "Na podany adres email został wysłany link aktywacyjny.",
+        title: "Błąd rejestracji",
+        description: error.message || "Wystąpił nieoczekiwany błąd. Spróbuj ponownie później.",
+        variant: "destructive",
       });
-    }, 1500);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
