@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { FormLabel } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { EventFormValues } from './EventEditSchema';
+import { Loader2 } from 'lucide-react';
 
 interface MediaTabProps {
   uploadedImageUrl: string | null;
@@ -19,6 +20,17 @@ interface MediaTabProps {
 
 const MediaTab = ({ uploadedImageUrl, handleImageUpload }: MediaTabProps) => {
   const form = useFormContext<EventFormValues>();
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Wrap the original handler to show loading state
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsUploading(true);
+    try {
+      await handleImageUpload(e);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <Card>
@@ -38,11 +50,20 @@ const MediaTab = ({ uploadedImageUrl, handleImageUpload }: MediaTabProps) => {
                 />
               </div>
             )}
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-            />
+            <div className="relative">
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                disabled={isUploading}
+                className={isUploading ? "opacity-50" : ""}
+              />
+              {isUploading && (
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                  <Loader2 className="animate-spin h-5 w-5 text-primary" />
+                </div>
+              )}
+            </div>
           </div>
         </div>
         

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -197,11 +198,34 @@ const EditEvent = () => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
     
-    const file = files[0];
-    const imageUrl = await uploadEventImage(file);
-    
-    if (imageUrl) {
-      setUploadedImageUrl(imageUrl);
+    try {
+      const file = files[0];
+      setSubmitting(true);
+      toast({
+        title: "Przesyłanie",
+        description: "Trwa przesyłanie zdjęcia...",
+      });
+      
+      const imageUrl = await uploadEventImage(file);
+      
+      if (imageUrl) {
+        setUploadedImageUrl(imageUrl);
+        toast({
+          title: "Sukces",
+          description: "Zdjęcie zostało przesłane pomyślnie.",
+        });
+      } else {
+        throw new Error("Nie udało się przesłać zdjęcia");
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie udało się przesłać zdjęcia. Spróbuj ponownie.",
+        variant: "destructive"
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 

@@ -5,11 +5,22 @@ import { toast } from '@/hooks/use-toast';
 // Function to upload image to Supabase storage
 export const uploadEventImage = async (file: File): Promise<string | null> => {
   try {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-    const filePath = `event_images/${fileName}`;
+    // Validate file type
+    const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validImageTypes.includes(file.type)) {
+      throw new Error('Nieprawidłowy format pliku. Dozwolone formaty: JPG, PNG, GIF, WEBP');
+    }
     
-    // Check if the storage bucket exists, if not create it
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error('Plik jest zbyt duży. Maksymalny rozmiar to 5MB');
+    }
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+    const filePath = `${fileName}`;
+    
+    // Check if the event_images bucket exists, if not create it
     const { data: buckets } = await supabase.storage.listBuckets();
     const eventImagesBucket = buckets?.find(b => b.name === 'event_images');
     
@@ -32,17 +43,18 @@ export const uploadEventImage = async (file: File): Promise<string | null> => {
       .from('event_images')
       .getPublicUrl(filePath);
       
-    toast({
-      title: "Zdjęcie przesłane",
-      description: "Zdjęcie zostało pomyślnie przesłane.",
-    });
-    
     return data.publicUrl;
   } catch (error) {
     console.error('Error uploading image:', error);
+    let errorMessage = 'Nie udało się przesłać zdjęcia. Spróbuj ponownie.';
+    
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    
     toast({
       title: "Błąd",
-      description: "Nie udało się przesłać zdjęcia. Spróbuj ponownie.",
+      description: errorMessage,
       variant: "destructive"
     });
     return null;
