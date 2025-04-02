@@ -1,7 +1,6 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 
 interface AuthContextType {
@@ -23,24 +22,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Sprawdź aktualną sesję po załadowaniu
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // Check if there's a demo user in localStorage
+    const storedDemoUser = localStorage.getItem('demoUser');
+    if (storedDemoUser) {
+      try {
+        setUser(JSON.parse(storedDemoUser) as User);
+        setLoading(false);
+        return; // Skip Supabase auth check if we have a demo user
+      } catch (e) {
+        console.error('Error parsing demo user:', e);
+        localStorage.removeItem('demoUser'); // Remove invalid demo user
+      }
+    }
 
-    // Nasłuchuj zmian w autentykacji
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // Only check Supabase auth if it's properly configured
+    if (isSupabaseConfigured()) {
+      // Check current session after loading
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      });
 
-    return () => subscription.unsubscribe();
+      // Listen for auth changes
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      });
+
+      return () => subscription.unsubscribe();
+    } else {
+      // If Supabase is not configured, just set loading to false
+      setLoading(false);
+    }
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    if (!isSupabaseConfigured()) {
+      toast({
+        title: "Uwaga: Wersja demo",
+        description: "Supabase nie jest skonfigurowane. Użyj opcji logowania demo.",
+        variant: "destructive",
+      });
+      return { error: new Error('Supabase not configured') };
+    }
+    
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (!error) {
       toast({
@@ -52,6 +79,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, metadata: any) => {
+    if (!isSupabaseConfigured()) {
+      toast({
+        title: "Uwaga: Wersja demo",
+        description: "Supabase nie jest skonfigurowane. Użyj opcji logowania demo.",
+        variant: "destructive",
+      });
+      return { error: new Error('Supabase not configured'), data: null };
+    }
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -71,36 +107,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    // Check if we have a demo user
+    if (localStorage.getItem('demoUser')) {
+      localStorage.removeItem('demoUser');
+      setUser(null);
+      toast({
+        title: "Wylogowano pomyślnie z trybu demo",
+      });
+      return;
+    }
+    
+    // Otherwise use Supabase
+    if (isSupabaseConfigured()) {
+      await supabase.auth.signOut();
+    }
+    
     toast({
       title: "Wylogowano pomyślnie",
     });
   };
 
-  // Funkcja do logowania demo
+  // Function for demo login
   const demoLogin = async (type: 'organization' | 'sponsor') => {
-    // W wersji demo ustawiamy tylko lokalny stan
+    // In demo version we just set local state
     const demoUser = {
       id: type === 'organization' ? 'demo-org-1' : 'demo-sponsor-1',
       email: type === 'organization' ? 'demo-org@n-go.pl' : 'demo-sponsor@n-go.pl',
-      app_metadata: {}, // Dodane wymagane pole
-      aud: 'authenticated', // Dodane wymagane pole
-      created_at: new Date().toISOString(), // Dodane wymagane pole
+      app_metadata: {}, // Required field
+      aud: 'authenticated', // Required field
+      created_at: new Date().toISOString(), // Required field
       user_metadata: {
         name: type === 'organization' ? 'Demo Organizacja' : 'Demo Sponsor',
         userType: type
       }
-    } as User; // Użycie "as User" do bezpiecznego rzutowania typu
+    } as User; // Cast to User type
     
     localStorage.setItem('demoUser', JSON.stringify(demoUser));
     
-    // Wywołujemy toast z informacją o demo logowaniu
+    // Show toast with demo login info
     toast({
       title: `Zalogowano jako demo ${type === 'organization' ? 'organizacji' : 'sponsora'}`,
       description: "Przekierowujemy Cię do panelu...",
     });
     
-    // Symulujemy ustawienie użytkownika (w rzeczywistości używalibyśmy Supabase)
+    // Set the user (in reality we would use Supabase)
     setUser(demoUser);
     
     return Promise.resolve();
