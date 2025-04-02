@@ -2,6 +2,7 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
+import { pl } from "date-fns/locale";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -50,12 +51,22 @@ function Calendar({
         day_range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
+        caption_dropdowns: "inline-flex gap-1",
+        dropdown: "relative z-10",
+        dropdown_month: "text-sm font-medium",
+        dropdown_year: "text-sm font-medium",
+        dropdown_icon: "h-4 w-4 opacity-50",
+        dropdown_option: cn(
+          buttonVariants({ variant: "ghost" }),
+          "justify-start font-normal"
+        ),
         ...classNames,
       }}
       components={{
         IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
       }}
+      locale={pl}
       {...props}
     />
   );

@@ -839,7 +839,16 @@ const Profile = () => {
                                 captionLayout="dropdown-buttons"
                                 fromYear={1900}
                                 toYear={new Date().getFullYear()}
-                                showMonthYearPicker
+                                formatters={{ 
+                                  formatMonthCaption: (date) => format(date, 'MMMM yyyy', { locale: pl }) 
+                                }}
+                                footer={
+                                  <div className="p-3 border-t border-border">
+                                    <p className="text-sm text-muted-foreground">
+                                      Wybierz datę założenia organizacji (miesiąc i rok)
+                                    </p>
+                                  </div>
+                                }
                               />
                             </PopoverContent>
                           </Popover>
