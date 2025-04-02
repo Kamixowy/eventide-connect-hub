@@ -1,4 +1,3 @@
-
 import React, { useState, FormEvent, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -76,7 +75,6 @@ const AddEvent = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // Formularz podstawowych informacji
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
@@ -90,11 +88,9 @@ const AddEvent = () => {
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
   
-  // Media społecznościowe
   const [fbEvent, setFbEvent] = useState('');
   const [linkedinEvent, setLinkedinEvent] = useState('');
   
-  // Opcje sponsorowania
   const [sponsorshipOptions, setSponsorshipOptions] = useState<SponsorshipOption[]>([
     {
       id: '1',
@@ -106,13 +102,11 @@ const AddEvent = () => {
     }
   ]);
   
-  // Przesyłanie plików
   const [bannerImage, setBannerImage] = useState<File | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   
   const formRef = useRef<HTMLDivElement>(null);
 
-  // Obsługa przesyłania plików
   const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -121,7 +115,6 @@ const AddEvent = () => {
     }
   };
   
-  // Obsługa tagów
   const handleAddTag = () => {
     if (newTag && !tags.includes(newTag)) {
       setTags([...tags, newTag]);
@@ -133,7 +126,6 @@ const AddEvent = () => {
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
   
-  // Obsługa grup docelowych
   const handleAudienceChange = (audience: string) => {
     if (selectedAudience.includes(audience)) {
       setSelectedAudience(selectedAudience.filter(a => a !== audience));
@@ -142,7 +134,6 @@ const AddEvent = () => {
     }
   };
   
-  // Obsługa opcji sponsorowania
   const handleAddSponsorshipOption = () => {
     const newOption: SponsorshipOption = {
       id: Date.now().toString(),
@@ -186,10 +177,16 @@ const AddEvent = () => {
     }));
   };
   
+  const handleSponsorshipNumberChange = (e: React.ChangeEvent<HTMLInputElement>, id: string, field: 'priceFrom' | 'priceTo') => {
+    const scrollPosition = window.scrollY;
+    const value = e.target.value;
+    handleSponsorshipOptionChange(id, field, value);
+    window.scrollTo(0, scrollPosition);
+  };
+  
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     
-    // Walidacja formularza
     if (!title || !category || !description || !startDate || !city || !voivodeship) {
       toast({
         title: "Błąd formularza",
@@ -199,7 +196,6 @@ const AddEvent = () => {
       return;
     }
     
-    // Dane do wysłania
     const eventData = {
       title,
       category,
@@ -221,8 +217,6 @@ const AddEvent = () => {
     
     console.log('Event data:', eventData);
     
-    // Tutaj kod wysyłający dane do API
-    
     toast({
       title: "Wydarzenie dodane",
       description: "Twoje wydarzenie zostało pomyślnie dodane",
@@ -231,15 +225,9 @@ const AddEvent = () => {
     navigate('/wydarzenia');
   };
 
-  // Funkcja do obsługi zmiany w polach numerycznych
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
-    // Zachowaj referencję do aktualnej pozycji scrollowania
     const scrollPosition = window.scrollY;
-    
-    // Aktualizuj state
     setter(e.target.value);
-    
-    // Przywróć pozycję scrollowania po aktualizacji state
     window.scrollTo(0, scrollPosition);
   };
 
@@ -255,9 +243,7 @@ const AddEvent = () => {
         
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8" ref={formRef}>
-            {/* Kolumna główna z formularzem */}
             <div className="md:col-span-2 space-y-6">
-              {/* Podstawowe informacje */}
               <Card>
                 <CardHeader>
                   <CardTitle>Podstawowe informacje</CardTitle>
@@ -305,7 +291,6 @@ const AddEvent = () => {
                 </CardContent>
               </Card>
               
-              {/* Data i lokalizacja */}
               <Card>
                 <CardHeader>
                   <CardTitle>Data i lokalizacja</CardTitle>
@@ -402,7 +387,6 @@ const AddEvent = () => {
                 </CardContent>
               </Card>
               
-              {/* Szczegóły wydarzenia */}
               <Card>
                 <CardHeader>
                   <CardTitle>Szczegóły wydarzenia</CardTitle>
@@ -487,7 +471,6 @@ const AddEvent = () => {
                 </CardContent>
               </Card>
               
-              {/* Media społecznościowe */}
               <Card>
                 <CardHeader>
                   <CardTitle>Media społecznościowe</CardTitle>
@@ -518,7 +501,6 @@ const AddEvent = () => {
                 </CardContent>
               </Card>
               
-              {/* Opcje sponsorowania */}
               <Card>
                 <CardHeader>
                   <CardTitle>Opcje sponsorowania</CardTitle>
@@ -572,7 +554,7 @@ const AddEvent = () => {
                             type="number" 
                             placeholder="Np. 1000" 
                             value={option.priceFrom}
-                            onChange={(e) => handleNumberChange(e, (value) => handleSponsorshipOptionChange(option.id, 'priceFrom', value))}
+                            onChange={(e) => handleSponsorshipNumberChange(e, option.id, 'priceFrom')}
                             min="0"
                           />
                         </div>
@@ -584,13 +566,12 @@ const AddEvent = () => {
                             type="number" 
                             placeholder="Np. 5000" 
                             value={option.priceTo}
-                            onChange={(e) => handleNumberChange(e, (value) => handleSponsorshipOptionChange(option.id, 'priceTo', value))}
+                            onChange={(e) => handleSponsorshipNumberChange(e, option.id, 'priceTo')}
                             min={option.priceFrom || "0"}
                           />
                         </div>
                       </div>
                       
-                      {/* Lista korzyści */}
                       <div className="space-y-2">
                         <Label>Korzyści dla sponsora</Label>
                         <div className="space-y-2">
@@ -656,7 +637,6 @@ const AddEvent = () => {
               </Card>
             </div>
             
-            {/* Prawa kolumna ze zdjęciem i podglądem */}
             <div className="md:col-span-1 space-y-6">
               <div className="sticky top-6">
                 <Card>
