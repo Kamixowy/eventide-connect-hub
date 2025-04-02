@@ -819,7 +819,7 @@ const Profile = () => {
                                 >
                                   <Calendar className="mr-2 h-4 w-4" />
                                   {field.value ? (
-                                    format(field.value, "PPP", { locale: pl })
+                                    format(field.value, "MMMM yyyy", { locale: pl })
                                   ) : (
                                     <span>Wybierz datę</span>
                                   )}
@@ -835,11 +835,16 @@ const Profile = () => {
                                   date > new Date() || date < new Date("1900-01-01")
                                 }
                                 initialFocus
+                                className={cn("p-3 pointer-events-auto")}
+                                captionLayout="dropdown-buttons"
+                                fromYear={1900}
+                                toYear={new Date().getFullYear()}
+                                showMonthYearPicker
                               />
                             </PopoverContent>
                           </Popover>
                           <FormDescription>
-                            Data założenia Twojej organizacji (opcjonalnie).
+                            Miesiąc i rok założenia Twojej organizacji (opcjonalnie).
                           </FormDescription>
                           <FormMessage />
                         </FormItem>

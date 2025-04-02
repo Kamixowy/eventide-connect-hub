@@ -2,12 +2,27 @@
 import React from 'react';
 import { CalendarIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+import { pl } from 'date-fns/locale';
 
 interface AboutTabProps {
-  organization: any;
+  organization: {
+    description: string;
+    category: string;
+    foundingYear: number | null;
+    foundingDate?: Date | null;
+    achievements: string[];
+  };
 }
 
 const AboutTab: React.FC<AboutTabProps> = ({ organization }) => {
+  // Format founding date to show month and year
+  const formattedFoundingDate = organization.foundingDate 
+    ? format(new Date(organization.foundingDate), 'MMMM yyyy', { locale: pl })
+    : organization.foundingYear 
+      ? `${organization.foundingYear}`
+      : 'Nie podano';
+
   return (
     <>
       <h2 className="text-2xl font-bold mb-6">O nas</h2>
@@ -25,7 +40,7 @@ const AboutTab: React.FC<AboutTabProps> = ({ organization }) => {
         </div>
         <div className="flex items-center text-sm text-muted-foreground mt-4">
           <CalendarIcon size={16} className="mr-2" />
-          Rok założenia: {organization.foundingYear || 'Nie podano'}
+          Data założenia: {formattedFoundingDate}
         </div>
       </div>
       

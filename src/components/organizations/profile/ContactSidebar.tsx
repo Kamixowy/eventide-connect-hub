@@ -2,6 +2,8 @@
 import React from 'react';
 import { Mail, MapPin, Globe, User, Users, Clock, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { format } from 'date-fns';
+import { pl } from 'date-fns/locale';
 
 interface ContactSidebarProps {
   organization: {
@@ -10,6 +12,7 @@ interface ContactSidebarProps {
     location: string;
     website: string;
     foundingYear: number | null;
+    foundingDate?: Date | null;
     followers: number;
     socialMedia: {
       facebook?: string;
@@ -21,6 +24,13 @@ interface ContactSidebarProps {
 }
 
 const ContactSidebar: React.FC<ContactSidebarProps> = ({ organization }) => {
+  // Format founding date to show month and year
+  const formattedFoundingDate = organization.foundingDate 
+    ? format(new Date(organization.foundingDate), 'MMMM yyyy', { locale: pl })
+    : organization.foundingYear 
+      ? `${organization.foundingYear}`
+      : 'Nie podano';
+
   return (
     <Card className="mb-6">
       <CardContent className="p-6">
@@ -70,8 +80,8 @@ const ContactSidebar: React.FC<ContactSidebarProps> = ({ organization }) => {
           <div className="flex items-center">
             <Clock className="text-ngo mr-3" size={20} />
             <div>
-              <p className="text-sm text-muted-foreground">Rok założenia</p>
-              <p className="font-medium">{organization.foundingYear || 'Nie podano'}</p>
+              <p className="text-sm text-muted-foreground">Data założenia</p>
+              <p className="font-medium">{formattedFoundingDate}</p>
             </div>
           </div>
           

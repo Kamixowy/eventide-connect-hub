@@ -31,6 +31,7 @@ interface OrganizationData {
   category: string;
   followers: number;
   foundingYear: number | null;
+  foundingDate: Date | null;
   achievements: string[];
   upcomingEvents: {
     id: number;
@@ -68,6 +69,7 @@ const fallbackOrganizationData: OrganizationData = {
   category: 'Pomoc dzieciom',
   followers: 356,
   foundingYear: 2010,
+  foundingDate: new Date(2010, 0, 1),
   achievements: [
     'Nagroda "Organizacja Roku 2018" przyznana przez Ministerstwo Rodziny i Polityki Społecznej',
     'Wyróżnienie za działalność charytatywną od Prezydenta miasta Warszawa w 2020 roku',
@@ -195,11 +197,13 @@ const OrganizationProfile = () => {
 
         const orgData = data as unknown as OrganizationDBData;
 
-        // Convert date string to year if available
+        // Get founding year and date if available
         let foundingYear: number | null = null;
+        let foundingDate: Date | null = null;
+        
         if (orgData.founding_date) {
-          const date = new Date(orgData.founding_date);
-          foundingYear = date.getFullYear();
+          foundingDate = new Date(orgData.founding_date);
+          foundingYear = foundingDate.getFullYear();
         }
 
         const formattedData: OrganizationData = {
@@ -219,6 +223,7 @@ const OrganizationProfile = () => {
           achievements: orgData.achievements || fallbackOrganizationData.achievements,
           user_id: orgData.user_id || '',
           foundingYear: foundingYear,
+          foundingDate: foundingDate,
           nip: orgData.nip || undefined,
         };
 
