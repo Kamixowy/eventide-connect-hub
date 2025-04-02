@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
@@ -151,6 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     if (isSupabaseConfigured()) {
       try {
+        // Check if profile exists
         const { data: existingProfile } = await supabase
           .from('profiles')
           .select('*')
@@ -158,6 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
           
         if (!existingProfile) {
+          // Insert profile using the correct types from Database
           await supabase.from('profiles').insert({
             id: demoUser.id,
             email: demoUser.email,
@@ -166,6 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
           
           if (type === 'organization') {
+            // Insert organization using the correct types
             await supabase.from('organizations').insert({
               user_id: demoUser.id,
               name: demoUser.user_metadata.name
