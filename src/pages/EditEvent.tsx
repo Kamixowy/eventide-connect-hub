@@ -112,8 +112,8 @@ const EditEvent = () => {
           audience: eventData.audience ? eventData.audience.join(', ') : '',
           tags: eventData.tags ? eventData.tags.join(', ') : '',
           image_url: eventData.image_url || '',
-          facebook: socialMedia.facebook || '',
-          linkedin: socialMedia.linkedin || '',
+          facebook: socialMedia && typeof socialMedia === 'object' ? socialMedia.facebook || '' : '',
+          linkedin: socialMedia && typeof socialMedia === 'object' ? socialMedia.linkedin || '' : '',
         });
 
         setUploadedImageUrl(eventData.image_url || null);
