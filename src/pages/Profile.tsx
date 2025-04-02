@@ -231,6 +231,14 @@ const Profile = () => {
                   Zmień logo
                 </Button>
                 
+                {organizationId && (
+                  <Link to={`/organizacje/${organizationId}`}>
+                    <Button variant="link" className="mb-2">
+                      Zobacz publiczny profil
+                    </Button>
+                  </Link>
+                )}
+                
                 <Alert className="mt-6">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Wskazówka</AlertTitle>
