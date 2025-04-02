@@ -1,12 +1,13 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
 import Layout from '@/components/layout/Layout';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Login = () => {
@@ -15,32 +16,53 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { signIn, demoLogin } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Symulacja logowania
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        toast({
+          title: "Błąd logowania",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        // Przekierowanie do strony głównej po zalogowaniu
+        navigate('/');
+      }
+    } catch (err) {
       toast({
-        title: "Zalogowano pomyślnie",
-        description: "Przekierowujemy Cię do panelu...",
+        title: "Wystąpił błąd",
+        description: "Nie można połączyć się z serwerem. Spróbuj ponownie później.",
+        variant: "destructive",
       });
-    }, 1500);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDemoLogin = (type: 'organization' | 'sponsor') => {
+  const handleDemoLogin = async (type: 'organization' | 'sponsor') => {
     setIsLoading(true);
     
-    // Symulacja logowania demo
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await demoLogin(type);
+      // Przekierowanie do strony głównej po zalogowaniu demo
+      navigate('/');
+    } catch (err) {
       toast({
-        title: `Zalogowano jako demo ${type === 'organization' ? 'organizacji' : 'sponsora'}`,
-        description: "Przekierowujemy Cię do panelu...",
+        title: "Wystąpił błąd",
+        description: "Nie można zalogować się jako demo. Spróbuj ponownie później.",
+        variant: "destructive",
       });
-    }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
