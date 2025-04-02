@@ -55,3 +55,14 @@ export const updateEvent = async (id: string, data: EventFormValues, imageUrl: s
   
   return true;
 };
+
+export const updateEventStatus = async (id: string, status: string) => {
+  const { error } = await supabase
+    .from('events')
+    .update({ status })
+    .eq('id', id);
+    
+  if (error) throw error;
+  
+  return true;
+};

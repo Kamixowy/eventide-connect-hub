@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -11,7 +12,6 @@ import {
   Tag,
   MessageSquare,
   Edit,
-  Pencil
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -23,6 +23,13 @@ import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { updateEventStatus } from '@/services/eventService';
 
 // Przykładowe dane wydarzenia
 const demoEventData = {
@@ -98,6 +105,7 @@ const EventDetails = () => {
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState(false);
   
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -183,7 +191,7 @@ const EventDetails = () => {
           detailed_location: eventData.detailed_location,
           attendees: eventData.expected_participants || 0,
           category: eventData.category || 'Inne',
-          status: 'Planowane', // Można dodać logikę statusu bazując na datach
+          status: eventData.status || 'Planowane', // Use status from database
           description: eventData.description,
           banner: eventData.image_url,
           audience: eventData.audience || [],
@@ -219,6 +227,36 @@ const EventDetails = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // Handle event status change
+  const handleStatusChange = async (newStatus: string) => {
+    if (!id || !isOwner) return;
+    
+    setStatusUpdating(true);
+    try {
+      await updateEventStatus(id, newStatus);
+      
+      // Update local state
+      setEvent(prev => ({
+        ...prev,
+        status: newStatus
+      }));
+      
+      toast({
+        title: "Status zaktualizowany",
+        description: `Status wydarzenia został zmieniony na "${newStatus}".`,
+      });
+    } catch (error) {
+      console.error('Error updating event status:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie udało się zaktualizować statusu wydarzenia.",
+        variant: "destructive"
+      });
+    } finally {
+      setStatusUpdating(false);
+    }
+  };
   
   if (loading) {
     return (
@@ -256,6 +294,15 @@ const EventDetails = () => {
     });
   };
 
+  // Define available status options
+  const statusOptions = [
+    "Planowane",
+    "W przygotowaniu",
+    "W trakcie",
+    "Zakończone",
+    "Anulowane"
+  ];
+
   return (
     <Layout>
       {/* Banner */}
@@ -277,6 +324,8 @@ const EventDetails = () => {
             ${event.status === 'Planowane' ? 'text-blue-700' : 
               event.status === 'W przygotowaniu' ? 'text-yellow-700' : 
               event.status === 'W trakcie' ? 'text-green-700' : 
+              event.status === 'Zakończone' ? 'text-gray-700' :
+              event.status === 'Anulowane' ? 'text-red-700' :
               'text-gray-700'}
           `}>
             {event.status}
@@ -286,15 +335,40 @@ const EventDetails = () => {
           </h1>
         </div>
         
-        {/* Add Edit Button for owners */}
+        {/* Add Edit Button for owners (replaced with a cleaner version) */}
         {isOwner && (
-          <div className="absolute top-6 right-6">
+          <div className="absolute top-6 right-6 flex space-x-2">
+            {/* Status dropdown for owners */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="bg-white shadow-md"
+                  disabled={statusUpdating}
+                >
+                  {statusUpdating ? "Aktualizowanie..." : "Zmień status"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {statusOptions.map((status) => (
+                  <DropdownMenuItem 
+                    key={status}
+                    onClick={() => handleStatusChange(status)}
+                    className={event.status === status ? "font-bold bg-gray-100" : ""}
+                  >
+                    {status}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            {/* Edit button (styled differently now) */}
             <Button 
               onClick={() => navigate(`/edytuj-wydarzenie/${id}`)}
-              variant="success"
-              className="shadow-md"
+              variant="outline"
+              className="bg-white shadow-md"
             >
-              <Pencil size={16} className="mr-2" /> Edytuj wydarzenie
+              <Edit size={16} className="mr-2" /> Edytuj
             </Button>
           </div>
         )}
