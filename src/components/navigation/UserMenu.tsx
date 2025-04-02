@@ -19,6 +19,12 @@ const UserMenu = () => {
   
   if (!user) return null;
   
+  const handleSignOut = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default behavior
+    e.stopPropagation(); // Stop event propagation
+    signOut();
+  };
+  
   return (
     <div className="flex items-center gap-2">
       <Link to="/wiadomosci" className="hidden md:inline-flex">
@@ -80,7 +86,7 @@ const UserMenu = () => {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer">
+          <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
             <LogOut className="mr-2 h-4 w-4" />
             <span>Wyloguj się</span>
           </DropdownMenuItem>

@@ -186,6 +186,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast({
         title: "Wylogowano pomyślnie z trybu demo",
       });
+      
+      // Redirect to home page
+      window.location.href = '/';
       return;
     }
     
@@ -211,6 +214,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     toast({
       title: "Wylogowano pomyślnie",
     });
+    
+    // Redirect to home page
+    window.location.href = '/';
   };
 
   const demoLogin = async (type: 'organization' | 'sponsor') => {
