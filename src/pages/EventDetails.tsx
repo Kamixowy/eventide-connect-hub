@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -352,7 +351,7 @@ const EventDetails = () => {
               <Button 
                 variant="success" 
                 className="shadow-md"
-                onClick={() => navigate(`/wydarzenia/edytuj/${id}`)}
+                onClick={() => navigate(`/edytuj-wydarzenie/${id}`)}
               >
                 <Edit className="mr-2 h-4 w-4" />
                 Edytuj wydarzenie
