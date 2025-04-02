@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
@@ -88,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         data: metadata,
-        emailRedirectTo: '',
+        emailRedirectTo: window.location.origin + '/logowanie',
       }
     });
     
