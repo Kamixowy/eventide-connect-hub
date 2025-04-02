@@ -101,6 +101,7 @@ export type Database = {
           organization_id: string
           social_media: Json | null
           start_date: string
+          status: string | null
           tags: string[] | null
           title: string
           updated_at: string
@@ -119,6 +120,7 @@ export type Database = {
           organization_id: string
           social_media?: Json | null
           start_date: string
+          status?: string | null
           tags?: string[] | null
           title: string
           updated_at?: string
@@ -137,6 +139,7 @@ export type Database = {
           organization_id?: string
           social_media?: Json | null
           start_date?: string
+          status?: string | null
           tags?: string[] | null
           title?: string
           updated_at?: string
@@ -333,7 +336,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_column_exists: {
+        Args: {
+          table_name: string
+          column_name: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

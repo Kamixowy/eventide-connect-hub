@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -31,7 +30,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { updateEventStatus } from '@/services/eventService';
 
-// Przykładowe dane wydarzenia
 const demoEventData = {
   id: 1,
   title: 'Bieg Charytatywny "Pomagamy Dzieciom"',
@@ -111,7 +109,6 @@ const EventDetails = () => {
     const fetchEventDetails = async () => {
       setLoading(true);
       
-      // Dla użytkowników demo lub gdy id zaczyna się od "evt-"
       if ((user && user.id.startsWith('demo-')) || (id && id.startsWith('evt-'))) {
         setEvent(demoEventData);
         setLoading(false);
@@ -161,12 +158,10 @@ const EventDetails = () => {
         
         console.log('Event data:', eventData);
         
-        // Check if current user is the owner of the organization
         if (user && eventData.organizations?.user_id === user.id) {
           setIsOwner(true);
         }
         
-        // Pobierz opcje sponsorowania dla tego wydarzenia
         const { data: sponsorshipData, error: sponsorshipError } = await supabase
           .from('sponsorship_options')
           .select('*')
@@ -176,7 +171,6 @@ const EventDetails = () => {
           console.error('Error fetching sponsorship options:', sponsorshipError);
         }
         
-        // Przygotuj dane wydarzenia w formacie odpowiednim dla komponentu
         const formattedEvent = {
           id: eventData.id,
           title: eventData.title,
@@ -191,7 +185,7 @@ const EventDetails = () => {
           detailed_location: eventData.detailed_location,
           attendees: eventData.expected_participants || 0,
           category: eventData.category || 'Inne',
-          status: eventData.status || 'Planowane', // Use status from database
+          status: eventData.status || 'Planowane',
           description: eventData.description,
           banner: eventData.image_url,
           audience: eventData.audience || [],
@@ -203,7 +197,7 @@ const EventDetails = () => {
             description: option.description,
             price: option.price ? { from: option.price, to: option.price * 1.5 } : null
           })) : demoEventData.sponsorshipOptions,
-          updates: [] // Można dodać logikę pobierania aktualizacji
+          updates: []
         };
         
         setEvent(formattedEvent);
@@ -214,7 +208,7 @@ const EventDetails = () => {
           description: "Wystąpił problem z pobieraniem danych wydarzenia.",
           variant: "destructive"
         });
-        setEvent(demoEventData); // Fallback do danych demo
+        setEvent(demoEventData);
       } finally {
         setLoading(false);
       }
@@ -223,12 +217,10 @@ const EventDetails = () => {
     fetchEventDetails();
   }, [id, user, toast, navigate]);
   
-  // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Handle event status change
   const handleStatusChange = async (newStatus: string) => {
     if (!id || !isOwner) return;
     
@@ -236,7 +228,6 @@ const EventDetails = () => {
     try {
       await updateEventStatus(id, newStatus);
       
-      // Update local state
       setEvent(prev => ({
         ...prev,
         status: newStatus
@@ -281,12 +272,10 @@ const EventDetails = () => {
     );
   }
   
-  // Check if user is logged in and get user type
   const userType = user?.user_metadata?.userType || null;
   const isLoggedIn = !!user;
   const isOwnerVar = userType === 'organization' && user?.id === event.organization?.userId;
 
-  // Handle contact with organization
   const handleContactOrganization = () => {
     toast({
       title: "Wiadomość wysłana",
@@ -294,7 +283,6 @@ const EventDetails = () => {
     });
   };
 
-  // Define available status options
   const statusOptions = [
     "Planowane",
     "W przygotowaniu",
@@ -305,7 +293,6 @@ const EventDetails = () => {
 
   return (
     <Layout>
-      {/* Banner */}
       <div className="relative h-64 md:h-80 w-full overflow-hidden bg-gray-100">
         <img 
           src={event.banner || '/placeholder.svg'} 
@@ -335,10 +322,8 @@ const EventDetails = () => {
           </h1>
         </div>
         
-        {/* Add Edit Button for owners (replaced with a cleaner version) */}
         {isOwner && (
-          <div className="absolute top-6 right-6 flex space-x-2">
-            {/* Status dropdown for owners */}
+          <div className="absolute top-6 right-6">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
@@ -361,15 +346,6 @@ const EventDetails = () => {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            
-            {/* Edit button (styled differently now) */}
-            <Button 
-              onClick={() => navigate(`/edytuj-wydarzenie/${id}`)}
-              variant="outline"
-              className="bg-white shadow-md"
-            >
-              <Edit size={16} className="mr-2" /> Edytuj
-            </Button>
           </div>
         )}
       </div>
@@ -377,7 +353,6 @@ const EventDetails = () => {
       <div className="container py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            {/* Informacje o organizacji */}
             <Link to={`/organizacje/${event.organization.id}`} className="flex items-center mb-6 hover:text-ngo transition-colors">
               <Avatar className="h-12 w-12 mr-3">
                 <AvatarImage src={event.organization.avatar} alt={event.organization.name} />
@@ -389,7 +364,6 @@ const EventDetails = () => {
               </div>
             </Link>
 
-            {/* Podstawowe informacje */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               <div className="flex items-center border rounded-lg p-4">
                 <Calendar size={24} className="mr-3 text-ngo" /> 
@@ -414,7 +388,6 @@ const EventDetails = () => {
               </div>
             </div>
 
-            {/* Treść wydarzenia */}
             <Tabs defaultValue="details" className="mb-8">
               <TabsList className="w-full bg-transparent border-b rounded-none h-auto p-0 mb-6">
                 <TabsTrigger 
@@ -547,7 +520,6 @@ const EventDetails = () => {
           </div>
 
           <div className="lg:col-span-1">
-            {/* Możliwości sponsorowania */}
             <Card className="mb-6">
               <CardHeader className="pb-2">
                 <CardTitle className="text-xl">Możliwości współpracy</CardTitle>
@@ -602,7 +574,6 @@ const EventDetails = () => {
               </CardContent>
             </Card>
 
-            {/* Udostępnij */}
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-xl">Udostępnij wydarzenie</CardTitle>
