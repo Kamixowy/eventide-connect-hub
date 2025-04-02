@@ -178,10 +178,8 @@ const AddEvent = () => {
   };
   
   const handleSponsorshipNumberChange = (e: React.ChangeEvent<HTMLInputElement>, id: string, field: 'priceFrom' | 'priceTo') => {
-    const scrollPosition = window.scrollY;
     const value = e.target.value;
     handleSponsorshipOptionChange(id, field, value);
-    window.scrollTo(0, scrollPosition);
   };
   
   const handleSubmit = (e: FormEvent) => {
@@ -226,9 +224,7 @@ const AddEvent = () => {
   };
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
-    const scrollPosition = window.scrollY;
     setter(e.target.value);
-    window.scrollTo(0, scrollPosition);
   };
 
   return (
