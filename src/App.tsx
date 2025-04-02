@@ -19,6 +19,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Organizations from "./pages/Organizations";
 import OrganizationProfile from "./pages/OrganizationProfile";
+import MyEvents from "./pages/MyEvents";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/kontakt" element={<Contact />} />
             <Route path="/organizacje" element={<Organizations />} />
             <Route path="/organizacje/:id" element={<OrganizationProfile />} />
+            <Route path="/moje-wydarzenia" element={<MyEvents />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

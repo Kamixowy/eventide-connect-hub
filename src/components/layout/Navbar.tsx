@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -13,7 +12,8 @@ import {
   ChevronDown,
   Info,
   Contact as ContactIcon,
-  Users
+  Users,
+  ListChecks
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,10 +33,8 @@ const Navbar = () => {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   
-  // Funkcja sprawdzająca, czy link jest aktywny
   const isActive = (path: string) => location.pathname === path;
   
-  // Efekt nasłuchujący scroll
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 10) {
@@ -53,10 +51,11 @@ const Navbar = () => {
     };
   }, []);
   
-  // Zamknij menu mobilne po zmianie ścieżki
   useEffect(() => {
     setIsOpen(false);
   }, [location.pathname]);
+  
+  const isOrganization = user?.user_metadata?.userType === 'organization';
   
   return (
     <header 
@@ -66,12 +65,10 @@ const Navbar = () => {
     >
       <div className="container">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
           <Link to="/" className="flex items-center">
             <span className="text-xl font-bold text-ngo">N-GO</span>
           </Link>
           
-          {/* Menu na desktop */}
           <nav className="hidden md:flex items-center space-x-6">
             <Link 
               to="/wydarzenia" 
@@ -89,7 +86,16 @@ const Navbar = () => {
             >
               Organizacje
             </Link>
-            {/* Współprace tylko dla zalogowanych */}
+            {user && isOrganization && (
+              <Link 
+                to="/moje-wydarzenia" 
+                className={`text-sm font-medium transition-colors hover:text-ngo ${
+                  isActive('/moje-wydarzenia') ? 'text-ngo' : 'text-muted-foreground'
+                }`}
+              >
+                Moje wydarzenia
+              </Link>
+            )}
             {user && (
               <Link 
                 to="/wspolprace" 
@@ -100,7 +106,6 @@ const Navbar = () => {
                 Współprace
               </Link>
             )}
-            {/* O nas i Kontakt tylko dla niezalogowanych */}
             {!user && (
               <>
                 <Link 
@@ -123,7 +128,6 @@ const Navbar = () => {
             )}
           </nav>
           
-          {/* Przyciski logowania / Profil użytkownika */}
           <div className="flex items-center gap-4">
             {user ? (
               <div className="flex items-center gap-2">
@@ -165,6 +169,14 @@ const Navbar = () => {
                         <span>Wydarzenia</span>
                       </Link>
                     </DropdownMenuItem>
+                    {isOrganization && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/moje-wydarzenia" className="cursor-pointer w-full flex">
+                          <ListChecks className="mr-2 h-4 w-4" />
+                          <span>Moje wydarzenia</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem asChild>
                       <Link to="/wiadomosci" className="cursor-pointer w-full flex md:hidden">
                         <MessageSquare className="mr-2 h-4 w-4" />
@@ -201,7 +213,6 @@ const Navbar = () => {
               </div>
             )}
             
-            {/* Przycisk mobile menu */}
             <Button
               variant="ghost"
               size="icon"
@@ -214,7 +225,6 @@ const Navbar = () => {
         </div>
       </div>
       
-      {/* Mobile menu */}
       {isOpen && (
         <div className="md:hidden border-t">
           <div className="container py-4">
@@ -237,7 +247,17 @@ const Navbar = () => {
                 <Users className="mr-2 h-5 w-5" />
                 Organizacje
               </Link>
-              {/* Współprace tylko dla zalogowanych */}
+              {user && isOrganization && (
+                <Link 
+                  to="/moje-wydarzenia" 
+                  className={`flex items-center py-2 text-base font-medium transition-colors hover:text-ngo ${
+                    isActive('/moje-wydarzenia') ? 'text-ngo' : 'text-muted-foreground'
+                  }`}
+                >
+                  <ListChecks className="mr-2 h-5 w-5" />
+                  Moje wydarzenia
+                </Link>
+              )}
               {user && (
                 <Link 
                   to="/wspolprace" 
@@ -249,7 +269,6 @@ const Navbar = () => {
                   Współprace
                 </Link>
               )}
-              {/* O nas i Kontakt tylko dla niezalogowanych */}
               {!user && (
                 <>
                   <Link 
