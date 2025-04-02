@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
@@ -134,8 +135,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const demoLogin = async (type: 'organization' | 'sponsor') => {
+    // Generate deterministic UUIDs for demo users
+    const demoOrgId = '00000000-0000-0000-0000-000000000001';
+    const demoSponsorId = '00000000-0000-0000-0000-000000000002';
+    
     const demoUser = {
-      id: type === 'organization' ? 'demo-org-1' : 'demo-sponsor-1',
+      id: type === 'organization' ? demoOrgId : demoSponsorId,
       email: type === 'organization' ? 'demo-org@n-go.pl' : 'demo-sponsor@n-go.pl',
       app_metadata: {},
       aud: 'authenticated',
