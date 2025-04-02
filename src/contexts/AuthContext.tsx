@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
@@ -135,12 +134,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const demoLogin = async (type: 'organization' | 'sponsor') => {
-    // Generate deterministic UUIDs for demo users
-    const demoOrgId = '00000000-0000-0000-0000-000000000001';
-    const demoSponsorId = '00000000-0000-0000-0000-000000000002';
-    
     const demoUser = {
-      id: type === 'organization' ? demoOrgId : demoSponsorId,
+      id: type === 'organization' ? 'demo-organization' : 'demo-sponsor',
       email: type === 'organization' ? 'demo-org@n-go.pl' : 'demo-sponsor@n-go.pl',
       app_metadata: {},
       aud: 'authenticated',
@@ -152,37 +147,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } as User;
     
     localStorage.setItem('demoUser', JSON.stringify(demoUser));
-    
-    if (isSupabaseConfigured()) {
-      try {
-        // Check if profile exists
-        const { data: existingProfile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', demoUser.id)
-          .maybeSingle();
-          
-        if (!existingProfile) {
-          // Insert profile using the correct types from Database
-          await supabase.from('profiles').insert({
-            id: demoUser.id,
-            email: demoUser.email,
-            name: demoUser.user_metadata.name,
-            user_type: demoUser.user_metadata.userType
-          });
-          
-          if (type === 'organization') {
-            // Insert organization using the correct types
-            await supabase.from('organizations').insert({
-              user_id: demoUser.id,
-              name: demoUser.user_metadata.name
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Error creating demo profile in Supabase:', error);
-      }
-    }
     
     toast({
       title: `Zalogowano jako demo ${type === 'organization' ? 'organizacji' : 'sponsora'}`,
