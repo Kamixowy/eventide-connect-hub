@@ -316,6 +316,8 @@ const Profile = () => {
           title: "Sukces",
           description: "Profil organizacji został zaktualizowany.",
         });
+        
+        navigate(`/organizacje/${organizationId}`);
       }
     } catch (error) {
       console.error('Nieoczekiwany błąd:', error);
