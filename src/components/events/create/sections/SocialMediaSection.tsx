@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import { UseFormReturn } from 'react-hook-form';
 import { 
   Card, 
   CardContent, 
@@ -10,9 +10,20 @@ import {
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { EventCreateValues } from '../EventCreateSchema';
+import {
+  FormField,
+  FormItem,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 
-const SocialMediaSection = () => {
-  const { register } = useFormContext();
+interface SocialMediaSectionProps {
+  methods: UseFormReturn<EventCreateValues>;
+}
+
+const SocialMediaSection = ({ methods }: SocialMediaSectionProps) => {
+  const { control } = methods;
 
   return (
     <Card>
@@ -23,23 +34,43 @@ const SocialMediaSection = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="facebook">Link do wydarzenia na Facebooku</Label>
-          <Input 
-            id="facebook" 
-            placeholder="https://facebook.com/events/..." 
-            {...register('facebook')}
-          />
-        </div>
+        <FormField
+          control={control}
+          name="facebook"
+          render={({ field }) => (
+            <FormItem>
+              <Label htmlFor="facebook">Link do wydarzenia na Facebooku</Label>
+              <FormControl>
+                <Input 
+                  id="facebook" 
+                  placeholder="https://facebook.com/events/..." 
+                  {...field}
+                  value={field.value || ''}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
-        <div className="space-y-2">
-          <Label htmlFor="linkedin">Link do wydarzenia na LinkedIn</Label>
-          <Input 
-            id="linkedin" 
-            placeholder="https://linkedin.com/events/..." 
-            {...register('linkedin')}
-          />
-        </div>
+        <FormField
+          control={control}
+          name="linkedin"
+          render={({ field }) => (
+            <FormItem>
+              <Label htmlFor="linkedin">Link do wydarzenia na LinkedIn</Label>
+              <FormControl>
+                <Input 
+                  id="linkedin" 
+                  placeholder="https://linkedin.com/events/..." 
+                  {...field}
+                  value={field.value || ''}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </CardContent>
     </Card>
   );

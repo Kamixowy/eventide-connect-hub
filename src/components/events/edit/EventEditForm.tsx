@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FormProvider, UseFormReturn } from 'react-hook-form';
+import { UseFormReturn } from 'react-hook-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
@@ -26,64 +26,63 @@ const EventEditForm = ({
   handleImageUpload,
 }: EventEditFormProps) => {
   return (
-    <FormProvider {...methods}>
-      <Form>
-        <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
-          <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="mb-6">
-              <TabsTrigger value="basic">
-                <Info className="mr-2 h-4 w-4" />
-                Podstawowe informacje
-              </TabsTrigger>
-              <TabsTrigger value="details">
-                <Tag className="mr-2 h-4 w-4" />
-                Szczegóły
-              </TabsTrigger>
-              <TabsTrigger value="media">
-                <Calendar className="mr-2 h-4 w-4" />
-                Media i dodatkowe
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="basic" className="space-y-6">
-              <BasicInfoTab />
-            </TabsContent>
-            
-            <TabsContent value="details" className="space-y-6">
-              <DetailsTab />
-            </TabsContent>
-            
-            <TabsContent value="media" className="space-y-6">
-              <MediaTab 
-                uploadedImageUrl={uploadedImageUrl} 
-                handleImageUpload={handleImageUpload} 
-              />
-            </TabsContent>
-          </Tabs>
+    <Form>
+      <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
+        <Tabs defaultValue="basic" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="basic">
+              <Info className="mr-2 h-4 w-4" />
+              Podstawowe informacje
+            </TabsTrigger>
+            <TabsTrigger value="details">
+              <Tag className="mr-2 h-4 w-4" />
+              Szczegóły
+            </TabsTrigger>
+            <TabsTrigger value="media">
+              <Calendar className="mr-2 h-4 w-4" />
+              Media i dodatkowe
+            </TabsTrigger>
+          </TabsList>
           
-          <div className="flex justify-end">
-            <Button 
-              type="submit" 
-              className="w-full md:w-auto"
-              disabled={submitting}
-              variant="success"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Zapisywanie...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Zapisz zmiany
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </FormProvider>
+          <TabsContent value="basic" className="space-y-6">
+            <BasicInfoTab methods={methods} />
+          </TabsContent>
+          
+          <TabsContent value="details" className="space-y-6">
+            <DetailsTab methods={methods} />
+          </TabsContent>
+          
+          <TabsContent value="media" className="space-y-6">
+            <MediaTab 
+              methods={methods}
+              uploadedImageUrl={uploadedImageUrl} 
+              handleImageUpload={handleImageUpload} 
+            />
+          </TabsContent>
+        </Tabs>
+        
+        <div className="flex justify-end">
+          <Button 
+            type="submit" 
+            className="w-full md:w-auto"
+            disabled={submitting}
+            variant="success"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Zapisywanie...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Zapisz zmiany
+              </>
+            )}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 };
 

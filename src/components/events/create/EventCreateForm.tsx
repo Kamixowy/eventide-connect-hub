@@ -1,6 +1,6 @@
 
-import React, { useRef, useState } from 'react';
-import { FormProvider, UseFormReturn } from 'react-hook-form';
+import React, { useRef } from 'react';
+import { UseFormReturn } from 'react-hook-form';
 import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { EventCreateValues, SponsorshipOption } from './EventCreateSchema';
@@ -45,53 +45,50 @@ const EventCreateForm = ({
   handleSponsorshipNumberChange,
 }: EventCreateFormProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const formRef = useRef<HTMLDivElement>(null);
 
   return (
-    <FormProvider {...methods}>
-      <Form>
-        <form onSubmit={methods.handleSubmit(onSubmit)}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8" ref={formRef}>
-            <div className="md:col-span-2 space-y-6">
-              <BasicInfoSection />
-              <DateLocationSection />
-              <DetailsSection />
-              <SocialMediaSection />
-              <SponsorshipSection 
-                sponsorshipOptions={sponsorshipOptions}
-                handleAddSponsorshipOption={handleAddSponsorshipOption}
-                handleRemoveSponsorshipOption={handleRemoveSponsorshipOption}
-                handleSponsorshipOptionChange={handleSponsorshipOptionChange}
-                handleAddBenefit={handleAddBenefit}
-                handleRemoveBenefit={handleRemoveBenefit}
-                handleSponsorshipNumberChange={handleSponsorshipNumberChange}
+    <Form>
+      <form onSubmit={methods.handleSubmit(onSubmit)}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="md:col-span-2 space-y-6">
+            <BasicInfoSection methods={methods} />
+            <DateLocationSection methods={methods} />
+            <DetailsSection methods={methods} />
+            <SocialMediaSection methods={methods} />
+            <SponsorshipSection 
+              sponsorshipOptions={sponsorshipOptions}
+              handleAddSponsorshipOption={handleAddSponsorshipOption}
+              handleRemoveSponsorshipOption={handleRemoveSponsorshipOption}
+              handleSponsorshipOptionChange={handleSponsorshipOptionChange}
+              handleAddBenefit={handleAddBenefit}
+              handleRemoveBenefit={handleRemoveBenefit}
+              handleSponsorshipNumberChange={handleSponsorshipNumberChange}
+            />
+          </div>
+          
+          <div className="md:col-span-1 space-y-6">
+            <div className="sticky top-6">
+              <ImageUploadSection
+                bannerPreview={bannerPreview}
+                resetBannerImage={resetBannerImage}
+                fileInputRef={fileInputRef}
+                handleBannerUpload={handleBannerUpload}
               />
-            </div>
-            
-            <div className="md:col-span-1 space-y-6">
-              <div className="sticky top-6">
-                <ImageUploadSection
-                  bannerPreview={bannerPreview}
-                  resetBannerImage={resetBannerImage}
-                  fileInputRef={fileInputRef}
-                  handleBannerUpload={handleBannerUpload}
-                />
-                
-                <div className="mt-6">
-                  <Button 
-                    type="submit" 
-                    className="w-full btn-gradient"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Dodawanie...' : 'Dodaj wydarzenie'}
-                  </Button>
-                </div>
+              
+              <div className="mt-6">
+                <Button 
+                  type="submit" 
+                  className="w-full btn-gradient"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Dodawanie...' : 'Dodaj wydarzenie'}
+                </Button>
               </div>
             </div>
           </div>
-        </form>
-      </Form>
-    </FormProvider>
+        </div>
+      </form>
+    </Form>
   );
 };
 

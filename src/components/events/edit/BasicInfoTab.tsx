@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import { UseFormReturn } from 'react-hook-form';
 import { format } from 'date-fns';
 import { Calendar } from 'lucide-react';
 
@@ -19,8 +19,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { EventFormValues } from './EventEditSchema';
 
-const BasicInfoTab = () => {
-  const form = useFormContext<EventFormValues>();
+interface BasicInfoTabProps {
+  methods: UseFormReturn<EventFormValues>;
+}
+
+const BasicInfoTab = ({ methods }: BasicInfoTabProps) => {
+  const { control } = methods;
 
   return (
     <Card>
@@ -29,7 +33,7 @@ const BasicInfoTab = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <FormField
-          control={form.control}
+          control={control}
           name="title"
           render={({ field }) => (
             <FormItem>
@@ -43,7 +47,7 @@ const BasicInfoTab = () => {
         />
         
         <FormField
-          control={form.control}
+          control={control}
           name="description"
           render={({ field }) => (
             <FormItem>
@@ -62,7 +66,7 @@ const BasicInfoTab = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
-            control={form.control}
+            control={control}
             name="start_date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
@@ -100,7 +104,7 @@ const BasicInfoTab = () => {
           />
           
           <FormField
-            control={form.control}
+            control={control}
             name="end_date"
             render={({ field }) => (
               <FormItem className="flex flex-col">

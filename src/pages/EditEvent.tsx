@@ -97,7 +97,7 @@ const EditEvent = () => {
         setEvent(eventData);
         
         // Extract social media values from JSON
-        const socialMedia = eventData.social_media || {};
+        const socialMedia = eventData.social_media ? eventData.social_media : {};
         
         // Set form values from event data
         methods.reset({
@@ -112,8 +112,8 @@ const EditEvent = () => {
           audience: eventData.audience ? eventData.audience.join(', ') : '',
           tags: eventData.tags ? eventData.tags.join(', ') : '',
           image_url: eventData.image_url || '',
-          facebook: socialMedia && typeof socialMedia === 'object' ? socialMedia.facebook || '' : '',
-          linkedin: socialMedia && typeof socialMedia === 'object' ? socialMedia.linkedin || '' : '',
+          facebook: socialMedia && typeof socialMedia === 'object' ? (socialMedia as any).facebook || '' : '',
+          linkedin: socialMedia && typeof socialMedia === 'object' ? (socialMedia as any).linkedin || '' : '',
         });
 
         setUploadedImageUrl(eventData.image_url || null);

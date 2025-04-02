@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import { UseFormReturn } from 'react-hook-form';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -13,8 +13,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { EventFormValues } from './EventEditSchema';
 
-const DetailsTab = () => {
-  const form = useFormContext<EventFormValues>();
+interface DetailsTabProps {
+  methods: UseFormReturn<EventFormValues>;
+}
+
+const DetailsTab = ({ methods }: DetailsTabProps) => {
+  const { control } = methods;
 
   return (
     <Card>
@@ -24,7 +28,7 @@ const DetailsTab = () => {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
-            control={form.control}
+            control={control}
             name="location"
             render={({ field }) => (
               <FormItem>
@@ -42,7 +46,7 @@ const DetailsTab = () => {
           />
           
           <FormField
-            control={form.control}
+            control={control}
             name="detailed_location"
             render={({ field }) => (
               <FormItem>
@@ -61,7 +65,7 @@ const DetailsTab = () => {
         </div>
         
         <FormField
-          control={form.control}
+          control={control}
           name="expected_participants"
           render={({ field }) => (
             <FormItem>
@@ -80,7 +84,7 @@ const DetailsTab = () => {
         />
         
         <FormField
-          control={form.control}
+          control={control}
           name="category"
           render={({ field }) => (
             <FormItem>
@@ -98,7 +102,7 @@ const DetailsTab = () => {
         />
         
         <FormField
-          control={form.control}
+          control={control}
           name="audience"
           render={({ field }) => (
             <FormItem>
@@ -116,7 +120,7 @@ const DetailsTab = () => {
         />
         
         <FormField
-          control={form.control}
+          control={control}
           name="tags"
           render={({ field }) => (
             <FormItem>

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { UseFormReturn } from 'react-hook-form';
 import { FormLabel } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -14,12 +14,13 @@ import { EventFormValues } from './EventEditSchema';
 import { Loader2 } from 'lucide-react';
 
 interface MediaTabProps {
+  methods: UseFormReturn<EventFormValues>;
   uploadedImageUrl: string | null;
   handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
 }
 
-const MediaTab = ({ uploadedImageUrl, handleImageUpload }: MediaTabProps) => {
-  const form = useFormContext<EventFormValues>();
+const MediaTab = ({ methods, uploadedImageUrl, handleImageUpload }: MediaTabProps) => {
+  const { control } = methods;
   const [isUploading, setIsUploading] = useState(false);
 
   // Wrap the original handler to show loading state
@@ -68,7 +69,7 @@ const MediaTab = ({ uploadedImageUrl, handleImageUpload }: MediaTabProps) => {
         </div>
         
         <FormField
-          control={form.control}
+          control={control}
           name="facebook"
           render={({ field }) => (
             <FormItem>
@@ -86,7 +87,7 @@ const MediaTab = ({ uploadedImageUrl, handleImageUpload }: MediaTabProps) => {
         />
         
         <FormField
-          control={form.control}
+          control={control}
           name="linkedin"
           render={({ field }) => (
             <FormItem>
