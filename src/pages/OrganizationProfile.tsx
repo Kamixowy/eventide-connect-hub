@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -170,12 +171,20 @@ const OrganizationProfile = () => {
           name: string;
           description: string | null;
           logo_url: string | null;
+          cover_url: string | null;
           address: string | null;
           contact_email: string | null;
           phone: string | null;
           website: string | null;
           category: string | null;
           achievements: string[] | null;
+          social_media: {
+            facebook?: string;
+            twitter?: string;
+            linkedin?: string;
+            instagram?: string;
+          } | null;
+          followers: number | null;
           user_id: string;
           created_at: string;
           updated_at: string;
@@ -189,12 +198,14 @@ const OrganizationProfile = () => {
           name: orgData.name || 'Organizacja bez nazwy',
           description: orgData.description || fallbackOrganizationData.description,
           logo: orgData.logo_url || fallbackOrganizationData.logo,
-          cover: orgData.logo_url || fallbackOrganizationData.cover,
+          cover: orgData.cover_url || fallbackOrganizationData.cover,
           location: orgData.address || 'Brak adresu',
           email: orgData.contact_email || 'Brak adresu email',
           phone: orgData.phone || 'Brak numeru telefonu',
           website: orgData.website || 'https://www.example.com',
           category: orgData.category || fallbackOrganizationData.category,
+          socialMedia: orgData.social_media || fallbackOrganizationData.socialMedia,
+          followers: orgData.followers || 0,
           achievements: orgData.achievements || fallbackOrganizationData.achievements,
           user_id: orgData.user_id || '',
         };

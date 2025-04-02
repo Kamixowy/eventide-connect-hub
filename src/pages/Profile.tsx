@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
@@ -11,7 +12,13 @@ import {
   AlertCircle,
   Upload,
   Tag,
-  Award
+  Award,
+  Facebook,
+  Twitter,
+  Linkedin,
+  Instagram,
+  Users,
+  ImageIcon
 } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,6 +36,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useOrganizationStorage } from '@/hooks/useOrganizationStorage';
+import { Separator } from '@/components/ui/separator';
 
 const profileFormSchema = z.object({
   organizationName: z.string().min(2, {
@@ -45,6 +53,19 @@ const profileFormSchema = z.object({
   }).optional().or(z.literal('')),
   category: z.string().optional(),
   achievements: z.string().optional(),
+  facebook: z.string().url({
+    message: "Proszę podać prawidłowy adres URL.",
+  }).optional().or(z.literal('')),
+  twitter: z.string().url({
+    message: "Proszę podać prawidłowy adres URL.",
+  }).optional().or(z.literal('')),
+  linkedin: z.string().url({
+    message: "Proszę podać prawidłowy adres URL.",
+  }).optional().or(z.literal('')),
+  instagram: z.string().url({
+    message: "Proszę podać prawidłowy adres URL.",
+  }).optional().or(z.literal('')),
+  followers: z.number().min(0).optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -54,11 +75,15 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [isOrganization, setIsOrganization] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const { uploadLogo, uploadCover } = useOrganizationStorage();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -71,6 +96,11 @@ const Profile = () => {
       website: '',
       category: '',
       achievements: '',
+      facebook: '',
+      twitter: '',
+      linkedin: '',
+      instagram: '',
+      followers: 0,
     },
   });
 
@@ -105,7 +135,14 @@ const Profile = () => {
           website: 'https://example.com',
           category: 'Pomoc społeczna',
           achievements: 'Nagroda "Organizacja Roku 2022"',
+          facebook: 'https://facebook.com/demoorg',
+          twitter: 'https://twitter.com/demoorg',
+          linkedin: 'https://linkedin.com/company/demoorg',
+          instagram: 'https://instagram.com/demoorg',
+          followers: 356,
         });
+        setLogoUrl('https://images.unsplash.com/photo-1607799279861-4dd421887fb3?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80');
+        setCoverUrl('https://images.unsplash.com/photo-1560252829-804f1aedf1be?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');
         return;
       }
 
@@ -140,9 +177,17 @@ const Profile = () => {
             phone: string | null;
             website: string | null;
             logo_url: string | null;
+            cover_url: string | null;
             user_id: string;
             category: string | null;
             achievements: string[] | null;
+            social_media: {
+              facebook?: string;
+              twitter?: string;
+              linkedin?: string;
+              instagram?: string;
+            } | null;
+            followers: number | null;
             created_at: string;
             updated_at: string;
           }
@@ -152,6 +197,8 @@ const Profile = () => {
           
           console.log('Dane organizacji pobrane:', typedOrgData);
           console.log('Logo URL:', typedOrgData.logo_url);
+          console.log('Cover URL:', typedOrgData.cover_url);
+          console.log('Social Media:', typedOrgData.social_media);
           
           setOrganizationId(typedOrgData.id);
           form.reset({
@@ -165,8 +212,14 @@ const Profile = () => {
             achievements: Array.isArray(typedOrgData.achievements) 
               ? typedOrgData.achievements.join('\n') 
               : (typedOrgData.achievements ? String(typedOrgData.achievements) : ''),
+            facebook: typedOrgData.social_media?.facebook || '',
+            twitter: typedOrgData.social_media?.twitter || '',
+            linkedin: typedOrgData.social_media?.linkedin || '',
+            instagram: typedOrgData.social_media?.instagram || '',
+            followers: typedOrgData.followers || 0,
           });
-          setAvatarUrl(typedOrgData.logo_url);
+          setLogoUrl(typedOrgData.logo_url);
+          setCoverUrl(typedOrgData.cover_url);
         }
       } catch (error) {
         console.error('Błąd:', error);
@@ -200,6 +253,13 @@ const Profile = () => {
           ? data.achievements.split('\n').filter(item => item.trim() !== '')
           : [];
 
+        const socialMedia = {
+          facebook: data.facebook || null,
+          twitter: data.twitter || null,
+          linkedin: data.linkedin || null,
+          instagram: data.instagram || null
+        };
+
         const { error } = await supabase
           .from('organizations')
           .update({
@@ -211,6 +271,8 @@ const Profile = () => {
             website: data.website,
             category: data.category,
             achievements: achievementsArray,
+            social_media: socialMedia,
+            followers: data.followers || 0,
             updated_at: new Date().toISOString(),
           })
           .eq('id', organizationId);
@@ -240,33 +302,59 @@ const Profile = () => {
     }
   };
 
-  const handleAvatarClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
+  const handleLogoClick = () => {
+    if (logoInputRef.current) {
+      logoInputRef.current.click();
     }
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverClick = () => {
+    if (coverInputRef.current) {
+      coverInputRef.current.click();
+    }
+  };
+
+  const handleLogoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !organizationId) return;
 
     try {
-      setUploading(true);
+      setLogoUploading(true);
       
-      console.log('Wybrano plik:', file.name, 'dla organizacji:', organizationId);
+      console.log('Wybrano plik logo:', file.name, 'dla organizacji:', organizationId);
       
-      // Use our custom hook for file upload
-      const { uploadLogo } = useOrganizationStorage();
       const { url } = await uploadLogo(file, organizationId);
       
-      console.log('Otrzymano URL:', url);
-      setAvatarUrl(url);
+      console.log('Otrzymano URL logo:', url);
+      setLogoUrl(url);
       
     } catch (error) {
-      console.error('Błąd podczas przesyłania zdjęcia:', error);
+      console.error('Błąd podczas przesyłania logo:', error);
       // Toast is already shown in the hook
     } finally {
-      setUploading(false);
+      setLogoUploading(false);
+    }
+  };
+
+  const handleCoverChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !organizationId) return;
+
+    try {
+      setCoverUploading(true);
+      
+      console.log('Wybrano plik tła:', file.name, 'dla organizacji:', organizationId);
+      
+      const { url } = await uploadCover(file, organizationId);
+      
+      console.log('Otrzymano URL tła:', url);
+      setCoverUrl(url);
+      
+    } catch (error) {
+      console.error('Błąd podczas przesyłania tła:', error);
+      // Toast is already shown in the hook
+    } finally {
+      setCoverUploading(false);
     }
   };
 
@@ -291,16 +379,16 @@ const Profile = () => {
               <CardContent className="flex flex-col items-center">
                 <input
                   type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
+                  ref={logoInputRef}
+                  onChange={handleLogoChange}
                   accept="image/*"
                   className="hidden"
                 />
                 <Avatar 
                   className="h-32 w-32 mb-4 cursor-pointer hover:opacity-80 transition-opacity relative"
-                  onClick={handleAvatarClick}
+                  onClick={handleLogoClick}
                 >
-                  <AvatarImage src={avatarUrl || ''} alt="Logo organizacji" />
+                  <AvatarImage src={logoUrl || ''} alt="Logo organizacji" />
                   <AvatarFallback className="text-3xl relative">
                     {form.getValues("organizationName").substring(0, 2) || 'OR'}
                     <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
@@ -314,12 +402,49 @@ const Profile = () => {
                 
                 <Button 
                   variant="outline" 
-                  className="mb-2"
-                  onClick={handleAvatarClick}
-                  disabled={uploading}
+                  className="mb-4"
+                  onClick={handleLogoClick}
+                  disabled={logoUploading}
                 >
-                  {uploading ? 'Przesyłanie...' : 'Zmień logo'}
+                  {logoUploading ? 'Przesyłanie...' : 'Zmień logo'}
                 </Button>
+
+                <Separator className="my-4" />
+                
+                <div className="w-full mb-4">
+                  <h3 className="text-sm font-medium mb-2">Zdjęcie w tle</h3>
+                  <input
+                    type="file"
+                    ref={coverInputRef}
+                    onChange={handleCoverChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <div 
+                    className="w-full h-32 bg-gray-100 rounded-md overflow-hidden relative cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={handleCoverClick}
+                  >
+                    {coverUrl ? (
+                      <img src={coverUrl} alt="Tło profilu" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                        <ImageIcon className="h-8 w-8 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                      <Upload className="h-8 w-8 text-white" />
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="mt-2 w-full"
+                    onClick={handleCoverClick}
+                    disabled={coverUploading}
+                  >
+                    {coverUploading ? 'Przesyłanie...' : 'Zmień zdjęcie tła'}
+                  </Button>
+                </div>
                 
                 {organizationId && (
                   <Link to={`/organizacje/${organizationId}`}>
@@ -526,6 +651,128 @@ const Profile = () => {
                         )}
                       />
                     </div>
+
+                    <Separator className="my-4" />
+
+                    <h3 className="text-lg font-medium">Media społecznościowe</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Dodaj linki do profili swojej organizacji w mediach społecznościowych
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="facebook"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Facebook</FormLabel>
+                            <FormControl>
+                              <div className="flex items-center border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 ring-offset-background">
+                                <Facebook className="ml-3 h-5 w-5 text-muted-foreground" />
+                                <Input 
+                                  placeholder="https://facebook.com/nazwaorganizacji" 
+                                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0" 
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="twitter"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Twitter</FormLabel>
+                            <FormControl>
+                              <div className="flex items-center border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 ring-offset-background">
+                                <Twitter className="ml-3 h-5 w-5 text-muted-foreground" />
+                                <Input 
+                                  placeholder="https://twitter.com/nazwaorganizacji" 
+                                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0" 
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="linkedin"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>LinkedIn</FormLabel>
+                            <FormControl>
+                              <div className="flex items-center border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 ring-offset-background">
+                                <Linkedin className="ml-3 h-5 w-5 text-muted-foreground" />
+                                <Input 
+                                  placeholder="https://linkedin.com/company/nazwaorganizacji" 
+                                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0" 
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="instagram"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Instagram</FormLabel>
+                            <FormControl>
+                              <div className="flex items-center border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 ring-offset-background">
+                                <Instagram className="ml-3 h-5 w-5 text-muted-foreground" />
+                                <Input 
+                                  placeholder="https://instagram.com/nazwaorganizacji" 
+                                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0" 
+                                  {...field} 
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <Separator className="my-4" />
+
+                    <FormField
+                      control={form.control}
+                      name="followers"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Liczba obserwujących</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 ring-offset-background">
+                              <Users className="ml-3 h-5 w-5 text-muted-foreground" />
+                              <Input 
+                                type="number"
+                                placeholder="0" 
+                                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0" 
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                value={field.value || 0}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormDescription>
+                            Wprowadź liczbę osób obserwujących Twoją organizację. Ta liczba będzie wyświetlana na Twoim profilu.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <div className="flex justify-end">
                       <Button type="submit" className="bg-ngo hover:bg-ngo/90">

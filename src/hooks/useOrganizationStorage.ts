@@ -7,7 +7,11 @@ export const useOrganizationStorage = () => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
-  const uploadLogo = async (file: File, organizationId: string) => {
+  const uploadImage = async (
+    file: File, 
+    organizationId: string, 
+    type: 'logo' | 'cover' = 'logo'
+  ) => {
     if (!file || !organizationId) {
       toast({
         title: "Błąd",
@@ -29,7 +33,7 @@ export const useOrganizationStorage = () => {
     try {
       setUploading(true);
       
-      console.log('Rozpoczęcie przesyłania logo dla organizacji:', organizationId);
+      console.log(`Rozpoczęcie przesyłania ${type} dla organizacji:`, organizationId);
 
       // Validate file type
       const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -54,7 +58,7 @@ export const useOrganizationStorage = () => {
 
       // Upload to Supabase Storage
       const fileExt = file.name.split('.').pop();
-      const filePath = `${organizationId}/logo.${fileExt}`;
+      const filePath = `${organizationId}/${type}.${fileExt}`;
       
       console.log('Przesyłanie pliku do ścieżki:', filePath);
       
@@ -76,28 +80,32 @@ export const useOrganizationStorage = () => {
 
       console.log('Publiczny URL:', publicUrl);
 
-      // Update organization logo URL in the database
+      // Update organization image URL in the database
+      const updateData = type === 'logo' 
+        ? { logo_url: publicUrl } 
+        : { cover_url: publicUrl };
+        
       const { error: updateError } = await supabase
         .from('organizations')
-        .update({ logo_url: publicUrl })
+        .update(updateData)
         .eq('id', organizationId);
 
       if (updateError) {
-        console.error('Błąd podczas aktualizacji URL logo:', updateError);
+        console.error(`Błąd podczas aktualizacji URL ${type}:`, updateError);
         throw updateError;
       }
 
       toast({
         title: "Sukces",
-        description: "Logo zostało zaktualizowane pomyślnie",
+        description: `${type === 'logo' ? 'Logo' : 'Zdjęcie tła'} zostało zaktualizowane pomyślnie`,
       });
 
       return { url: publicUrl };
     } catch (error) {
-      console.error('Błąd przesyłania logo:', error);
+      console.error(`Błąd przesyłania ${type}:`, error);
       toast({
         title: "Błąd przesyłania",
-        description: "Nie udało się przesłać logo. Spróbuj ponownie później.",
+        description: `Nie udało się przesłać ${type === 'logo' ? 'logo' : 'zdjęcia tła'}. Spróbuj ponownie później.`,
         variant: "destructive",
       });
       throw error;
@@ -106,8 +114,17 @@ export const useOrganizationStorage = () => {
     }
   };
 
+  const uploadLogo = (file: File, organizationId: string) => {
+    return uploadImage(file, organizationId, 'logo');
+  };
+
+  const uploadCover = (file: File, organizationId: string) => {
+    return uploadImage(file, organizationId, 'cover');
+  };
+
   return {
     uploadLogo,
+    uploadCover,
     uploading
   };
 };
