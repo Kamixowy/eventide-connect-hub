@@ -1,5 +1,5 @@
 
-import React, { useState, FormEvent, useRef, useEffect } from 'react';
+import React, { useState, FormEvent, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Calendar, 
@@ -38,6 +38,7 @@ import { useToast } from '@/components/ui/use-toast';
 import Layout from '@/components/layout/Layout';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const categories = [
   "Charytatywne",
@@ -111,65 +112,16 @@ const AddEvent = () => {
   
   const formRef = useRef<HTMLDivElement>(null);
 
-  // Stop scroll at the form level
-  useEffect(() => {
-    const handleFormEvents = (e: Event) => {
-      e.stopPropagation();
-    };
-
-    // Stop propagation for form interactions
-    const formElement = formRef.current;
-    
-    if (formElement) {
-      formElement.addEventListener('click', handleFormEvents, true);
-      formElement.addEventListener('focus', handleFormEvents, true);
-      formElement.addEventListener('input', handleFormEvents, true);
-      formElement.addEventListener('change', handleFormEvents, true);
-    }
-    
-    // Add global handlers for interactive elements
-    const makeInteractive = (selector: string) => {
-      document.querySelectorAll(selector).forEach(element => {
-        element.addEventListener('click', (e) => e.stopPropagation(), true);
-        element.addEventListener('focus', (e) => e.stopPropagation(), true);
-      });
-    };
-    
-    // Make sure these elements don't trigger scroll
-    makeInteractive('input');
-    makeInteractive('textarea');
-    makeInteractive('select');
-    makeInteractive('[role="combobox"]');
-    makeInteractive('[role="dialog"]');
-    makeInteractive('[role="checkbox"]');
-    makeInteractive('.checkbox-wrapper');
-    makeInteractive('.file-upload-container');
-    makeInteractive('.popover-content');
-    makeInteractive('.calendar');
-    
-    return () => {
-      if (formElement) {
-        formElement.removeEventListener('click', handleFormEvents, true);
-        formElement.removeEventListener('focus', handleFormEvents, true);
-        formElement.removeEventListener('input', handleFormEvents, true);
-        formElement.removeEventListener('change', handleFormEvents, true);
-      }
-    };
-  }, []);
-
   const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setBannerImage(file);
       setBannerPreview(URL.createObjectURL(file));
-      
-      // Stop event propagation to prevent scrolling
-      e.stopPropagation();
     }
   };
   
   const handleAddTag = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
+    if (e) e.preventDefault();
     
     if (newTag && !tags.includes(newTag)) {
       setTags([...tags, newTag]);
@@ -178,13 +130,11 @@ const AddEvent = () => {
   };
   
   const handleRemoveTag = (tagToRemove: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
+    if (e) e.preventDefault();
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
   
-  const handleAudienceChange = (audience: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    
+  const handleAudienceChange = (audience: string) => {
     if (selectedAudience.includes(audience)) {
       setSelectedAudience(selectedAudience.filter(a => a !== audience));
     } else {
@@ -193,7 +143,7 @@ const AddEvent = () => {
   };
   
   const handleAddSponsorshipOption = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
+    if (e) e.preventDefault();
     
     const newOption: SponsorshipOption = {
       id: Date.now().toString(),
@@ -207,7 +157,7 @@ const AddEvent = () => {
   };
   
   const handleRemoveSponsorshipOption = (id: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
+    if (e) e.preventDefault();
     setSponsorshipOptions(sponsorshipOptions.filter(option => option.id !== id));
   };
   
@@ -221,7 +171,7 @@ const AddEvent = () => {
   };
   
   const handleAddBenefit = (id: string, benefit: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
+    if (e) e.preventDefault();
     
     setSponsorshipOptions(sponsorshipOptions.map(option => {
       if (option.id === id) {
@@ -232,7 +182,7 @@ const AddEvent = () => {
   };
   
   const handleRemoveBenefit = (id: string, benefit: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
+    if (e) e.preventDefault();
     
     setSponsorshipOptions(sponsorshipOptions.map(option => {
       if (option.id === id) {
@@ -243,14 +193,12 @@ const AddEvent = () => {
   };
   
   const handleSponsorshipNumberChange = (e: React.ChangeEvent<HTMLInputElement>, id: string, field: 'priceFrom' | 'priceTo') => {
-    e.stopPropagation();
     const value = e.target.value.replace(/[^0-9]/g, '');
     handleSponsorshipOptionChange(id, field, value);
   };
   
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    e.stopPropagation();
     
     if (!title || !category || !description || !startDate || !city || !voivodeship) {
       toast({
@@ -390,14 +338,13 @@ const AddEvent = () => {
   };
 
   // Updated to validate numeric input only
-  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
-    e.stopPropagation();
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, '');
-    setter(value);
+    setAttendees(value);
   };
 
   return (
-    <Layout scrollToTop={false} preventScroll={true}>
+    <Layout>
       <div className="container py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">Dodaj nowe wydarzenie</h1>
@@ -423,12 +370,8 @@ const AddEvent = () => {
                       id="title" 
                       placeholder="Np. Bieg Charytatywny 'Pomagamy Dzieciom'" 
                       value={title}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        setTitle(e.target.value);
-                      }}
+                      onChange={(e) => setTitle(e.target.value)}
                       required
-                      onClick={(e) => e.stopPropagation()}
                     />
                   </div>
                   
@@ -436,25 +379,17 @@ const AddEvent = () => {
                     <Label htmlFor="category">Kategoria *</Label>
                     <Select 
                       value={category} 
-                      onValueChange={(value) => {
-                        setCategory(value);
-                      }}
+                      onValueChange={setCategory}
                       required
                     >
-                      <SelectTrigger 
-                        id="category" 
-                        onClick={(e) => e.stopPropagation()}
-                        className="pointer-events-auto"
-                      >
+                      <SelectTrigger id="category">
                         <SelectValue placeholder="Wybierz kategorię" />
                       </SelectTrigger>
-                      <SelectContent className="pointer-events-auto">
+                      <SelectContent>
                         {categories.map((cat) => (
                           <SelectItem 
                             key={cat} 
                             value={cat}
-                            onClick={(e) => e.stopPropagation()}
-                            className="pointer-events-auto"
                           >
                             {cat}
                           </SelectItem>
@@ -468,14 +403,10 @@ const AddEvent = () => {
                     <Textarea 
                       id="description" 
                       placeholder="Opisz swoje wydarzenie. Im więcej szczegółów podasz, tym większa szansa na znalezienie odpowiednich sponsorów." 
-                      className="min-h-[150px] pointer-events-auto"
+                      className="min-h-[150px]"
                       value={description}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        setDescription(e.target.value);
-                      }}
+                      onChange={(e) => setDescription(e.target.value)}
                       required
-                      onClick={(e) => e.stopPropagation()}
                     />
                   </div>
                 </CardContent>
@@ -497,14 +428,10 @@ const AddEvent = () => {
                         <Input 
                           id="startDate" 
                           type="date" 
-                          className="pl-10 pointer-events-auto" 
+                          className="pl-10" 
                           value={startDate}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            setStartDate(e.target.value);
-                          }}
+                          onChange={(e) => setStartDate(e.target.value)}
                           required
-                          onClick={(e) => e.stopPropagation()}
                         />
                       </div>
                     </div>
@@ -516,14 +443,10 @@ const AddEvent = () => {
                         <Input 
                           id="endDate" 
                           type="date" 
-                          className="pl-10 pointer-events-auto" 
+                          className="pl-10" 
                           value={endDate}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            setEndDate(e.target.value);
-                          }}
+                          onChange={(e) => setEndDate(e.target.value)}
                           min={startDate}
-                          onClick={(e) => e.stopPropagation()}
                         />
                       </div>
                     </div>
@@ -537,14 +460,10 @@ const AddEvent = () => {
                         <Input 
                           id="city" 
                           placeholder="Np. Warszawa" 
-                          className="pl-10 pointer-events-auto" 
+                          className="pl-10" 
                           value={city}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            setCity(e.target.value);
-                          }}
+                          onChange={(e) => setCity(e.target.value)}
                           required
-                          onClick={(e) => e.stopPropagation()}
                         />
                       </div>
                     </div>
@@ -553,19 +472,13 @@ const AddEvent = () => {
                       <Label htmlFor="voivodeship">Województwo *</Label>
                       <Select 
                         value={voivodeship} 
-                        onValueChange={(value) => {
-                          setVoivodeship(value);
-                        }}
+                        onValueChange={setVoivodeship}
                         required
                       >
-                        <SelectTrigger 
-                          id="voivodeship" 
-                          className="pointer-events-auto"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                        <SelectTrigger id="voivodeship">
                           <SelectValue placeholder="Wybierz województwo" />
                         </SelectTrigger>
-                        <SelectContent className="pointer-events-auto">
+                        <SelectContent>
                           <SelectItem value="dolnośląskie">Dolnośląskie</SelectItem>
                           <SelectItem value="kujawsko-pomorskie">Kujawsko-pomorskie</SelectItem>
                           <SelectItem value="lubelskie">Lubelskie</SelectItem>
@@ -593,12 +506,7 @@ const AddEvent = () => {
                       id="location" 
                       placeholder="Np. Park Miejski, ul. Przykładowa 123" 
                       value={location}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        setLocation(e.target.value);
-                      }}
-                      className="pointer-events-auto"
-                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => setLocation(e.target.value)}
                     />
                   </div>
                 </CardContent>
@@ -622,13 +530,9 @@ const AddEvent = () => {
                         inputMode="numeric"
                         pattern="[0-9]*"
                         placeholder="Np. 100" 
-                        className="pl-10 pointer-events-auto" 
+                        className="pl-10" 
                         value={attendees}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          handleNumberChange(e, setAttendees);
-                        }}
-                        onClick={(e) => e.stopPropagation()}
+                        onChange={handleNumberChange}
                       />
                     </div>
                   </div>
@@ -637,25 +541,15 @@ const AddEvent = () => {
                     <Label>Grupa docelowa (możesz wybrać kilka)</Label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {audienceTypes.map((audience) => (
-                        <div key={audience} className="checkbox-wrapper flex items-center space-x-2 pointer-events-auto">
+                        <div key={audience} className="flex items-center space-x-2">
                           <Checkbox 
                             id={`audience-${audience}`} 
                             checked={selectedAudience.includes(audience)}
                             onCheckedChange={() => handleAudienceChange(audience)}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAudienceChange(audience, e);
-                            }}
-                            className="pointer-events-auto"
                           />
                           <label 
                             htmlFor={`audience-${audience}`}
-                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 pointer-events-auto"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleAudienceChange(audience, e);
-                            }}
+                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                           >
                             {audience}
                           </label>
@@ -672,11 +566,8 @@ const AddEvent = () => {
                           {tag}
                           <button 
                             type="button" 
-                            className="ml-2 hover:text-destructive pointer-events-auto"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemoveTag(tag, e);
-                            }}
+                            className="ml-2 hover:text-destructive"
+                            onClick={(e) => handleRemoveTag(tag, e)}
                           >
                             <X size={14} />
                           </button>
@@ -687,28 +578,18 @@ const AddEvent = () => {
                       <Input 
                         placeholder="Dodaj tag" 
                         value={newTag}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          setNewTag(e.target.value);
-                        }}
-                        className="pointer-events-auto"
+                        onChange={(e) => setNewTag(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
-                            e.stopPropagation();
                             handleAddTag();
                           }
                         }}
-                        onClick={(e) => e.stopPropagation()}
                       />
                       <Button 
                         type="button" 
                         variant="outline" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAddTag(e);
-                        }}
-                        className="pointer-events-auto"
+                        onClick={handleAddTag}
                       >
                         <Plus size={16} className="mr-2" /> Dodaj
                       </Button>
@@ -800,7 +681,6 @@ const AddEvent = () => {
                           <Label htmlFor={`option-price-from-${option.id}`}>Cena od (PLN)</Label>
                           <Input 
                             id={`option-price-from-${option.id}`} 
-                            type="number" 
                             placeholder="Np. 1000" 
                             value={option.priceFrom}
                             onChange={(e) => handleSponsorshipNumberChange(e, option.id, 'priceFrom')}
@@ -812,7 +692,6 @@ const AddEvent = () => {
                           <Label htmlFor={`option-price-to-${option.id}`}>Cena do (PLN)</Label>
                           <Input 
                             id={`option-price-to-${option.id}`} 
-                            type="number" 
                             placeholder="Np. 5000" 
                             value={option.priceTo}
                             onChange={(e) => handleSponsorshipNumberChange(e, option.id, 'priceTo')}
@@ -896,7 +775,7 @@ const AddEvent = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="border-2 border-dashed rounded-lg p-4 text-center space-y-4 file-upload-container pointer-events-auto">
+                    <div className="border-2 border-dashed rounded-lg p-4 text-center space-y-4">
                       {bannerPreview ? (
                         <div className="relative">
                           <img 
@@ -908,9 +787,8 @@ const AddEvent = () => {
                             type="button"
                             variant="destructive"
                             size="sm"
-                            className="absolute top-2 right-2 pointer-events-auto"
-                            onClick={(e) => {
-                              e.stopPropagation();
+                            className="absolute top-2 right-2"
+                            onClick={() => {
                               setBannerImage(null);
                               setBannerPreview(null);
                             }}
@@ -944,11 +822,9 @@ const AddEvent = () => {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
+                          onClick={() => {
                             document.getElementById('banner-upload')?.click();
                           }}
-                          className="mt-2 pointer-events-auto"
                         >
                           <Upload size={16} className="mr-2" /> Wybierz plik
                         </Button>
@@ -960,8 +836,7 @@ const AddEvent = () => {
                 <div className="mt-6">
                   <Button 
                     type="submit" 
-                    className="w-full btn-gradient pointer-events-auto"
-                    onClick={(e) => e.stopPropagation()}
+                    className="w-full btn-gradient"
                   >
                     Dodaj wydarzenie
                   </Button>
