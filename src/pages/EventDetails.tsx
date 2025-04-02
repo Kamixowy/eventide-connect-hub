@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -323,7 +324,7 @@ const EventDetails = () => {
         </div>
         
         {isOwner && (
-          <div className="absolute top-6 right-6">
+          <div className="absolute top-6 right-6 flex gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
@@ -346,6 +347,17 @@ const EventDetails = () => {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+            
+            {isOwner && (
+              <Button 
+                variant="success" 
+                className="shadow-md"
+                onClick={() => navigate(`/wydarzenia/edytuj/${id}`)}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Edytuj wydarzenie
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -563,12 +575,6 @@ const EventDetails = () => {
                     onClick={handleContactOrganization}
                   >
                     <MessageSquare size={16} className="mr-2" /> Skontaktuj się z organizacją
-                  </Button>
-                )}
-                
-                {isLoggedIn && userType === 'organization' && isOwnerVar && (
-                  <Button className="w-full mt-4">
-                    <Edit size={16} className="mr-2" /> Edytuj wydarzenie
                   </Button>
                 )}
               </CardContent>
