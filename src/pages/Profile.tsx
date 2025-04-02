@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   User, 
@@ -8,7 +9,10 @@ import {
   Phone, 
   Save, 
   Building,
-  AlertCircle
+  AlertCircle,
+  Upload,
+  Tag,
+  Award
 } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -39,6 +43,8 @@ const profileFormSchema = z.object({
   website: z.string().url({
     message: "Proszę podać prawidłowy adres URL.",
   }).optional().or(z.literal('')),
+  category: z.string().optional(),
+  achievements: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -48,9 +54,11 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isOrganization, setIsOrganization] = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -61,6 +69,8 @@ const Profile = () => {
       email: '',
       phone: '',
       website: '',
+      category: '',
+      achievements: '',
     },
   });
 
@@ -93,6 +103,8 @@ const Profile = () => {
           email: user.email || 'demo@example.com',
           phone: '+48 123 456 789',
           website: 'https://example.com',
+          category: 'Pomoc społeczna',
+          achievements: 'Nagroda "Organizacja Roku 2022"',
         });
         return;
       }
@@ -124,6 +136,10 @@ const Profile = () => {
             email: orgData.contact_email || user.email || '',
             phone: orgData.phone || '',
             website: orgData.website || '',
+            category: orgData.category || '',
+            achievements: Array.isArray(orgData.achievements) 
+              ? orgData.achievements.join('\n') 
+              : orgData.achievements || '',
           });
           setAvatarUrl(orgData.logo_url);
         }
@@ -155,6 +171,11 @@ const Profile = () => {
 
     try {
       if (organizationId) {
+        // Convert achievements string to array by splitting on newlines
+        const achievementsArray = data.achievements
+          ? data.achievements.split('\n').filter(item => item.trim() !== '')
+          : [];
+
         const { error } = await supabase
           .from('organizations')
           .update({
@@ -164,6 +185,8 @@ const Profile = () => {
             contact_email: data.email,
             phone: data.phone,
             website: data.website,
+            category: data.category,
+            achievements: achievementsArray,
             updated_at: new Date().toISOString(),
           })
           .eq('id', organizationId);
@@ -193,6 +216,74 @@ const Profile = () => {
     }
   };
 
+  const handleAvatarClick = () => {
+    // Trigger file input click when avatar is clicked
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !organizationId) return;
+
+    if (!isSupabaseConfigured()) {
+      // Demo mode, just show a fake URL
+      setAvatarUrl(URL.createObjectURL(file));
+      toast({
+        title: "Sukces",
+        description: "Zdjęcie profilowe zaktualizowane (tryb demo).",
+      });
+      return;
+    }
+
+    try {
+      setUploading(true);
+
+      // Upload to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const filePath = `organizations/${organizationId}/logo.${fileExt}`;
+      
+      const { error: uploadError, data } = await supabase.storage
+        .from('organizations')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('organizations')
+        .getPublicUrl(filePath);
+
+      // Update organization record with logo URL
+      const { error: updateError } = await supabase
+        .from('organizations')
+        .update({ logo_url: publicUrl })
+        .eq('id', organizationId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      setAvatarUrl(publicUrl);
+      toast({
+        title: "Sukces",
+        description: "Zdjęcie profilowe zostało zaktualizowane.",
+      });
+    } catch (error) {
+      console.error('Błąd podczas przesyłania zdjęcia:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie udało się zaktualizować zdjęcia profilowego.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (!isOrganization) {
     return null;
   }
@@ -212,15 +303,36 @@ const Profile = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col items-center">
-                <Avatar className="h-32 w-32 mb-4">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <Avatar 
+                  className="h-32 w-32 mb-4 cursor-pointer hover:opacity-80 transition-opacity relative"
+                  onClick={handleAvatarClick}
+                >
                   <AvatarImage src={avatarUrl || ''} alt="Logo organizacji" />
-                  <AvatarFallback className="text-3xl">
+                  <AvatarFallback className="text-3xl relative">
                     {form.getValues("organizationName").substring(0, 2) || 'OR'}
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                      <Upload className="h-8 w-8 text-white" />
+                    </div>
                   </AvatarFallback>
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity rounded-full">
+                    <Upload className="h-8 w-8 text-white" />
+                  </div>
                 </Avatar>
                 
-                <Button variant="outline" className="mb-2">
-                  Zmień logo
+                <Button 
+                  variant="outline" 
+                  className="mb-2"
+                  onClick={handleAvatarClick}
+                  disabled={uploading}
+                >
+                  {uploading ? 'Przesyłanie...' : 'Zmień logo'}
                 </Button>
                 
                 {organizationId && (
@@ -276,6 +388,30 @@ const Profile = () => {
 
                     <FormField
                       control={form.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Dziedzina działalności</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 ring-offset-background">
+                              <Tag className="ml-3 h-5 w-5 text-muted-foreground" />
+                              <Input 
+                                placeholder="np. Pomoc społeczna, Edukacja, Ochrona środowiska" 
+                                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0" 
+                                {...field} 
+                              />
+                            </div>
+                          </FormControl>
+                          <FormDescription>
+                            Określ główną dziedzinę działalności Twojej organizacji.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
                       name="description"
                       render={({ field }) => (
                         <FormItem>
@@ -289,6 +425,30 @@ const Profile = () => {
                           </FormControl>
                           <FormDescription>
                             Opisz czym zajmuje się Twoja organizacja i jakie ma cele.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="achievements"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Osiągnięcia</FormLabel>
+                          <FormControl>
+                            <div className="flex items-start border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 ring-offset-background">
+                              <Award className="ml-3 mt-2 h-5 w-5 text-muted-foreground flex-shrink-0" />
+                              <Textarea 
+                                placeholder="Wpisz każde osiągnięcie w nowej linii..." 
+                                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 min-h-[120px]" 
+                                {...field} 
+                              />
+                            </div>
+                          </FormControl>
+                          <FormDescription>
+                            Wpisz każde osiągnięcie w nowej linii. Np. nagrody, wyróżnienia, zrealizowane projekty.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>

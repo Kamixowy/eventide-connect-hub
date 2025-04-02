@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,13 +8,11 @@ import { supabase } from '@/lib/supabase';
 import OrganizationHeader from '@/components/organizations/profile/OrganizationHeader';
 import AboutTab from '@/components/organizations/profile/AboutTab';
 import EventsTab from '@/components/organizations/profile/EventsTab';
-import GalleryTab from '@/components/organizations/profile/GalleryTab';
 import ContactSidebar from '@/components/organizations/profile/ContactSidebar';
 import SponsorshipCard from '@/components/organizations/profile/SponsorshipCard';
 
-// Define a proper interface for the organization data
 interface OrganizationData {
-  id: string; // Changed from number to string to match Supabase UUID
+  id: string;
   name: string;
   description: string;
   logo: string;
@@ -53,12 +50,11 @@ interface OrganizationData {
     image: string;
   }[];
   gallery: string[];
-  user_id?: string; // Added user_id property as optional
+  user_id?: string;
 }
 
-// Example organization data (jako dane awaryjne, gdy nie można pobrać danych z bazy)
 const fallbackOrganizationData: OrganizationData = {
-  id: '101', // Changed from number to string
+  id: '101',
   name: 'Fundacja Szczęśliwe Dzieciństwo',
   description: 'Nasza fundacja wspiera dzieci z domów dziecka i rodzin zastępczych. Organizujemy wydarzenia, wycieczki i zapewniamy materiały edukacyjne. Celem naszej działalności jest zapewnienie dzieciom pozbawionym opieki rodzicielskiej szansy na lepszą przyszłość.\n\nOd 2010 roku zrealizowaliśmy ponad 50 projektów, które objęły swoim wsparciem ponad 1000 dzieci. Naszym priorytetem jest edukacja, rozwój talentów oraz wsparcie psychologiczne.',
   logo: 'https://images.unsplash.com/photo-1607799279861-4dd421887fb3?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
@@ -118,7 +114,7 @@ const fallbackOrganizationData: OrganizationData = {
       id: 203,
       title: 'Zbiórka Przyborów Szkolnych',
       date: '10.08.2023 - 25.08.2023',
-      image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
+      image: 'https://images.unsplash.com/photo-1503676260728-1a811878dd37?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
     }
   ],
   pastEvents: [
@@ -143,7 +139,7 @@ const fallbackOrganizationData: OrganizationData = {
     'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
     'https://images.unsplash.com/photo-1516627145497-ae6968895b40?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
   ],
-  user_id: '' // Added empty user_id
+  user_id: ''
 };
 
 const OrganizationProfile = () => {
@@ -154,21 +150,17 @@ const OrganizationProfile = () => {
   const [following, setFollowing] = useState(false);
   const [organization, setOrganization] = useState<OrganizationData>(fallbackOrganizationData);
   const [loading, setLoading] = useState(true);
-  
-  // Pobierz dane organizacji z Supabase
+
   useEffect(() => {
     const fetchOrganizationData = async () => {
       setLoading(true);
-      
-      // Jeśli nie mamy ID, używamy przykładowych danych
+
       if (!id) {
         setLoading(false);
         return;
       }
 
-      // Dla użytkowników demo, używamy przykładowych danych
       if (user && user.id.startsWith('demo-')) {
-        // Zmień ID na rzeczywiste ID organizacji, aby pasowało do URL
         setOrganization({
           ...fallbackOrganizationData,
           id: id
@@ -176,15 +168,14 @@ const OrganizationProfile = () => {
         setLoading(false);
         return;
       }
-      
-      // Pobierz dane z Supabase
+
       try {
         const { data, error } = await supabase
           .from('organizations')
           .select('*')
           .eq('id', id)
           .single();
-        
+
         if (error) {
           console.error('Error fetching organization data:', error);
           toast({
@@ -194,14 +185,12 @@ const OrganizationProfile = () => {
           });
           return;
         }
-        
+
         if (!data) {
-          // Organizacja nie istnieje, przekieruj do strony 404
           navigate('/404');
           return;
         }
-        
-        // Przekształć dane z Supabase na format używany w komponencie
+
         const formattedData: OrganizationData = {
           ...fallbackOrganizationData,
           id: data.id,
@@ -213,10 +202,9 @@ const OrganizationProfile = () => {
           email: data.contact_email || 'Brak adresu email',
           phone: data.phone || 'Brak numeru telefonu',
           website: data.website || 'https://www.example.com',
-          user_id: data.user_id || '', // Include user_id from database
-          // Pozostałe dane pozostawiamy z domyślnego obiektu
+          user_id: data.user_id || '',
         };
-        
+
         setOrganization(formattedData);
       } catch (err) {
         console.error('Error:', err);
@@ -229,16 +217,14 @@ const OrganizationProfile = () => {
         setLoading(false);
       }
     };
-    
+
     fetchOrganizationData();
   }, [id, user, toast, navigate]);
-  
-  // Scroll to top when component mounts
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-  
-  // Check if user is logged in and is the owner
+
   const userType = user?.user_metadata?.userType || null;
   const isLoggedIn = !!user;
   const isOwner = userType === 'organization' && user?.id === organization.user_id;
@@ -249,7 +235,7 @@ const OrganizationProfile = () => {
       description: "Twoja wiadomość została wysłana do organizacji. Otrzymasz odpowiedź wkrótce.",
     });
   };
-  
+
   if (loading) {
     return (
       <Layout>
@@ -288,12 +274,6 @@ const OrganizationProfile = () => {
                 >
                   Wydarzenia
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="gallery" 
-                  className="rounded-none border-b-2 data-[state=active]:border-ngo data-[state=active]:text-foreground px-4 py-2"
-                >
-                  Galeria
-                </TabsTrigger>
               </TabsList>
               
               <TabsContent value="about" className="mt-0">
@@ -302,10 +282,6 @@ const OrganizationProfile = () => {
               
               <TabsContent value="events" className="mt-0">
                 <EventsTab organization={organization} isOwner={isOwner} />
-              </TabsContent>
-              
-              <TabsContent value="gallery" className="mt-0">
-                <GalleryTab organization={organization} isOwner={isOwner} />
               </TabsContent>
             </Tabs>
           </div>

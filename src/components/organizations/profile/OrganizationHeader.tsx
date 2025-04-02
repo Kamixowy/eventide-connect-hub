@@ -96,9 +96,11 @@ const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
                 )}
                 
                 {isOwner && (
-                  <Button>
-                    <Edit size={16} className="mr-2" /> Edytuj profil
-                  </Button>
+                  <Link to="/profil">
+                    <Button>
+                      <Edit size={16} className="mr-2" /> Edytuj profil
+                    </Button>
+                  </Link>
                 )}
               </div>
             </div>
