@@ -1,4 +1,4 @@
-import React, { useState, FormEvent, useRef } from 'react';
+import React, { useState, FormEvent, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Calendar, 
@@ -109,6 +109,36 @@ const AddEvent = () => {
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   
   const formRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const preventScroll = (e: Event) => {
+      const target = e.target as HTMLElement;
+      const isFormElement = 
+        target.tagName === 'INPUT' || 
+        target.tagName === 'TEXTAREA' || 
+        target.tagName === 'SELECT' ||
+        target.hasAttribute('role') || // For checkboxes and other custom elements
+        target.closest('[role="combobox"]') || // For select dropdowns
+        target.closest('[role="dialog"]'); // For date pickers
+      
+      if (isFormElement) {
+        e.stopPropagation();
+      }
+    };
+
+    const formElement = formRef.current;
+    if (formElement) {
+      formElement.addEventListener('focus', preventScroll, true);
+      formElement.addEventListener('click', preventScroll, true);
+    }
+
+    return () => {
+      if (formElement) {
+        formElement.removeEventListener('focus', preventScroll, true);
+        formElement.removeEventListener('click', preventScroll, true);
+      }
+    };
+  }, []);
 
   const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -315,13 +345,14 @@ const AddEvent = () => {
         }
       }
 
-      // Success message and redirect
+      // Success message and redirect to the event page
       toast({
         title: "Wydarzenie dodane",
         description: "Twoje wydarzenie zostało pomyślnie dodane",
       });
       
-      navigate('/moje-wydarzenia');
+      // Navigate to the event details page instead of my-events page
+      navigate(`/wydarzenia/${eventId}`);
     } catch (error) {
       console.error('Error in event creation:', error);
       toast({

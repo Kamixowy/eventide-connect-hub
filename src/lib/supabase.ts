@@ -8,8 +8,19 @@ console.log('Supabase Configured:', isSupabaseConfigured() ? 'Yes ✓' : 'No ✗
 // Create function to check if storage bucket exists and create if not
 export const ensureStorageBuckets = async () => {
   try {
+    if (!isSupabaseConfigured()) {
+      console.log('Supabase not configured, skipping bucket creation');
+      return;
+    }
+    
     // Check if events bucket exists
-    const { data: buckets } = await supabase.storage.listBuckets();
+    const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+    
+    if (listError) {
+      console.error('Error listing buckets:', listError);
+      return;
+    }
+    
     const eventsBucketExists = buckets?.some(bucket => bucket.name === 'events');
     
     if (!eventsBucketExists) {
