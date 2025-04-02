@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -31,7 +32,7 @@ const EditEvent = () => {
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
   // Initialize form with resolver
-  const form = useForm<EventFormValues>({
+  const methods = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
       title: '',
@@ -99,7 +100,7 @@ const EditEvent = () => {
         const socialMedia = eventData.social_media as SocialMedia || {};
         
         // Set form values from event data
-        form.reset({
+        methods.reset({
           title: eventData.title || '',
           description: eventData.description || '',
           start_date: eventData.start_date ? new Date(eventData.start_date) : new Date(),
@@ -131,7 +132,7 @@ const EditEvent = () => {
     };
     
     fetchEventDetails();
-  }, [id, user, toast, navigate, form]);
+  }, [id, user, toast, navigate, methods]);
   
   const onSubmit = async (data: EventFormValues) => {
     if (!user || !event) return;
@@ -249,10 +250,10 @@ const EditEvent = () => {
           </p>
         </div>
         
-        {/* This is the key fix - spread the form object into FormProvider */}
-        <FormProvider {...form}>
+        {/* Correctly pass all form methods to FormProvider */}
+        <FormProvider {...methods}>
           <Form>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
               <Tabs defaultValue="basic" className="w-full">
                 <TabsList className="mb-6">
                   <TabsTrigger value="basic">
