@@ -31,12 +31,6 @@ interface OrganizationData {
   followers: number;
   foundationYear: number;
   achievements: string[];
-  team: {
-    id: number;
-    name: string;
-    position: string;
-    avatar: string;
-  }[];
   upcomingEvents: {
     id: number;
     title: string;
@@ -202,6 +196,8 @@ const OrganizationProfile = () => {
           email: data.contact_email || 'Brak adresu email',
           phone: data.phone || 'Brak numeru telefonu',
           website: data.website || 'https://www.example.com',
+          category: data.category || fallbackOrganizationData.category,
+          achievements: data.achievements || fallbackOrganizationData.achievements,
           user_id: data.user_id || '',
         };
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
@@ -139,7 +138,7 @@ const Profile = () => {
             category: orgData.category || '',
             achievements: Array.isArray(orgData.achievements) 
               ? orgData.achievements.join('\n') 
-              : orgData.achievements || '',
+              : (orgData.achievements || ''),
           });
           setAvatarUrl(orgData.logo_url);
         }
@@ -171,7 +170,6 @@ const Profile = () => {
 
     try {
       if (organizationId) {
-        // Convert achievements string to array by splitting on newlines
         const achievementsArray = data.achievements
           ? data.achievements.split('\n').filter(item => item.trim() !== '')
           : [];
@@ -217,7 +215,6 @@ const Profile = () => {
   };
 
   const handleAvatarClick = () => {
-    // Trigger file input click when avatar is clicked
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
@@ -228,7 +225,6 @@ const Profile = () => {
     if (!file || !organizationId) return;
 
     if (!isSupabaseConfigured()) {
-      // Demo mode, just show a fake URL
       setAvatarUrl(URL.createObjectURL(file));
       toast({
         title: "Sukces",
@@ -240,7 +236,6 @@ const Profile = () => {
     try {
       setUploading(true);
 
-      // Upload to Supabase Storage
       const fileExt = file.name.split('.').pop();
       const filePath = `organizations/${organizationId}/logo.${fileExt}`;
       
@@ -252,12 +247,10 @@ const Profile = () => {
         throw uploadError;
       }
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('organizations')
         .getPublicUrl(filePath);
 
-      // Update organization record with logo URL
       const { error: updateError } = await supabase
         .from('organizations')
         .update({ logo_url: publicUrl })

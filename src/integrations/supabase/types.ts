@@ -223,7 +223,9 @@ export type Database = {
       }
       organizations: {
         Row: {
+          achievements: string[] | null
           address: string | null
+          category: string | null
           contact_email: string | null
           created_at: string
           description: string | null
@@ -236,7 +238,9 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          achievements?: string[] | null
           address?: string | null
+          category?: string | null
           contact_email?: string | null
           created_at?: string
           description?: string | null
@@ -249,7 +253,9 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          achievements?: string[] | null
           address?: string | null
+          category?: string | null
           contact_email?: string | null
           created_at?: string
           description?: string | null
