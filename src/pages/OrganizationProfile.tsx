@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/components/ui/use-toast';
 import Layout from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 import OrganizationHeader from '@/components/organizations/profile/OrganizationHeader';
 import AboutTab from '@/components/organizations/profile/AboutTab';
 import EventsTab from '@/components/organizations/profile/EventsTab';
@@ -12,8 +13,8 @@ import GalleryTab from '@/components/organizations/profile/GalleryTab';
 import ContactSidebar from '@/components/organizations/profile/ContactSidebar';
 import SponsorshipCard from '@/components/organizations/profile/SponsorshipCard';
 
-// Example organization data
-const organizationData = {
+// Example organization data (jako dane awaryjne, gdy nie można pobrać danych z bazy)
+const fallbackOrganizationData = {
   id: 101,
   name: 'Fundacja Szczęśliwe Dzieciństwo',
   description: 'Nasza fundacja wspiera dzieci z domów dziecka i rodzin zastępczych. Organizujemy wydarzenia, wycieczki i zapewniamy materiały edukacyjne. Celem naszej działalności jest zapewnienie dzieciom pozbawionym opieki rodzicielskiej szansy na lepszą przyszłość.\n\nOd 2010 roku zrealizowaliśmy ponad 50 projektów, które objęły swoim wsparciem ponad 1000 dzieci. Naszym priorytetem jest edukacja, rozwój talentów oraz wsparcie psychologiczne.',
@@ -104,9 +105,88 @@ const organizationData = {
 const OrganizationProfile = () => {
   const { id } = useParams();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [following, setFollowing] = useState(false);
-  const [organization, setOrganization] = useState(organizationData);
+  const [organization, setOrganization] = useState(fallbackOrganizationData);
+  const [loading, setLoading] = useState(true);
+  
+  // Pobierz dane organizacji z Supabase
+  useEffect(() => {
+    const fetchOrganizationData = async () => {
+      setLoading(true);
+      
+      // Jeśli nie mamy ID, używamy przykładowych danych
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+
+      // Dla użytkowników demo, używamy przykładowych danych
+      if (user && user.id.startsWith('demo-')) {
+        // Zmień ID na rzeczywiste ID organizacji, aby pasowało do URL
+        setOrganization({
+          ...fallbackOrganizationData,
+          id: id
+        });
+        setLoading(false);
+        return;
+      }
+      
+      // Pobierz dane z Supabase
+      try {
+        const { data, error } = await supabase
+          .from('organizations')
+          .select('*')
+          .eq('id', id)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching organization data:', error);
+          toast({
+            title: "Błąd",
+            description: "Nie udało się pobrać danych organizacji.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        if (!data) {
+          // Organizacja nie istnieje, przekieruj do strony 404
+          navigate('/404');
+          return;
+        }
+        
+        // Przekształć dane z Supabase na format używany w komponencie
+        const formattedData = {
+          ...fallbackOrganizationData,
+          id: data.id,
+          name: data.name || 'Organizacja bez nazwy',
+          description: data.description || fallbackOrganizationData.description,
+          logo: data.logo_url || fallbackOrganizationData.logo,
+          cover: data.logo_url || fallbackOrganizationData.cover,
+          location: data.address || 'Brak adresu',
+          email: data.contact_email || 'Brak adresu email',
+          phone: data.phone || 'Brak numeru telefonu',
+          website: data.website || 'https://www.example.com',
+          // Pozostałe dane pozostawiamy z domyślnego obiektu
+        };
+        
+        setOrganization(formattedData);
+      } catch (err) {
+        console.error('Error:', err);
+        toast({
+          title: "Błąd",
+          description: "Wystąpił problem podczas ładowania danych.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchOrganizationData();
+  }, [id, user, toast, navigate]);
   
   // Scroll to top when component mounts
   useEffect(() => {
@@ -116,7 +196,7 @@ const OrganizationProfile = () => {
   // Check if user is logged in and is the owner
   const userType = user?.user_metadata?.userType || null;
   const isLoggedIn = !!user;
-  const isOwner = userType === 'organization' && user?.id === id;
+  const isOwner = userType === 'organization' && user?.id === organization.user_id;
 
   const handleContact = () => {
     toast({
@@ -124,6 +204,16 @@ const OrganizationProfile = () => {
       description: "Twoja wiadomość została wysłana do organizacji. Otrzymasz odpowiedź wkrótce.",
     });
   };
+  
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container py-12 text-center">
+          <p className="text-muted-foreground">Ładowanie danych organizacji...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
