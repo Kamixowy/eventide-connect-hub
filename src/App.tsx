@@ -15,6 +15,10 @@ import AddEvent from "./pages/AddEvent";
 import Collaborations from "./pages/Collaborations";
 import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Organizations from "./pages/Organizations";
+import OrganizationProfile from "./pages/OrganizationProfile";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +38,10 @@ const App = () => (
             <Route path="/dodaj-wydarzenie" element={<AddEvent />} />
             <Route path="/wspolprace" element={<Collaborations />} />
             <Route path="/wiadomosci" element={<Messages />} />
+            <Route path="/o-nas" element={<About />} />
+            <Route path="/kontakt" element={<Contact />} />
+            <Route path="/organizacje" element={<Organizations />} />
+            <Route path="/organizacje/:id" element={<OrganizationProfile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

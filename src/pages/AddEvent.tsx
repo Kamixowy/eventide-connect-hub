@@ -1,9 +1,21 @@
 
-import { useState } from 'react';
-import { Calendar, MapPin, Users, Upload, Plus, X } from 'lucide-react';
+import React, { useState, FormEvent, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Calendar, 
+  Clock, 
+  MapPin, 
+  Users, 
+  Target, 
+  Radio, 
+  Plus, 
+  Trash2, 
+  Upload, 
+  Check, 
+  X 
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
@@ -12,554 +24,713 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import Layout from '@/components/layout/Layout';
 
+const categories = [
+  "Charytatywne",
+  "Sportowe",
+  "Kulturalne",
+  "Edukacyjne",
+  "Ekologiczne",
+  "Zdrowotne",
+  "Społeczne",
+  "Religijne",
+  "Inne"
+];
+
+const audienceTypes = [
+  "Dzieci",
+  "Młodzież",
+  "Dorośli",
+  "Seniorzy",
+  "Rodziny z dziećmi",
+  "Osoby z niepełnosprawnościami",
+  "Społeczność lokalna",
+  "Sportowcy",
+  "Profesjonaliści",
+  "Firmy",
+  "Wolontariusze"
+];
+
+type SponsorshipOption = {
+  id: string;
+  title: string;
+  description: string;
+  priceFrom: string;
+  priceTo: string;
+  benefits: string[];
+};
+
 const AddEvent = () => {
   const { toast } = useToast();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [date, setDate] = useState({ start: '', end: '' });
-  const [location, setLocation] = useState('');
-  const [region, setRegion] = useState('');
-  const [attendees, setAttendees] = useState('');
-  const [category, setCategory] = useState('');
-  const [audienceTag, setAudienceTag] = useState('');
-  const [audiences, setAudiences] = useState<string[]>([]);
-  const [tag, setTag] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
-  const [facebook, setFacebook] = useState('');
-  const [linkedin, setLinkedin] = useState('');
-  const [banner, setBanner] = useState<File | null>(null);
-  const [bannerPreview, setBannerPreview] = useState<string>('');
+  const navigate = useNavigate();
   
-  // Sponsorship options
-  const [sponsorshipOptions, setSponsorshipOptions] = useState<Array<{
-    title: string;
-    description: string;
-    hasPriceRange: boolean;
-    priceFrom: string;
-    priceTo: string;
-  }>>([]);
-  const [newOption, setNewOption] = useState({
-    title: '',
-    description: '',
-    hasPriceRange: false,
-    priceFrom: '',
-    priceTo: ''
-  });
-
-  const handleAddAudience = () => {
-    if (audienceTag.trim() && !audiences.includes(audienceTag.trim())) {
-      setAudiences([...audiences, audienceTag.trim()]);
-      setAudienceTag('');
+  // Formularz podstawowych informacji
+  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [city, setCity] = useState('');
+  const [voivodeship, setVoivodeship] = useState('');
+  const [location, setLocation] = useState('');
+  const [attendees, setAttendees] = useState('');
+  const [selectedAudience, setSelectedAudience] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState('');
+  
+  // Media społecznościowe
+  const [fbEvent, setFbEvent] = useState('');
+  const [linkedinEvent, setLinkedinEvent] = useState('');
+  
+  // Opcje sponsorowania
+  const [sponsorshipOptions, setSponsorshipOptions] = useState<SponsorshipOption[]>([
+    {
+      id: '1',
+      title: '',
+      description: '',
+      priceFrom: '',
+      priceTo: '',
+      benefits: []
     }
-  };
+  ]);
+  
+  // Przesyłanie plików
+  const [bannerImage, setBannerImage] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  
+  const formRef = useRef<HTMLDivElement>(null);
 
-  const handleRemoveAudience = (audienceToRemove: string) => {
-    setAudiences(audiences.filter(a => a !== audienceToRemove));
-  };
-
-  const handleAddTag = () => {
-    if (tag.trim() && !tags.includes(tag.trim())) {
-      setTags([...tags, tag.trim()]);
-      setTag('');
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter(t => t !== tagToRemove));
-  };
-
-  const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Obsługa przesyłania plików
+  const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setBanner(file);
-      
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setBannerPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setBannerImage(file);
+      setBannerPreview(URL.createObjectURL(file));
     }
   };
-
+  
+  // Obsługa tagów
+  const handleAddTag = () => {
+    if (newTag && !tags.includes(newTag)) {
+      setTags([...tags, newTag]);
+      setNewTag('');
+    }
+  };
+  
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+  
+  // Obsługa grup docelowych
+  const handleAudienceChange = (audience: string) => {
+    if (selectedAudience.includes(audience)) {
+      setSelectedAudience(selectedAudience.filter(a => a !== audience));
+    } else {
+      setSelectedAudience([...selectedAudience, audience]);
+    }
+  };
+  
+  // Obsługa opcji sponsorowania
   const handleAddSponsorshipOption = () => {
-    if (newOption.title.trim() && newOption.description.trim()) {
-      setSponsorshipOptions([...sponsorshipOptions, { ...newOption }]);
-      setNewOption({
-        title: '',
-        description: '',
-        hasPriceRange: false,
-        priceFrom: '',
-        priceTo: ''
-      });
-    }
+    const newOption: SponsorshipOption = {
+      id: Date.now().toString(),
+      title: '',
+      description: '',
+      priceFrom: '',
+      priceTo: '',
+      benefits: []
+    };
+    setSponsorshipOptions([...sponsorshipOptions, newOption]);
   };
-
-  const handleRemoveSponsorshipOption = (index: number) => {
-    setSponsorshipOptions(sponsorshipOptions.filter((_, i) => i !== index));
+  
+  const handleRemoveSponsorshipOption = (id: string) => {
+    setSponsorshipOptions(sponsorshipOptions.filter(option => option.id !== id));
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  
+  const handleSponsorshipOptionChange = (id: string, field: keyof SponsorshipOption, value: string | string[]) => {
+    setSponsorshipOptions(sponsorshipOptions.map(option => {
+      if (option.id === id) {
+        return { ...option, [field]: value };
+      }
+      return option;
+    }));
+  };
+  
+  const handleAddBenefit = (id: string, benefit: string) => {
+    setSponsorshipOptions(sponsorshipOptions.map(option => {
+      if (option.id === id) {
+        return { ...option, benefits: [...option.benefits, benefit] };
+      }
+      return option;
+    }));
+  };
+  
+  const handleRemoveBenefit = (id: string, benefit: string) => {
+    setSponsorshipOptions(sponsorshipOptions.map(option => {
+      if (option.id === id) {
+        return { ...option, benefits: option.benefits.filter(b => b !== benefit) };
+      }
+      return option;
+    }));
+  };
+  
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     
-    // Tutaj dodajesz logikę walidacji i wysyłania formularza
+    // Walidacja formularza
+    if (!title || !category || !description || !startDate || !city || !voivodeship) {
+      toast({
+        title: "Błąd formularza",
+        description: "Wypełnij wszystkie wymagane pola",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Dane do wysłania
+    const eventData = {
+      title,
+      category,
+      description,
+      startDate,
+      endDate,
+      location: `${city}, ${voivodeship}`,
+      detailedLocation: location,
+      attendees: parseInt(attendees),
+      audience: selectedAudience,
+      tags,
+      socialMedia: {
+        facebook: fbEvent,
+        linkedin: linkedinEvent
+      },
+      sponsorshipOptions,
+      banner: bannerImage
+    };
+    
+    console.log('Event data:', eventData);
+    
+    // Tutaj kod wysyłający dane do API
     
     toast({
       title: "Wydarzenie dodane",
-      description: "Twoje wydarzenie zostało pomyślnie utworzone.",
+      description: "Twoje wydarzenie zostało pomyślnie dodane",
     });
+    
+    navigate('/wydarzenia');
+  };
+
+  // Funkcja do obsługi zmiany w polach numerycznych
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
+    // Zachowaj referencję do aktualnej pozycji scrollowania
+    const scrollPosition = window.scrollY;
+    
+    // Aktualizuj state
+    setter(e.target.value);
+    
+    // Przywróć pozycję scrollowania po aktualizacji state
+    window.scrollTo(0, scrollPosition);
   };
 
   return (
     <Layout>
-      <div className="container py-12">
-        <div className="mb-8">
+      <div className="container py-8">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">Dodaj nowe wydarzenie</h1>
           <p className="text-muted-foreground">
-            Wypełnij poniższy formularz, aby utworzyć nowe wydarzenie
+            Wypełnij formularz, aby dodać nowe wydarzenie i znaleźć sponsorów
           </p>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Podstawowe informacje */}
-          <div className="grid grid-cols-1 gap-6 p-6 bg-white rounded-lg border">
-            <h2 className="text-xl font-semibold mb-2">Podstawowe informacje</h2>
-
-            <div className="space-y-2">
-              <Label htmlFor="title">Tytuł wydarzenia *</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Np. Bieg Charytatywny Pomagamy Dzieciom"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="description">Opis wydarzenia *</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Opisz szczegółowo, na czym polega wydarzenie, jaki jest jego cel, program, itd."
-                className="min-h-[150px]"
-                required
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="date-start">Data rozpoczęcia *</Label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="date-start"
-                    type="date"
-                    value={date.start}
-                    onChange={(e) => setDate({ ...date, start: e.target.value })}
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="date-end">Data zakończenia</Label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="date-end"
-                    type="date"
-                    value={date.end}
-                    onChange={(e) => setDate({ ...date, end: e.target.value })}
-                    className="pl-10"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Opcjonalne - wypełnij tylko jeśli wydarzenie trwa więcej niż jeden dzień
-                </p>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="location">Dokładna lokalizacja *</Label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="location"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Np. Park Centralny, ul. Parkowa 1"
-                  className="pl-10"
-                  required
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="region">Województwo *</Label>
-              <Select value={region} onValueChange={setRegion} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Wybierz województwo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="dolnośląskie">Dolnośląskie</SelectItem>
-                  <SelectItem value="kujawsko-pomorskie">Kujawsko-pomorskie</SelectItem>
-                  <SelectItem value="lubelskie">Lubelskie</SelectItem>
-                  <SelectItem value="lubuskie">Lubuskie</SelectItem>
-                  <SelectItem value="łódzkie">Łódzkie</SelectItem>
-                  <SelectItem value="małopolskie">Małopolskie</SelectItem>
-                  <SelectItem value="mazowieckie">Mazowieckie</SelectItem>
-                  <SelectItem value="opolskie">Opolskie</SelectItem>
-                  <SelectItem value="podkarpackie">Podkarpackie</SelectItem>
-                  <SelectItem value="podlaskie">Podlaskie</SelectItem>
-                  <SelectItem value="pomorskie">Pomorskie</SelectItem>
-                  <SelectItem value="śląskie">Śląskie</SelectItem>
-                  <SelectItem value="świętokrzyskie">Świętokrzyskie</SelectItem>
-                  <SelectItem value="warmińsko-mazurskie">Warmińsko-mazurskie</SelectItem>
-                  <SelectItem value="wielkopolskie">Wielkopolskie</SelectItem>
-                  <SelectItem value="zachodniopomorskie">Zachodniopomorskie</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="attendees">Przewidywana liczba uczestników *</Label>
-              <div className="relative">
-                <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="attendees"
-                  type="number"
-                  min="1"
-                  value={attendees}
-                  onChange={(e) => setAttendees(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="category">Kategoria wydarzenia *</Label>
-              <Select value={category} onValueChange={setCategory} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Wybierz kategorię" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Charytatywne">Charytatywne</SelectItem>
-                  <SelectItem value="Kulturalne">Kulturalne</SelectItem>
-                  <SelectItem value="Sportowe">Sportowe</SelectItem>
-                  <SelectItem value="Ekologiczne">Ekologiczne</SelectItem>
-                  <SelectItem value="Studenckie">Studenckie</SelectItem>
-                  <SelectItem value="Zdrowotne">Zdrowotne</SelectItem>
-                  <SelectItem value="Inne">Inne</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Banner */}
-          <div className="p-6 bg-white rounded-lg border">
-            <h2 className="text-xl font-semibold mb-4">Banner wydarzenia</h2>
-            
-            <div className="space-y-4">
-              <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 bg-gray-50">
-                {bannerPreview ? (
-                  <div className="relative w-full">
-                    <img 
-                      src={bannerPreview} 
-                      alt="Preview" 
-                      className="w-full h-56 object-cover rounded-lg"
+        
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8" ref={formRef}>
+            {/* Kolumna główna z formularzem */}
+            <div className="md:col-span-2 space-y-6">
+              {/* Podstawowe informacje */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Podstawowe informacje</CardTitle>
+                  <CardDescription>
+                    Podaj podstawowe informacje o Twoim wydarzeniu
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Nazwa wydarzenia *</Label>
+                    <Input 
+                      id="title" 
+                      placeholder="Np. Bieg Charytatywny 'Pomagamy Dzieciom'" 
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      required
                     />
-                    <Button 
-                      type="button"
-                      variant="destructive" 
-                      size="icon"
-                      className="absolute top-2 right-2 h-8 w-8 rounded-full"
-                      onClick={() => {
-                        setBanner(null);
-                        setBannerPreview('');
-                      }}
-                    >
-                      <X size={16} />
-                    </Button>
                   </div>
-                ) : (
-                  <>
-                    <Upload className="h-10 w-10 text-muted-foreground mb-2" />
-                    <p className="text-sm font-medium mb-1">Przeciągnij i upuść lub kliknij, aby wybrać plik</p>
-                    <p className="text-xs text-muted-foreground mb-4">PNG, JPG lub WEBP (maks. 4MB)</p>
-                    <Input
-                      id="banner"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleBannerChange}
-                    />
-                    <Label 
-                      htmlFor="banner" 
-                      className="btn-gradient px-4 py-2 rounded-md cursor-pointer"
-                    >
-                      Wybierz plik
-                    </Label>
-                  </>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Zalecany rozmiar: 1200 x 400 pikseli. Banner będzie wyświetlany na górze strony wydarzenia.
-              </p>
-            </div>
-          </div>
-
-          {/* Odbiorcy i tagi */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-6 bg-white rounded-lg border">
-              <h2 className="text-xl font-semibold mb-4">Odbiorcy wydarzenia</h2>
-              
-              <div className="space-y-2 mb-4">
-                <Label htmlFor="audience">Dodaj grupę odbiorców</Label>
-                <div className="flex">
-                  <Input
-                    id="audience"
-                    value={audienceTag}
-                    onChange={(e) => setAudienceTag(e.target.value)}
-                    placeholder="Np. Rodziny z dziećmi"
-                    className="rounded-r-none"
-                  />
-                  <Button 
-                    type="button" 
-                    onClick={handleAddAudience}
-                    className="rounded-l-none"
-                  >
-                    Dodaj
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Określ, do kogo skierowane jest Twoje wydarzenie
-                </p>
-              </div>
-              
-              {audiences.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {audiences.map((audience, index) => (
-                    <Badge key={index} variant="outline" className="flex items-center gap-1 py-1.5">
-                      {audience}
-                      <Button 
-                        type="button"
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-4 w-4 ml-1 p-0"
-                        onClick={() => handleRemoveAudience(audience)}
-                      >
-                        <X size={12} />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-            
-            <div className="p-6 bg-white rounded-lg border">
-              <h2 className="text-xl font-semibold mb-4">Tagi wydarzenia</h2>
-              
-              <div className="space-y-2 mb-4">
-                <Label htmlFor="tag">Dodaj tag</Label>
-                <div className="flex">
-                  <Input
-                    id="tag"
-                    value={tag}
-                    onChange={(e) => setTag(e.target.value)}
-                    placeholder="Np. sport"
-                    className="rounded-r-none"
-                  />
-                  <Button 
-                    type="button" 
-                    onClick={handleAddTag}
-                    className="rounded-l-none"
-                  >
-                    Dodaj
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Dodaj tagi, które pomogą sponsorom znaleźć Twoje wydarzenie
-                </p>
-              </div>
-              
-              {tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {tags.map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="flex items-center gap-1 py-1.5 bg-gray-100">
-                      {tag}
-                      <Button 
-                        type="button"
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-4 w-4 ml-1 p-0"
-                        onClick={() => handleRemoveTag(tag)}
-                      >
-                        <X size={12} />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Social media */}
-          <div className="p-6 bg-white rounded-lg border">
-            <h2 className="text-xl font-semibold mb-4">Media społecznościowe</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              Opcjonalnie dodaj linki do mediów społecznościowych związanych z wydarzeniem
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="facebook">Facebook</Label>
-                <Input
-                  id="facebook"
-                  value={facebook}
-                  onChange={(e) => setFacebook(e.target.value)}
-                  placeholder="https://facebook.com/wydarzenie"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="linkedin">LinkedIn</Label>
-                <Input
-                  id="linkedin"
-                  value={linkedin}
-                  onChange={(e) => setLinkedin(e.target.value)}
-                  placeholder="https://linkedin.com/wydarzenie"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Możliwości sponsorowania */}
-          <div className="p-6 bg-white rounded-lg border">
-            <h2 className="text-xl font-semibold mb-2">Możliwości współpracy</h2>
-            <p className="text-sm text-muted-foreground mb-6">
-              Określ, w jaki sposób sponsorzy mogą wesprzeć Twoje wydarzenie
-            </p>
-            
-            <div className="space-y-6">
-              {sponsorshipOptions.map((option, index) => (
-                <Card key={index} className="relative">
-                  <Button 
-                    type="button"
-                    variant="destructive" 
-                    size="icon"
-                    className="absolute top-3 right-3 h-7 w-7"
-                    onClick={() => handleRemoveSponsorshipOption(index)}
-                  >
-                    <X size={14} />
-                  </Button>
                   
-                  <CardContent className="p-4">
-                    <div className="font-semibold mb-1">{option.title}</div>
-                    <p className="text-sm text-muted-foreground mb-3">{option.description}</p>
-                    
-                    {option.hasPriceRange && (
-                      <div className="text-sm">
-                        <span className="font-medium">Budżet:</span> {option.priceFrom} - {option.priceTo} PLN
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Kategoria *</Label>
+                    <Select value={category} onValueChange={setCategory} required>
+                      <SelectTrigger id="category">
+                        <SelectValue placeholder="Wybierz kategorię" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Opis wydarzenia *</Label>
+                    <Textarea 
+                      id="description" 
+                      placeholder="Opisz swoje wydarzenie. Im więcej szczegółów podasz, tym większa szansa na znalezienie odpowiednich sponsorów." 
+                      className="min-h-[150px]"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      required
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Data i lokalizacja */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Data i lokalizacja</CardTitle>
+                  <CardDescription>
+                    Określ kiedy i gdzie odbędzie się wydarzenie
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="startDate">Data rozpoczęcia *</Label>
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+                        <Input 
+                          id="startDate" 
+                          type="date" 
+                          className="pl-10" 
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          required
+                        />
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="endDate">Data zakończenia (opcjonalnie)</Label>
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+                        <Input 
+                          id="endDate" 
+                          type="date" 
+                          className="pl-10" 
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          min={startDate}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="city">Miasto *</Label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+                        <Input 
+                          id="city" 
+                          placeholder="Np. Warszawa" 
+                          className="pl-10" 
+                          value={city}
+                          onChange={(e) => setCity(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="voivodeship">Województwo *</Label>
+                      <Select value={voivodeship} onValueChange={setVoivodeship} required>
+                        <SelectTrigger id="voivodeship">
+                          <SelectValue placeholder="Wybierz województwo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="dolnośląskie">Dolnośląskie</SelectItem>
+                          <SelectItem value="kujawsko-pomorskie">Kujawsko-pomorskie</SelectItem>
+                          <SelectItem value="lubelskie">Lubelskie</SelectItem>
+                          <SelectItem value="lubuskie">Lubuskie</SelectItem>
+                          <SelectItem value="łódzkie">Łódzkie</SelectItem>
+                          <SelectItem value="małopolskie">Małopolskie</SelectItem>
+                          <SelectItem value="mazowieckie">Mazowieckie</SelectItem>
+                          <SelectItem value="opolskie">Opolskie</SelectItem>
+                          <SelectItem value="podkarpackie">Podkarpackie</SelectItem>
+                          <SelectItem value="podlaskie">Podlaskie</SelectItem>
+                          <SelectItem value="pomorskie">Pomorskie</SelectItem>
+                          <SelectItem value="śląskie">Śląskie</SelectItem>
+                          <SelectItem value="świętokrzyskie">Świętokrzyskie</SelectItem>
+                          <SelectItem value="warmińsko-mazurskie">Warmińsko-mazurskie</SelectItem>
+                          <SelectItem value="wielkopolskie">Wielkopolskie</SelectItem>
+                          <SelectItem value="zachodniopomorskie">Zachodniopomorskie</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Dokładna lokalizacja</Label>
+                    <Input 
+                      id="location" 
+                      placeholder="Np. Park Miejski, ul. Przykładowa 123" 
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
               
-              <div className="p-4 border rounded-lg mt-4">
-                <h3 className="font-medium mb-4">Dodaj nową opcję współpracy</h3>
-                
-                <div className="space-y-4">
+              {/* Szczegóły wydarzenia */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Szczegóły wydarzenia</CardTitle>
+                  <CardDescription>
+                    Dodaj więcej szczegółów, aby lepiej opisać swoje wydarzenie
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="option-title">Tytuł *</Label>
-                    <Input
-                      id="option-title"
-                      value={newOption.title}
-                      onChange={(e) => setNewOption({ ...newOption, title: e.target.value })}
-                      placeholder="Np. Partner Główny"
+                    <Label htmlFor="attendees">Przewidywana liczba uczestników</Label>
+                    <div className="relative">
+                      <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+                      <Input 
+                        id="attendees" 
+                        type="number" 
+                        placeholder="Np. 100" 
+                        className="pl-10" 
+                        value={attendees}
+                        onChange={(e) => handleNumberChange(e, setAttendees)}
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Grupa docelowa (możesz wybrać kilka)</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {audienceTypes.map((audience) => (
+                        <div key={audience} className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={`audience-${audience}`} 
+                            checked={selectedAudience.includes(audience)}
+                            onCheckedChange={() => handleAudienceChange(audience)}
+                          />
+                          <label 
+                            htmlFor={`audience-${audience}`}
+                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {audience}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <Label>Tagi wydarzenia</Label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {tags.map((tag) => (
+                        <Badge key={tag} variant="secondary" className="px-3 py-1">
+                          {tag}
+                          <button 
+                            type="button" 
+                            className="ml-2 hover:text-destructive"
+                            onClick={() => handleRemoveTag(tag)}
+                          >
+                            <X size={14} />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex space-x-2">
+                      <Input 
+                        placeholder="Dodaj tag" 
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddTag();
+                          }
+                        }}
+                      />
+                      <Button type="button" variant="outline" onClick={handleAddTag}>
+                        <Plus size={16} className="mr-2" /> Dodaj
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Tagi pomogą sponsorom znaleźć Twoje wydarzenie. Np. sport, edukacja, ekologia, etc.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Media społecznościowe */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Media społecznościowe</CardTitle>
+                  <CardDescription>
+                    Dodaj linki do wydarzenia w mediach społecznościowych
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fbEvent">Link do wydarzenia na Facebooku</Label>
+                    <Input 
+                      id="fbEvent" 
+                      placeholder="https://facebook.com/events/..." 
+                      value={fbEvent}
+                      onChange={(e) => setFbEvent(e.target.value)}
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="option-description">Opis *</Label>
-                    <Textarea
-                      id="option-description"
-                      value={newOption.description}
-                      onChange={(e) => setNewOption({ ...newOption, description: e.target.value })}
-                      placeholder="Opisz, co otrzyma sponsor w ramach tej opcji współpracy"
+                    <Label htmlFor="linkedinEvent">Link do wydarzenia na LinkedIn</Label>
+                    <Input 
+                      id="linkedinEvent" 
+                      placeholder="https://linkedin.com/events/..." 
+                      value={linkedinEvent}
+                      onChange={(e) => setLinkedinEvent(e.target.value)}
                     />
                   </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="has-price"
-                      checked={newOption.hasPriceRange}
-                      onChange={(e) => setNewOption({ ...newOption, hasPriceRange: e.target.checked })}
-                      className="rounded border-gray-300"
-                    />
-                    <Label htmlFor="has-price" className="font-normal">
-                      Określ widełki cenowe (widoczne tylko dla zalogowanych sponsorów)
-                    </Label>
-                  </div>
-                  
-                  {newOption.hasPriceRange && (
-                    <div className="grid grid-cols-2 gap-4">
+                </CardContent>
+              </Card>
+              
+              {/* Opcje sponsorowania */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Opcje sponsorowania</CardTitle>
+                  <CardDescription>
+                    Określ jakie formy sponsoringu oferujesz i jakie korzyści otrzymają sponsorzy
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {sponsorshipOptions.map((option, index) => (
+                    <div key={option.id} className="border rounded-lg p-4 space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="font-semibold">Opcja sponsoringu {index + 1}</h3>
+                        {sponsorshipOptions.length > 1 && (
+                          <Button 
+                            type="button" 
+                            size="sm" 
+                            variant="ghost" 
+                            className="h-8 text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                            onClick={() => handleRemoveSponsorshipOption(option.id)}
+                          >
+                            <Trash2 size={16} className="mr-2" /> Usuń
+                          </Button>
+                        )}
+                      </div>
+                      
                       <div className="space-y-2">
-                        <Label htmlFor="price-from">Od (PLN)</Label>
-                        <Input
-                          id="price-from"
-                          type="number"
-                          min="0"
-                          value={newOption.priceFrom}
-                          onChange={(e) => setNewOption({ ...newOption, priceFrom: e.target.value })}
+                        <Label htmlFor={`option-title-${option.id}`}>Nazwa opcji</Label>
+                        <Input 
+                          id={`option-title-${option.id}`} 
+                          placeholder="Np. Partner Główny" 
+                          value={option.title}
+                          onChange={(e) => handleSponsorshipOptionChange(option.id, 'title', e.target.value)}
                         />
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="price-to">Do (PLN)</Label>
-                        <Input
-                          id="price-to"
-                          type="number"
-                          min="0"
-                          value={newOption.priceTo}
-                          onChange={(e) => setNewOption({ ...newOption, priceTo: e.target.value })}
+                        <Label htmlFor={`option-desc-${option.id}`}>Opis</Label>
+                        <Textarea 
+                          id={`option-desc-${option.id}`} 
+                          placeholder="Opisz na czym polega ta opcja sponsoringu" 
+                          value={option.description}
+                          onChange={(e) => handleSponsorshipOptionChange(option.id, 'description', e.target.value)}
                         />
                       </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor={`option-price-from-${option.id}`}>Cena od (PLN)</Label>
+                          <Input 
+                            id={`option-price-from-${option.id}`} 
+                            type="number" 
+                            placeholder="Np. 1000" 
+                            value={option.priceFrom}
+                            onChange={(e) => handleNumberChange(e, (value) => handleSponsorshipOptionChange(option.id, 'priceFrom', value))}
+                            min="0"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor={`option-price-to-${option.id}`}>Cena do (PLN)</Label>
+                          <Input 
+                            id={`option-price-to-${option.id}`} 
+                            type="number" 
+                            placeholder="Np. 5000" 
+                            value={option.priceTo}
+                            onChange={(e) => handleNumberChange(e, (value) => handleSponsorshipOptionChange(option.id, 'priceTo', value))}
+                            min={option.priceFrom || "0"}
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Lista korzyści */}
+                      <div className="space-y-2">
+                        <Label>Korzyści dla sponsora</Label>
+                        <div className="space-y-2">
+                          {option.benefits.map((benefit, benefitIndex) => (
+                            <div key={benefitIndex} className="flex items-center">
+                              <Check size={16} className="mr-2 text-green-500" />
+                              <span className="flex-grow">{benefit}</span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-muted-foreground"
+                                onClick={() => handleRemoveBenefit(option.id, benefit)}
+                              >
+                                <X size={14} />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        <div className="flex space-x-2 mt-2">
+                          <Input 
+                            placeholder="Np. Logo na koszulkach" 
+                            id={`new-benefit-${option.id}`}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const input = document.getElementById(`new-benefit-${option.id}`) as HTMLInputElement;
+                                if (input.value) {
+                                  handleAddBenefit(option.id, input.value);
+                                  input.value = '';
+                                }
+                              }
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              const input = document.getElementById(`new-benefit-${option.id}`) as HTMLInputElement;
+                              if (input.value) {
+                                handleAddBenefit(option.id, input.value);
+                                input.value = '';
+                              }
+                            }}
+                          >
+                            <Plus size={16} className="mr-2" /> Dodaj
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                  )}
+                  ))}
                   
-                  <Button 
-                    type="button" 
-                    onClick={handleAddSponsorshipOption}
+                  <Button
+                    type="button"
+                    variant="outline"
                     className="w-full"
-                    disabled={!newOption.title || !newOption.description}
+                    onClick={handleAddSponsorshipOption}
                   >
-                    <Plus size={16} className="mr-2" /> Dodaj opcję
+                    <Plus size={16} className="mr-2" /> Dodaj kolejną opcję sponsorowania
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Prawa kolumna ze zdjęciem i podglądem */}
+            <div className="md:col-span-1 space-y-6">
+              <div className="sticky top-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Zdjęcie główne</CardTitle>
+                    <CardDescription>
+                      Dodaj zdjęcie główne wydarzenia
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="border-2 border-dashed rounded-lg p-4 text-center space-y-4">
+                      {bannerPreview ? (
+                        <div className="relative">
+                          <img 
+                            src={bannerPreview} 
+                            alt="Podgląd" 
+                            className="mx-auto max-h-48 rounded-md"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-2 right-2"
+                            onClick={() => {
+                              setBannerImage(null);
+                              setBannerPreview(null);
+                            }}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                            <Upload className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">
+                              Przeciągnij i upuść lub kliknij, aby przesłać
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Zalecany rozmiar: 1200x600px, max 5MB
+                            </p>
+                          </div>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        id="banner-upload"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleBannerUpload}
+                      />
+                      {!bannerPreview && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => document.getElementById('banner-upload')?.click()}
+                          className="mt-2"
+                        >
+                          <Upload size={16} className="mr-2" /> Wybierz plik
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <div className="mt-6">
+                  <Button type="submit" className="w-full btn-gradient">
+                    Dodaj wydarzenie
                   </Button>
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Przyciski akcji */}
-          <div className="flex justify-end space-x-4">
-            <Button type="button" variant="outline">
-              Zapisz jako szkic
-            </Button>
-            <Button type="submit" className="btn-gradient">
-              Opublikuj wydarzenie
-            </Button>
           </div>
         </form>
       </div>

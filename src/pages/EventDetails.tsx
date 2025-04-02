@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { 
   Calendar, 
@@ -21,6 +21,8 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from '@/components/ui/use-toast';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 // Przykładowe dane wydarzenia
 const eventData = {
@@ -88,42 +90,52 @@ const eventData = {
   ]
 };
 
-// Stan logowania użytkownika (demo)
-const demoUserState = {
-  isLoggedIn: false,
-  userType: null as null | 'sponsor' | 'organization',
-  isOwner: false
-};
-
 const EventDetails = () => {
   const { id } = useParams();
   const { toast } = useToast();
-  const [userState] = useState(demoUserState);
+  const { user } = useAuth();
+  const [event, setEvent] = useState(eventData);
   
-  // W rzeczywistej aplikacji tutaj pobieralibyśmy dane wydarzenia na podstawie ID
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+  
+  // Check if user is logged in and get user type
+  const userType = user?.user_metadata?.userType || null;
+  const isLoggedIn = !!user;
+  const isOwner = userType === 'organization';
+
+  // Handle contact with organization
+  const handleContactOrganization = () => {
+    toast({
+      title: "Wiadomość wysłana",
+      description: "Twoja wiadomość została wysłana do organizacji. Otrzymasz odpowiedź wkrótce.",
+    });
+  };
 
   return (
     <Layout>
       {/* Banner */}
       <div className="relative h-64 md:h-80 w-full overflow-hidden bg-gray-100">
         <img 
-          src={eventData.banner} 
-          alt={eventData.title} 
+          src={event.banner} 
+          alt={event.title} 
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/30" />
         <div className="absolute bottom-6 left-6 md:left-12">
           <div className={`
             inline-block rounded-full px-3 py-1 text-xs font-medium mb-2 bg-white
-            ${eventData.status === 'Planowane' ? 'text-blue-700' : 
-              eventData.status === 'W przygotowaniu' ? 'text-yellow-700' : 
-              eventData.status === 'W trakcie' ? 'text-green-700' : 
+            ${event.status === 'Planowane' ? 'text-blue-700' : 
+              event.status === 'W przygotowaniu' ? 'text-yellow-700' : 
+              event.status === 'W trakcie' ? 'text-green-700' : 
               'text-gray-700'}
           `}>
-            {eventData.status}
+            {event.status}
           </div>
           <h1 className="text-2xl md:text-3xl font-bold text-white shadow-sm">
-            {eventData.title}
+            {event.title}
           </h1>
         </div>
       </div>
@@ -132,14 +144,14 @@ const EventDetails = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             {/* Informacje o organizacji */}
-            <Link to={`/organizacje/${eventData.organization.id}`} className="flex items-center mb-6 hover:text-ngo transition-colors">
+            <Link to={`/organizacje/${event.organization.id}`} className="flex items-center mb-6 hover:text-ngo transition-colors">
               <Avatar className="h-12 w-12 mr-3">
-                <AvatarImage src={eventData.organization.avatar} alt={eventData.organization.name} />
-                <AvatarFallback>{eventData.organization.name.substring(0, 2)}</AvatarFallback>
+                <AvatarImage src={event.organization.avatar} alt={event.organization.name} />
+                <AvatarFallback>{event.organization.name.substring(0, 2)}</AvatarFallback>
               </Avatar>
               <div>
                 <p className="text-sm text-muted-foreground">Organizator</p>
-                <h3 className="font-semibold">{eventData.organization.name}</h3>
+                <h3 className="font-semibold">{event.organization.name}</h3>
               </div>
             </Link>
 
@@ -149,21 +161,21 @@ const EventDetails = () => {
                 <Calendar size={24} className="mr-3 text-ngo" /> 
                 <div>
                   <p className="text-sm text-muted-foreground">Data</p>
-                  <p className="font-medium">{eventData.date}</p>
+                  <p className="font-medium">{event.date}</p>
                 </div>
               </div>
               <div className="flex items-center border rounded-lg p-4">
                 <MapPin size={24} className="mr-3 text-ngo" /> 
                 <div>
                   <p className="text-sm text-muted-foreground">Lokalizacja</p>
-                  <p className="font-medium">{eventData.location}</p>
+                  <p className="font-medium">{event.location}</p>
                 </div>
               </div>
               <div className="flex items-center border rounded-lg p-4">
                 <Users size={24} className="mr-3 text-ngo" /> 
                 <div>
                   <p className="text-sm text-muted-foreground">Uczestnicy</p>
-                  <p className="font-medium">{eventData.attendees} osób</p>
+                  <p className="font-medium">{event.attendees} osób</p>
                 </div>
               </div>
             </div>
@@ -188,7 +200,7 @@ const EventDetails = () => {
               <TabsContent value="details" className="mt-0">
                 <div className="prose max-w-none mb-8">
                   <h2 className="text-2xl font-bold mb-4">Opis wydarzenia</h2>
-                  {eventData.description.split('\n\n').map((paragraph, index) => (
+                  {event.description.split('\n\n').map((paragraph, index) => (
                     <p key={index} className="mb-4 text-gray-700">{paragraph}</p>
                   ))}
                 </div>
@@ -196,7 +208,7 @@ const EventDetails = () => {
                 <div className="mb-8">
                   <h3 className="text-xl font-bold mb-4">Odbiorcy</h3>
                   <div className="flex flex-wrap gap-2">
-                    {eventData.audience.map((audience, index) => (
+                    {event.audience.map((audience, index) => (
                       <Badge key={index} variant="outline" className="bg-gray-50">
                         {audience}
                       </Badge>
@@ -207,14 +219,14 @@ const EventDetails = () => {
                 <div className="mb-8">
                   <h3 className="text-xl font-bold mb-4">Kategoria</h3>
                   <Badge className="bg-ngo text-white px-3 py-1 text-sm">
-                    {eventData.category}
+                    {event.category}
                   </Badge>
                 </div>
 
                 <div className="mb-8">
                   <h3 className="text-xl font-bold mb-4">Tagi</h3>
                   <div className="flex flex-wrap gap-2">
-                    {eventData.tags.map((tag, index) => (
+                    {event.tags.map((tag, index) => (
                       <Badge key={index} variant="secondary" className="bg-gray-100">
                         <Tag size={14} className="mr-1" /> {tag}
                       </Badge>
@@ -222,13 +234,13 @@ const EventDetails = () => {
                   </div>
                 </div>
 
-                {eventData.socialMedia && (
+                {event.socialMedia && (
                   <div>
                     <h3 className="text-xl font-bold mb-4">Media społecznościowe</h3>
                     <div className="flex space-x-4">
-                      {eventData.socialMedia.facebook && (
+                      {event.socialMedia.facebook && (
                         <a 
-                          href={eventData.socialMedia.facebook} 
+                          href={event.socialMedia.facebook} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="flex items-center text-ngo hover:underline"
@@ -236,9 +248,9 @@ const EventDetails = () => {
                           <Facebook size={20} className="mr-2" /> Facebook
                         </a>
                       )}
-                      {eventData.socialMedia.linkedin && (
+                      {event.socialMedia.linkedin && (
                         <a 
-                          href={eventData.socialMedia.linkedin} 
+                          href={event.socialMedia.linkedin} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="flex items-center text-ngo hover:underline"
@@ -254,9 +266,9 @@ const EventDetails = () => {
               <TabsContent value="updates" className="mt-0">
                 <h2 className="text-2xl font-bold mb-6">Aktualności</h2>
                 
-                {eventData.updates.length > 0 ? (
+                {event.updates.length > 0 ? (
                   <div className="space-y-8">
-                    {eventData.updates.map((update) => (
+                    {event.updates.map((update) => (
                       <Card key={update.id} className="border">
                         <CardHeader className="pb-2">
                           <div className="flex items-center justify-between">
@@ -296,7 +308,7 @@ const EventDetails = () => {
                 <CardTitle className="text-xl">Możliwości współpracy</CardTitle>
               </CardHeader>
               <CardContent>
-                {!userState.isLoggedIn && (
+                {!isLoggedIn && (
                   <div className="text-center p-4 bg-gray-50 rounded-md mb-4">
                     <p className="mb-3 font-medium">Zainteresowany sponsorowaniem tego typu wydarzenia?</p>
                     <Link to="/logowanie">
@@ -308,18 +320,18 @@ const EventDetails = () => {
                 )}
 
                 <div className="space-y-4">
-                  {eventData.sponsorshipOptions.map((option) => (
+                  {event.sponsorshipOptions.map((option) => (
                     <div key={option.id} className="border rounded-md p-4">
                       <h4 className="font-semibold mb-2">{option.title}</h4>
                       <p className="text-sm text-muted-foreground mb-3">{option.description}</p>
                       
-                      {userState.isLoggedIn && userState.userType === 'sponsor' && option.price && (
+                      {isLoggedIn && option.price && (
                         <p className="text-sm font-medium">
                           Budżet: {option.price.from} - {option.price.to} PLN
                         </p>
                       )}
                       
-                      {!userState.isLoggedIn && option.price && (
+                      {!isLoggedIn && option.price && (
                         <p className="text-sm italic text-muted-foreground">
                           Szczegóły cenowe dostępne po zalogowaniu
                         </p>
@@ -328,13 +340,16 @@ const EventDetails = () => {
                   ))}
                 </div>
 
-                {userState.isLoggedIn && userState.userType === 'sponsor' && (
-                  <Button className="w-full mt-4 btn-gradient">
+                {isLoggedIn && userType === 'sponsor' && (
+                  <Button 
+                    className="w-full mt-4 btn-gradient"
+                    onClick={handleContactOrganization}
+                  >
                     <MessageSquare size={16} className="mr-2" /> Skontaktuj się z organizacją
                   </Button>
                 )}
                 
-                {userState.isLoggedIn && userState.userType === 'organization' && userState.isOwner && (
+                {isLoggedIn && userType === 'organization' && isOwner && (
                   <Button className="w-full mt-4">
                     <Edit size={16} className="mr-2" /> Edytuj wydarzenie
                   </Button>
