@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
@@ -22,34 +23,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    const storedDemoUser = localStorage.getItem('demoUser');
-    if (storedDemoUser) {
-      try {
-        setUser(JSON.parse(storedDemoUser) as User);
-        setLoading(false);
-        return;
-      } catch (e) {
-        console.error('Error parsing demo user:', e);
-        localStorage.removeItem('demoUser');
+    const checkAuth = async () => {
+      setLoading(true);
+      
+      // First check for demo user
+      const storedDemoUser = localStorage.getItem('demoUser');
+      if (storedDemoUser) {
+        try {
+          setUser(JSON.parse(storedDemoUser) as User);
+          setSession(null); // Demo users don't have a session
+          setLoading(false);
+          return;
+        } catch (e) {
+          console.error('Error parsing demo user:', e);
+          localStorage.removeItem('demoUser');
+        }
       }
-    }
 
+      // Then check for real Supabase authenticated users
+      if (isSupabaseConfigured()) {
+        try {
+          const { data } = await supabase.auth.getSession();
+          console.log('Auth session data:', data);
+          
+          setSession(data.session);
+          setUser(data.session?.user ?? null);
+        } catch (error) {
+          console.error('Error fetching auth session:', error);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    // Set up the auth state change listener
     if (isSupabaseConfigured()) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
-        setLoading(false);
-      });
-
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
       });
 
       return () => subscription.unsubscribe();
-    } else {
-      setLoading(false);
     }
   }, []);
 
@@ -63,14 +82,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: new Error('Supabase not configured') };
     }
     
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (!error) {
+    try {
+      console.log('Attempting to sign in with email:', email);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        console.error('Sign in error:', error);
+        toast({
+          title: "Błąd logowania",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+      
+      console.log('Sign in successful:', data);
       toast({
         title: "Zalogowano pomyślnie",
         description: "Przekierowujemy Cię do panelu...",
       });
+      
+      return { error: null };
+    } catch (error) {
+      console.error('Unexpected sign in error:', error);
+      toast({
+        title: "Błąd logowania",
+        description: "Wystąpił nieoczekiwany błąd podczas logowania",
+        variant: "destructive",
+      });
+      return { error };
     }
-    return { error };
   };
 
   const signUp = async (email: string, password: string, metadata: any) => {
@@ -83,35 +124,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: new Error('Supabase not configured'), data: null };
     }
     
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: metadata,
-        emailRedirectTo: window.location.origin + '/logowanie',
-      }
-    });
-    
-    if (!error) {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+    try {
+      console.log('Attempting to sign up with email:', email);
+      const { data, error } = await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          data: metadata,
+          emailRedirectTo: window.location.origin + '/logowanie',
+        }
       });
       
-      if (!signInError) {
+      if (error) {
+        console.error('Sign up error:', error);
         toast({
-          title: "Rejestracja udana",
-          description: "Zostałeś automatycznie zalogowany do systemu.",
+          title: "Błąd rejestracji",
+          description: error.message,
+          variant: "destructive",
         });
-      } else {
-        toast({
-          title: "Rejestracja udana",
-          description: "Możesz teraz zalogować się na swoje konto.",
-        });
+        return { data: null, error };
       }
+      
+      console.log('Sign up successful:', data);
+      
+      // Try to sign in immediately after signup
+      if (!error) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+        
+        if (!signInError) {
+          toast({
+            title: "Rejestracja udana",
+            description: "Zostałeś automatycznie zalogowany do systemu.",
+          });
+        } else {
+          toast({
+            title: "Rejestracja udana",
+            description: "Możesz teraz zalogować się na swoje konto.",
+          });
+        }
+      }
+      
+      return { data, error };
+    } catch (error) {
+      console.error('Unexpected sign up error:', error);
+      toast({
+        title: "Błąd rejestracji",
+        description: "Wystąpił nieoczekiwany błąd podczas rejestracji",
+        variant: "destructive",
+      });
+      return { data: null, error };
     }
-    
-    return { data, error };
   };
 
   const signOut = async () => {
@@ -125,7 +190,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     if (isSupabaseConfigured()) {
-      await supabase.auth.signOut();
+      try {
+        console.log('Attempting to sign out');
+        const { error } = await supabase.auth.signOut();
+        
+        if (error) {
+          console.error('Sign out error:', error);
+          toast({
+            title: "Błąd wylogowania",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+      } catch (error) {
+        console.error('Unexpected sign out error:', error);
+      }
     }
     
     toast({

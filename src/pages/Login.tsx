@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -24,19 +23,23 @@ const Login = () => {
     setIsLoading(true);
 
     try {
+      console.log('Login form submitted with email:', email);
       const { error } = await signIn(email, password);
       
       if (error) {
+        console.error('Login error from form handler:', error);
         toast({
           title: "Błąd logowania",
           description: error.message,
           variant: "destructive",
         });
       } else {
+        console.log('Login successful, redirecting...');
         // Przekierowanie do strony głównej po zalogowaniu
         navigate('/');
       }
     } catch (err) {
+      console.error('Unexpected error in login handler:', err);
       toast({
         title: "Wystąpił błąd",
         description: "Nie można połączyć się z serwerem. Spróbuj ponownie później.",
