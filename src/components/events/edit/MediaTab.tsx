@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { EventFormValues } from './EventEditSchema';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Facebook, Linkedin, Instagram } from 'lucide-react';
 
 interface MediaTabProps {
   methods: UseFormReturn<EventFormValues>;
@@ -75,11 +75,37 @@ const MediaTab = ({ methods, uploadedImageUrl, handleImageUpload }: MediaTabProp
             <FormItem>
               <FormLabel>Link do wydarzenia na Facebook</FormLabel>
               <FormControl>
-                <Input
-                  placeholder="https://facebook.com/events/..."
-                  {...field}
-                  value={field.value || ''}
-                />
+                <div className="relative">
+                  <Facebook className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
+                  <Input
+                    placeholder="https://facebook.com/events/..."
+                    className="pl-10"
+                    {...field}
+                    value={field.value || ''}
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={control}
+          name="instagram"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Link do wydarzenia na Instagram</FormLabel>
+              <FormControl>
+                <div className="relative">
+                  <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
+                  <Input
+                    placeholder="https://instagram.com/p/..."
+                    className="pl-10"
+                    {...field}
+                    value={field.value || ''}
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -93,11 +119,15 @@ const MediaTab = ({ methods, uploadedImageUrl, handleImageUpload }: MediaTabProp
             <FormItem>
               <FormLabel>Link do wydarzenia na LinkedIn</FormLabel>
               <FormControl>
-                <Input
-                  placeholder="https://linkedin.com/events/..."
-                  {...field}
-                  value={field.value || ''}
-                />
+                <div className="relative">
+                  <Linkedin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
+                  <Input
+                    placeholder="https://linkedin.com/events/..."
+                    className="pl-10"
+                    {...field}
+                    value={field.value || ''}
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>

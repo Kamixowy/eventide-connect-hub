@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { UseFormReturn } from 'react-hook-form';
 import { 
   Card, 
   CardContent, 
@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Users, X, Plus } from 'lucide-react';
+import { EventCreateValues } from '../EventCreateSchema';
 
 const audienceTypes = [
   "Dzieci",
@@ -29,8 +30,12 @@ const audienceTypes = [
   "Wolontariusze"
 ];
 
-const DetailsSection = () => {
-  const { setValue, watch } = useFormContext();
+interface DetailsSectionProps {
+  methods: UseFormReturn<EventCreateValues>;
+}
+
+const DetailsSection = ({ methods }: DetailsSectionProps) => {
+  const { setValue, watch } = methods;
   const [newTag, setNewTag] = useState('');
   const audience = watch('audience') || [];
   const tags = watch('tags') || [];

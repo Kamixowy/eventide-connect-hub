@@ -15,6 +15,7 @@ export const eventFormSchema = z.object({
   tags: z.string().optional(),
   image_url: z.string().optional(),
   facebook: z.string().optional(),
+  instagram: z.string().optional(),
   linkedin: z.string().optional(),
 });
 
@@ -24,6 +25,7 @@ export type EventFormValues = z.infer<typeof eventFormSchema>;
 // Type for social media object
 export type SocialMedia = {
   facebook?: string;
+  instagram?: string;
   linkedin?: string;
   [key: string]: string | undefined;
 };

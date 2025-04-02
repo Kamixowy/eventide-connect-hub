@@ -26,7 +26,7 @@ const EventEditForm = ({
   handleImageUpload,
 }: EventEditFormProps) => {
   return (
-    <Form>
+    <Form {...methods}>
       <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
         <Tabs defaultValue="basic" className="w-full">
           <TabsList className="mb-6">

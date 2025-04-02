@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import { UseFormReturn } from 'react-hook-form';
 import { 
   Card, 
   CardContent, 
@@ -18,9 +18,20 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Calendar, MapPin } from 'lucide-react';
+import { EventCreateValues } from '../EventCreateSchema';
+import {
+  FormField,
+  FormItem,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 
-const DateLocationSection = () => {
-  const { register, setValue, watch } = useFormContext();
+interface DateLocationSectionProps {
+  methods: UseFormReturn<EventCreateValues>;
+}
+
+const DateLocationSection = ({ methods }: DateLocationSectionProps) => {
+  const { control, watch, setValue, register } = methods;
   const voivodeship = watch('voivodeship');
   const startDate = watch('start_date');
 

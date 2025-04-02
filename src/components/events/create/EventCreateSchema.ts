@@ -15,6 +15,7 @@ export const eventCreateSchema = z.object({
   audience: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
   facebook: z.string().optional(),
+  instagram: z.string().optional(),
   linkedin: z.string().optional(),
 });
 

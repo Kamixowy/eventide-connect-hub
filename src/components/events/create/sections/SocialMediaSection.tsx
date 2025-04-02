@@ -17,6 +17,7 @@ import {
   FormControl,
   FormMessage,
 } from '@/components/ui/form';
+import { Facebook, Linkedin, Instagram } from 'lucide-react';
 
 interface SocialMediaSectionProps {
   methods: UseFormReturn<EventCreateValues>;
@@ -41,12 +42,39 @@ const SocialMediaSection = ({ methods }: SocialMediaSectionProps) => {
             <FormItem>
               <Label htmlFor="facebook">Link do wydarzenia na Facebooku</Label>
               <FormControl>
-                <Input 
-                  id="facebook" 
-                  placeholder="https://facebook.com/events/..." 
-                  {...field}
-                  value={field.value || ''}
-                />
+                <div className="relative">
+                  <Facebook className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
+                  <Input 
+                    id="facebook" 
+                    placeholder="https://facebook.com/events/..." 
+                    className="pl-10"
+                    {...field}
+                    value={field.value || ''}
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={control}
+          name="instagram"
+          render={({ field }) => (
+            <FormItem>
+              <Label htmlFor="instagram">Link do wydarzenia na Instagramie</Label>
+              <FormControl>
+                <div className="relative">
+                  <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
+                  <Input 
+                    id="instagram" 
+                    placeholder="https://instagram.com/p/..." 
+                    className="pl-10"
+                    {...field}
+                    value={field.value || ''}
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -60,12 +88,16 @@ const SocialMediaSection = ({ methods }: SocialMediaSectionProps) => {
             <FormItem>
               <Label htmlFor="linkedin">Link do wydarzenia na LinkedIn</Label>
               <FormControl>
-                <Input 
-                  id="linkedin" 
-                  placeholder="https://linkedin.com/events/..." 
-                  {...field}
-                  value={field.value || ''}
-                />
+                <div className="relative">
+                  <Linkedin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
+                  <Input 
+                    id="linkedin" 
+                    placeholder="https://linkedin.com/events/..." 
+                    className="pl-10"
+                    {...field}
+                    value={field.value || ''}
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
