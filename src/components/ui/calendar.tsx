@@ -56,7 +56,9 @@ function Calendar({
         dropdown_month: "text-sm font-medium",
         dropdown_year: "text-sm font-medium",
         dropdown_icon: "h-4 w-4 opacity-50",
-        dropdown_option: cn(
+        // Change 'dropdown_option' to a property that exists in the expected type
+        // Using 'dropdown_item' which is the correct property according to react-day-picker
+        dropdown_item: cn(
           buttonVariants({ variant: "ghost" }),
           "justify-start font-normal"
         ),
