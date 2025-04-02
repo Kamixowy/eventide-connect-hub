@@ -24,31 +24,43 @@ export const ensureStorageBuckets = async () => {
     const eventsBucketExists = buckets?.some(bucket => bucket.name === 'events');
     
     if (!eventsBucketExists) {
-      // Create the events bucket
-      const { error } = await supabase.storage.createBucket('events', {
-        public: true, // Make files publicly accessible
-        fileSizeLimit: 5 * 1024 * 1024, // 5MB limit
-      });
-      
-      if (error) {
-        // Check if the error is because the bucket already exists
-        if (error.message.includes('already exists')) {
-          console.log('Events bucket already exists');
-          return;
+      try {
+        // Create the events bucket
+        const { error } = await supabase.storage
+          .createBucket('events', {
+            public: true, // Make files publicly accessible
+            fileSizeLimit: 5 * 1024 * 1024, // 5MB limit
+          });
+        
+        if (error) {
+          // Check if the error is because the bucket already exists
+          if (error.message.includes('already exists')) {
+            console.log('Events bucket already exists');
+            return;
+          }
+          console.error('Error creating events bucket:', error);
+        } else {
+          console.log('Events storage bucket created successfully');
         }
-        console.error('Error creating events bucket:', error);
-      } else {
-        console.log('Events storage bucket created successfully');
+      } catch (bucketError) {
+        // Handle specific RLS policy errors
+        console.error('Error creating events bucket:', bucketError);
+        console.log('This may be due to row-level security policies. The bucket might need to be created manually in the Supabase dashboard.');
       }
+    } else {
+      console.log('Events bucket already exists');
     }
   } catch (error) {
     console.error('Error ensuring storage buckets:', error);
   }
 };
 
-// Call this function on app initialization
+// Call this function on app initialization, but don't block the main thread
 if (isSupabaseConfigured()) {
-  ensureStorageBuckets();
+  // Use setTimeout to move this to the next event loop tick
+  setTimeout(() => {
+    ensureStorageBuckets();
+  }, 0);
 }
 
 export { supabase, isSupabaseConfigured };

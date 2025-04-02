@@ -1,3 +1,4 @@
+
 import React, { useState, FormEvent, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -110,84 +111,48 @@ const AddEvent = () => {
   
   const formRef = useRef<HTMLDivElement>(null);
 
+  // Stop scroll at the form level
   useEffect(() => {
-    const stopEvent = (e: Event) => {
+    const handleFormEvents = (e: Event) => {
       e.stopPropagation();
     };
 
-    const preventScroll = (e: Event) => {
-      const target = e.target as HTMLElement;
-      const isFormElement = 
-        target.tagName === 'INPUT' || 
-        target.tagName === 'TEXTAREA' || 
-        target.tagName === 'SELECT' ||
-        target.hasAttribute('role') || 
-        target.closest('[role="combobox"]') || 
-        target.closest('[role="dialog"]') ||
-        target.closest('.checkbox-wrapper') ||
-        target.closest('.file-upload-container'); 
-      
-      if (isFormElement) {
-        e.stopPropagation();
-        e.preventDefault();
-      }
-    };
-
-    const preventInputScroll = () => {
-      window.scrollTo(document.documentElement.scrollLeft, document.documentElement.scrollTop);
-      return true;
-    };
-
-    document.addEventListener('wheel', preventScroll, { passive: false });
-    document.addEventListener('touchmove', preventScroll, { passive: false });
-    document.addEventListener('keydown', (e) => {
-      if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Space'].includes(e.key)) {
-        const activeElement = document.activeElement;
-        if (activeElement && 
-           (activeElement.tagName === 'INPUT' || 
-            activeElement.tagName === 'TEXTAREA' || 
-            activeElement.tagName === 'SELECT')) {
-          e.stopPropagation();
-        }
-      }
-    }, { capture: true });
-
+    // Stop propagation for form interactions
     const formElement = formRef.current;
+    
     if (formElement) {
-      formElement.addEventListener('focus', preventScroll, true);
-      formElement.addEventListener('click', preventScroll, true);
-      formElement.addEventListener('input', preventInputScroll, true);
-      
-      const checkboxes = formElement.querySelectorAll('.checkbox-wrapper');
-      checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('click', stopEvent, true);
-      });
-      
-      const fileUploads = formElement.querySelectorAll('.file-upload-container');
-      fileUploads.forEach(upload => {
-        upload.addEventListener('click', stopEvent, true);
-      });
+      formElement.addEventListener('click', handleFormEvents, true);
+      formElement.addEventListener('focus', handleFormEvents, true);
+      formElement.addEventListener('input', handleFormEvents, true);
+      formElement.addEventListener('change', handleFormEvents, true);
     }
-
+    
+    // Add global handlers for interactive elements
+    const makeInteractive = (selector: string) => {
+      document.querySelectorAll(selector).forEach(element => {
+        element.addEventListener('click', (e) => e.stopPropagation(), true);
+        element.addEventListener('focus', (e) => e.stopPropagation(), true);
+      });
+    };
+    
+    // Make sure these elements don't trigger scroll
+    makeInteractive('input');
+    makeInteractive('textarea');
+    makeInteractive('select');
+    makeInteractive('[role="combobox"]');
+    makeInteractive('[role="dialog"]');
+    makeInteractive('[role="checkbox"]');
+    makeInteractive('.checkbox-wrapper');
+    makeInteractive('.file-upload-container');
+    makeInteractive('.popover-content');
+    makeInteractive('.calendar');
+    
     return () => {
-      document.removeEventListener('wheel', preventScroll);
-      document.removeEventListener('touchmove', preventScroll);
-      document.removeEventListener('keydown', preventScroll);
-
       if (formElement) {
-        formElement.removeEventListener('focus', preventScroll, true);
-        formElement.removeEventListener('click', preventScroll, true);
-        formElement.removeEventListener('input', preventInputScroll, true);
-        
-        const checkboxes = formElement.querySelectorAll('.checkbox-wrapper');
-        checkboxes.forEach(checkbox => {
-          checkbox.removeEventListener('click', stopEvent, true);
-        });
-        
-        const fileUploads = formElement.querySelectorAll('.file-upload-container');
-        fileUploads.forEach(upload => {
-          upload.removeEventListener('click', stopEvent, true);
-        });
+        formElement.removeEventListener('click', handleFormEvents, true);
+        formElement.removeEventListener('focus', handleFormEvents, true);
+        formElement.removeEventListener('input', handleFormEvents, true);
+        formElement.removeEventListener('change', handleFormEvents, true);
       }
     };
   }, []);
@@ -198,22 +163,28 @@ const AddEvent = () => {
       setBannerImage(file);
       setBannerPreview(URL.createObjectURL(file));
       
+      // Stop event propagation to prevent scrolling
       e.stopPropagation();
     }
   };
   
-  const handleAddTag = () => {
+  const handleAddTag = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    
     if (newTag && !tags.includes(newTag)) {
       setTags([...tags, newTag]);
       setNewTag('');
     }
   };
   
-  const handleRemoveTag = (tagToRemove: string) => {
+  const handleRemoveTag = (tagToRemove: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
   
-  const handleAudienceChange = (audience: string) => {
+  const handleAudienceChange = (audience: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    
     if (selectedAudience.includes(audience)) {
       setSelectedAudience(selectedAudience.filter(a => a !== audience));
     } else {
@@ -221,7 +192,9 @@ const AddEvent = () => {
     }
   };
   
-  const handleAddSponsorshipOption = () => {
+  const handleAddSponsorshipOption = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    
     const newOption: SponsorshipOption = {
       id: Date.now().toString(),
       title: '',
@@ -233,7 +206,8 @@ const AddEvent = () => {
     setSponsorshipOptions([...sponsorshipOptions, newOption]);
   };
   
-  const handleRemoveSponsorshipOption = (id: string) => {
+  const handleRemoveSponsorshipOption = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setSponsorshipOptions(sponsorshipOptions.filter(option => option.id !== id));
   };
   
@@ -246,7 +220,9 @@ const AddEvent = () => {
     }));
   };
   
-  const handleAddBenefit = (id: string, benefit: string) => {
+  const handleAddBenefit = (id: string, benefit: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    
     setSponsorshipOptions(sponsorshipOptions.map(option => {
       if (option.id === id) {
         return { ...option, benefits: [...option.benefits, benefit] };
@@ -255,7 +231,9 @@ const AddEvent = () => {
     }));
   };
   
-  const handleRemoveBenefit = (id: string, benefit: string) => {
+  const handleRemoveBenefit = (id: string, benefit: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    
     setSponsorshipOptions(sponsorshipOptions.map(option => {
       if (option.id === id) {
         return { ...option, benefits: option.benefits.filter(b => b !== benefit) };
@@ -265,12 +243,14 @@ const AddEvent = () => {
   };
   
   const handleSponsorshipNumberChange = (e: React.ChangeEvent<HTMLInputElement>, id: string, field: 'priceFrom' | 'priceTo') => {
-    const value = e.target.value;
+    e.stopPropagation();
+    const value = e.target.value.replace(/[^0-9]/g, '');
     handleSponsorshipOptionChange(id, field, value);
   };
   
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     
     if (!title || !category || !description || !startDate || !city || !voivodeship) {
       toast({
@@ -409,13 +389,15 @@ const AddEvent = () => {
     }
   };
 
+  // Updated to validate numeric input only
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
+    e.stopPropagation();
     const value = e.target.value.replace(/[^0-9]/g, '');
     setter(value);
   };
 
   return (
-    <Layout scrollToTop={false}>
+    <Layout scrollToTop={false} preventScroll={true}>
       <div className="container py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">Dodaj nowe wydarzenie</h1>
@@ -441,20 +423,41 @@ const AddEvent = () => {
                       id="title" 
                       placeholder="Np. Bieg Charytatywny 'Pomagamy Dzieciom'" 
                       value={title}
-                      onChange={(e) => setTitle(e.target.value)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        setTitle(e.target.value);
+                      }}
                       required
+                      onClick={(e) => e.stopPropagation()}
                     />
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="category">Kategoria *</Label>
-                    <Select value={category} onValueChange={setCategory} required>
-                      <SelectTrigger id="category">
+                    <Select 
+                      value={category} 
+                      onValueChange={(value) => {
+                        setCategory(value);
+                      }}
+                      required
+                    >
+                      <SelectTrigger 
+                        id="category" 
+                        onClick={(e) => e.stopPropagation()}
+                        className="pointer-events-auto"
+                      >
                         <SelectValue placeholder="Wybierz kategorię" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="pointer-events-auto">
                         {categories.map((cat) => (
-                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                          <SelectItem 
+                            key={cat} 
+                            value={cat}
+                            onClick={(e) => e.stopPropagation()}
+                            className="pointer-events-auto"
+                          >
+                            {cat}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -465,10 +468,14 @@ const AddEvent = () => {
                     <Textarea 
                       id="description" 
                       placeholder="Opisz swoje wydarzenie. Im więcej szczegółów podasz, tym większa szansa na znalezienie odpowiednich sponsorów." 
-                      className="min-h-[150px]"
+                      className="min-h-[150px] pointer-events-auto"
                       value={description}
-                      onChange={(e) => setDescription(e.target.value)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        setDescription(e.target.value);
+                      }}
                       required
+                      onClick={(e) => e.stopPropagation()}
                     />
                   </div>
                 </CardContent>
@@ -492,7 +499,10 @@ const AddEvent = () => {
                           type="date" 
                           className="pl-10 pointer-events-auto" 
                           value={startDate}
-                          onChange={(e) => setStartDate(e.target.value)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            setStartDate(e.target.value);
+                          }}
                           required
                           onClick={(e) => e.stopPropagation()}
                         />
@@ -508,7 +518,10 @@ const AddEvent = () => {
                           type="date" 
                           className="pl-10 pointer-events-auto" 
                           value={endDate}
-                          onChange={(e) => setEndDate(e.target.value)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            setEndDate(e.target.value);
+                          }}
                           min={startDate}
                           onClick={(e) => e.stopPropagation()}
                         />
@@ -524,21 +537,35 @@ const AddEvent = () => {
                         <Input 
                           id="city" 
                           placeholder="Np. Warszawa" 
-                          className="pl-10" 
+                          className="pl-10 pointer-events-auto" 
                           value={city}
-                          onChange={(e) => setCity(e.target.value)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            setCity(e.target.value);
+                          }}
                           required
+                          onClick={(e) => e.stopPropagation()}
                         />
                       </div>
                     </div>
                     
                     <div className="space-y-2">
                       <Label htmlFor="voivodeship">Województwo *</Label>
-                      <Select value={voivodeship} onValueChange={setVoivodeship} required>
-                        <SelectTrigger id="voivodeship">
+                      <Select 
+                        value={voivodeship} 
+                        onValueChange={(value) => {
+                          setVoivodeship(value);
+                        }}
+                        required
+                      >
+                        <SelectTrigger 
+                          id="voivodeship" 
+                          className="pointer-events-auto"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <SelectValue placeholder="Wybierz województwo" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="pointer-events-auto">
                           <SelectItem value="dolnośląskie">Dolnośląskie</SelectItem>
                           <SelectItem value="kujawsko-pomorskie">Kujawsko-pomorskie</SelectItem>
                           <SelectItem value="lubelskie">Lubelskie</SelectItem>
@@ -566,7 +593,12 @@ const AddEvent = () => {
                       id="location" 
                       placeholder="Np. Park Miejski, ul. Przykładowa 123" 
                       value={location}
-                      onChange={(e) => setLocation(e.target.value)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        setLocation(e.target.value);
+                      }}
+                      className="pointer-events-auto"
+                      onClick={(e) => e.stopPropagation()}
                     />
                   </div>
                 </CardContent>
@@ -590,9 +622,12 @@ const AddEvent = () => {
                         inputMode="numeric"
                         pattern="[0-9]*"
                         placeholder="Np. 100" 
-                        className="pl-10" 
+                        className="pl-10 pointer-events-auto" 
                         value={attendees}
-                        onChange={(e) => handleNumberChange(e, setAttendees)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleNumberChange(e, setAttendees);
+                        }}
                         onClick={(e) => e.stopPropagation()}
                       />
                     </div>
@@ -607,15 +642,19 @@ const AddEvent = () => {
                             id={`audience-${audience}`} 
                             checked={selectedAudience.includes(audience)}
                             onCheckedChange={() => handleAudienceChange(audience)}
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAudienceChange(audience, e);
+                            }}
+                            className="pointer-events-auto"
                           />
                           <label 
                             htmlFor={`audience-${audience}`}
-                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 pointer-events-auto"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              handleAudienceChange(audience);
+                              handleAudienceChange(audience, e);
                             }}
                           >
                             {audience}
@@ -633,8 +672,11 @@ const AddEvent = () => {
                           {tag}
                           <button 
                             type="button" 
-                            className="ml-2 hover:text-destructive"
-                            onClick={() => handleRemoveTag(tag)}
+                            className="ml-2 hover:text-destructive pointer-events-auto"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveTag(tag, e);
+                            }}
                           >
                             <X size={14} />
                           </button>
@@ -645,15 +687,29 @@ const AddEvent = () => {
                       <Input 
                         placeholder="Dodaj tag" 
                         value={newTag}
-                        onChange={(e) => setNewTag(e.target.value)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          setNewTag(e.target.value);
+                        }}
+                        className="pointer-events-auto"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
+                            e.stopPropagation();
                             handleAddTag();
                           }
                         }}
+                        onClick={(e) => e.stopPropagation()}
                       />
-                      <Button type="button" variant="outline" onClick={handleAddTag}>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddTag(e);
+                        }}
+                        className="pointer-events-auto"
+                      >
                         <Plus size={16} className="mr-2" /> Dodaj
                       </Button>
                     </div>
@@ -852,7 +908,7 @@ const AddEvent = () => {
                             type="button"
                             variant="destructive"
                             size="sm"
-                            className="absolute top-2 right-2"
+                            className="absolute top-2 right-2 pointer-events-auto"
                             onClick={(e) => {
                               e.stopPropagation();
                               setBannerImage(null);
@@ -892,7 +948,7 @@ const AddEvent = () => {
                             e.stopPropagation();
                             document.getElementById('banner-upload')?.click();
                           }}
-                          className="mt-2"
+                          className="mt-2 pointer-events-auto"
                         >
                           <Upload size={16} className="mr-2" /> Wybierz plik
                         </Button>
@@ -902,7 +958,11 @@ const AddEvent = () => {
                 </Card>
                 
                 <div className="mt-6">
-                  <Button type="submit" className="w-full btn-gradient">
+                  <Button 
+                    type="submit" 
+                    className="w-full btn-gradient pointer-events-auto"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     Dodaj wydarzenie
                   </Button>
                 </div>
