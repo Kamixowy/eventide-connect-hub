@@ -9,7 +9,7 @@ interface ContactSidebarProps {
     phone: string;
     location: string;
     website: string;
-    foundationYear: number;
+    foundingYear: number | null;
     followers: number;
     socialMedia: {
       facebook?: string;
@@ -71,7 +71,7 @@ const ContactSidebar: React.FC<ContactSidebarProps> = ({ organization }) => {
             <Clock className="text-ngo mr-3" size={20} />
             <div>
               <p className="text-sm text-muted-foreground">Rok założenia</p>
-              <p className="font-medium">{organization.foundationYear}</p>
+              <p className="font-medium">{organization.foundingYear || 'Nie podano'}</p>
             </div>
           </div>
           
