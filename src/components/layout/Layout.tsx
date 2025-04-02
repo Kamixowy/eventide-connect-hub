@@ -1,3 +1,4 @@
+
 import { ReactNode, useEffect } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
@@ -16,29 +17,10 @@ const Layout = ({ children, scrollToTop = true, preventScroll = false }: LayoutP
     }
 
     if (preventScroll) {
-      // Save current scroll position
-      const scrollX = window.scrollX;
-      const scrollY = window.scrollY;
+      document.body.style.overflow = 'hidden';
       
-      // Create event handlers for different types of scroll events
-      const preventDefaultScroll = (e: Event) => {
-        e.preventDefault();
-      };
-
-      const maintainScroll = () => {
-        window.scrollTo(scrollX, scrollY);
-      };
-
-      // Disable various events that could cause scrolling
-      document.addEventListener('wheel', preventDefaultScroll, { passive: false });
-      document.addEventListener('touchmove', preventDefaultScroll, { passive: false });
-      document.addEventListener('scroll', maintainScroll);
-
       return () => {
-        // Clean up event listeners when component unmounts
-        document.removeEventListener('wheel', preventDefaultScroll);
-        document.removeEventListener('touchmove', preventDefaultScroll);
-        document.removeEventListener('scroll', maintainScroll);
+        document.body.style.overflow = '';
       };
     }
   }, [scrollToTop, preventScroll]);

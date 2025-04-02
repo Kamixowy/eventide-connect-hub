@@ -33,19 +33,14 @@ export const ensureStorageBuckets = async () => {
           });
         
         if (error) {
-          // Check if the error is because the bucket already exists
-          if (error.message.includes('already exists')) {
-            console.log('Events bucket already exists');
-            return;
-          }
           console.error('Error creating events bucket:', error);
+          // Don't throw an error as this might be due to RLS policies
+          // and we still want the app to function
         } else {
           console.log('Events storage bucket created successfully');
         }
       } catch (bucketError) {
-        // Handle specific RLS policy errors
         console.error('Error creating events bucket:', bucketError);
-        console.log('This may be due to row-level security policies. The bucket might need to be created manually in the Supabase dashboard.');
       }
     } else {
       console.log('Events bucket already exists');

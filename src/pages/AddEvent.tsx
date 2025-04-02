@@ -34,7 +34,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/layout/Layout';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -109,8 +109,10 @@ const AddEvent = () => {
   
   const [bannerImage, setBannerImage] = useState<File | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const formRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -219,6 +221,8 @@ const AddEvent = () => {
     }
 
     try {
+      setIsSubmitting(true);
+      
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .select('id')
@@ -232,6 +236,7 @@ const AddEvent = () => {
           description: "Nie udało się pobrać danych organizacji. Upewnij się, że jesteś zalogowany jako organizacja.",
           variant: "destructive"
         });
+        setIsSubmitting(false);
         return;
       }
 
@@ -243,7 +248,7 @@ const AddEvent = () => {
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
         const filePath = `event-banners/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
+        const { data, error: uploadError } = await supabase.storage
           .from('events')
           .upload(filePath, bannerImage);
 
@@ -251,7 +256,7 @@ const AddEvent = () => {
           console.error('Error uploading image:', uploadError);
           toast({
             title: "Błąd przesyłania zdjęcia",
-            description: "Nie udało się przesłać zdjęcia wydarzenia",
+            description: "Nie udało się przesłać zdjęcia wydarzenia. " + uploadError.message,
             variant: "destructive"
           });
         } else {
@@ -292,9 +297,10 @@ const AddEvent = () => {
         console.error('Error creating event:', eventError);
         toast({
           title: "Błąd tworzenia wydarzenia",
-          description: "Nie udało się utworzyć wydarzenia",
+          description: "Nie udało się utworzyć wydarzenia: " + eventError.message,
           variant: "destructive"
         });
+        setIsSubmitting(false);
         return;
       }
 
@@ -317,6 +323,7 @@ const AddEvent = () => {
 
           if (sponsorshipError) {
             console.error('Error creating sponsorship options:', sponsorshipError);
+            // We continue despite sponsorship errors since the event was created
           }
         }
       }
@@ -334,6 +341,8 @@ const AddEvent = () => {
         description: "Wystąpił nieoczekiwany błąd podczas dodawania wydarzenia",
         variant: "destructive"
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -424,7 +433,7 @@ const AddEvent = () => {
                     <div className="space-y-2">
                       <Label htmlFor="startDate">Data rozpoczęcia *</Label>
                       <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
                         <Input 
                           id="startDate" 
                           type="date" 
@@ -439,7 +448,7 @@ const AddEvent = () => {
                     <div className="space-y-2">
                       <Label htmlFor="endDate">Data zakończenia (opcjonalnie)</Label>
                       <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
                         <Input 
                           id="endDate" 
                           type="date" 
@@ -456,7 +465,7 @@ const AddEvent = () => {
                     <div className="space-y-2">
                       <Label htmlFor="city">Miasto *</Label>
                       <div className="relative">
-                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
                         <Input 
                           id="city" 
                           placeholder="Np. Warszawa" 
@@ -523,7 +532,7 @@ const AddEvent = () => {
                   <div className="space-y-2">
                     <Label htmlFor="attendees">Przewidywana liczba uczestników</Label>
                     <div className="relative">
-                      <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
+                      <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
                       <Input 
                         id="attendees" 
                         type="text" 
@@ -791,6 +800,9 @@ const AddEvent = () => {
                             onClick={() => {
                               setBannerImage(null);
                               setBannerPreview(null);
+                              if (fileInputRef.current) {
+                                fileInputRef.current.value = '';
+                              }
                             }}
                           >
                             <Trash2 size={16} />
@@ -817,13 +829,16 @@ const AddEvent = () => {
                         className="hidden"
                         accept="image/*"
                         onChange={handleBannerUpload}
+                        ref={fileInputRef}
                       />
                       {!bannerPreview && (
                         <Button
                           type="button"
                           variant="outline"
                           onClick={() => {
-                            document.getElementById('banner-upload')?.click();
+                            if (fileInputRef.current) {
+                              fileInputRef.current.click();
+                            }
                           }}
                         >
                           <Upload size={16} className="mr-2" /> Wybierz plik
@@ -837,8 +852,9 @@ const AddEvent = () => {
                   <Button 
                     type="submit" 
                     className="w-full btn-gradient"
+                    disabled={isSubmitting}
                   >
-                    Dodaj wydarzenie
+                    {isSubmitting ? 'Dodawanie...' : 'Dodaj wydarzenie'}
                   </Button>
                 </div>
               </div>
