@@ -19,9 +19,8 @@ const UserMenu = () => {
   
   if (!user) return null;
   
-  const handleSignOut = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent default behavior
-    e.stopPropagation(); // Stop event propagation
+  const handleSignOut = () => {
+    // Call signOut directly without any event parameters
     signOut();
   };
   

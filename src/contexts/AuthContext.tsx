@@ -180,21 +180,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    if (localStorage.getItem('demoUser')) {
-      localStorage.removeItem('demoUser');
-      setUser(null);
-      toast({
-        title: "Wylogowano pomyślnie z trybu demo",
-      });
-      
-      // Redirect to home page
-      window.location.href = '/';
-      return;
-    }
+    console.log('Signing out...');
     
-    if (isSupabaseConfigured()) {
-      try {
-        console.log('Attempting to sign out');
+    try {
+      // First check if we have a demo user
+      if (localStorage.getItem('demoUser')) {
+        console.log('Signing out demo user');
+        localStorage.removeItem('demoUser');
+        setUser(null);
+        
+        toast({
+          title: "Wylogowano pomyślnie z trybu demo",
+        });
+        
+        // Redirect to home page
+        window.location.href = '/';
+        return;
+      }
+      
+      // Then try to sign out a regular Supabase user
+      if (isSupabaseConfigured()) {
+        console.log('Signing out Supabase user');
         const { error } = await supabase.auth.signOut();
         
         if (error) {
@@ -206,17 +212,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
           return;
         }
-      } catch (error) {
-        console.error('Unexpected sign out error:', error);
+        
+        // Clear user state
+        setUser(null);
+        setSession(null);
       }
+      
+      toast({
+        title: "Wylogowano pomyślnie",
+      });
+      
+      // Redirect to home page
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Unexpected error during sign out:', error);
+      toast({
+        title: "Błąd wylogowania",
+        description: "Wystąpił nieoczekiwany błąd",
+        variant: "destructive",
+      });
     }
-    
-    toast({
-      title: "Wylogowano pomyślnie",
-    });
-    
-    // Redirect to home page
-    window.location.href = '/';
   };
 
   const demoLogin = async (type: 'organization' | 'sponsor') => {
