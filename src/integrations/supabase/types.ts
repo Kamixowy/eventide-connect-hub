@@ -231,9 +231,11 @@ export type Database = {
           created_at: string
           description: string | null
           followers: number | null
+          founding_date: string | null
           id: string
           logo_url: string | null
           name: string
+          nip: string | null
           phone: string | null
           social_media: Json | null
           updated_at: string
@@ -249,9 +251,11 @@ export type Database = {
           created_at?: string
           description?: string | null
           followers?: number | null
+          founding_date?: string | null
           id?: string
           logo_url?: string | null
           name: string
+          nip?: string | null
           phone?: string | null
           social_media?: Json | null
           updated_at?: string
@@ -267,9 +271,11 @@ export type Database = {
           created_at?: string
           description?: string | null
           followers?: number | null
+          founding_date?: string | null
           id?: string
           logo_url?: string | null
           name?: string
+          nip?: string | null
           phone?: string | null
           social_media?: Json | null
           updated_at?: string

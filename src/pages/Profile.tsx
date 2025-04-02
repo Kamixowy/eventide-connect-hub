@@ -17,7 +17,9 @@ import {
   Linkedin,
   Instagram,
   Users,
-  ImageIcon
+  ImageIcon,
+  Calendar,
+  FileText
 } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -36,6 +38,10 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useOrganizationStorage } from '@/hooks/useOrganizationStorage';
 import { Separator } from '@/components/ui/separator';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { pl } from 'date-fns/locale';
 
 const profileFormSchema = z.object({
   organizationName: z.string().min(2, {
@@ -65,6 +71,14 @@ const profileFormSchema = z.object({
     message: "Proszę podać prawidłowy adres URL.",
   }).optional().or(z.literal('')),
   followers: z.number().min(0).optional(),
+  foundingDate: z.date().optional().nullable(),
+  nip: z.string().optional().nullable().refine(value => {
+    if (!value) return true;
+    // NIP validation - 10 digits
+    return /^\d{10}$/.test(value);
+  }, {
+    message: "NIP powinien składać się z 10 cyfr.",
+  }),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -100,6 +114,8 @@ const Profile = () => {
       linkedin: '',
       instagram: '',
       followers: 0,
+      foundingDate: null,
+      nip: '',
     },
   });
 
@@ -139,6 +155,8 @@ const Profile = () => {
           linkedin: 'https://linkedin.com/company/demoorg',
           instagram: 'https://instagram.com/demoorg',
           followers: 356,
+          foundingDate: new Date(2010, 0, 1),
+          nip: '1234567890',
         });
         setLogoUrl('https://images.unsplash.com/photo-1607799279861-4dd421887fb3?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80');
         setCoverUrl('https://images.unsplash.com/photo-1560252829-804f1aedf1be?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');
@@ -186,6 +204,8 @@ const Profile = () => {
               instagram?: string;
             } | null;
             followers: number | null;
+            founding_date: string | null;
+            nip: string | null;
             created_at: string;
             updated_at: string;
           }
@@ -195,6 +215,8 @@ const Profile = () => {
           console.log('Dane organizacji pobrane:', typedOrgData);
           console.log('Social Media:', typedOrgData.social_media);
           console.log('Followers:', typedOrgData.followers);
+          console.log('Founding Date:', typedOrgData.founding_date);
+          console.log('NIP:', typedOrgData.nip);
           
           setOrganizationId(typedOrgData.id);
           form.reset({
@@ -213,6 +235,8 @@ const Profile = () => {
             linkedin: typedOrgData.social_media?.linkedin || '',
             instagram: typedOrgData.social_media?.instagram || '',
             followers: typedOrgData.followers || 0,
+            foundingDate: typedOrgData.founding_date ? new Date(typedOrgData.founding_date) : null,
+            nip: typedOrgData.nip || '',
           });
           setLogoUrl(typedOrgData.logo_url);
           setCoverUrl(typedOrgData.cover_url);
@@ -271,6 +295,8 @@ const Profile = () => {
             followers: data.followers || 0,
             logo_url: logoUrl,
             cover_url: coverUrl,
+            founding_date: data.foundingDate ? data.foundingDate.toISOString().split('T')[0] : null,
+            nip: data.nip || null,
             updated_at: new Date().toISOString(),
           })
           .eq('id', organizationId);
@@ -766,6 +792,76 @@ const Profile = () => {
                           </FormControl>
                           <FormDescription>
                             Wprowadź liczbę osób obserwujących Twoją organizację. Ta liczba będzie wyświetlana na Twoim profilu.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="foundingDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Data założenia</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal flex items-center",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  <Calendar className="mr-2 h-4 w-4" />
+                                  {field.value ? (
+                                    format(field.value, "PPP", { locale: pl })
+                                  ) : (
+                                    <span>Wybierz datę</span>
+                                  )}
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <CalendarComponent
+                                mode="single"
+                                selected={field.value || undefined}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                  date > new Date() || date < new Date("1900-01-01")
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormDescription>
+                            Data założenia Twojej organizacji (opcjonalnie).
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="nip"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>NIP</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 ring-offset-background">
+                              <FileText className="ml-3 h-5 w-5 text-muted-foreground" />
+                              <Input 
+                                placeholder="Numer NIP (10 cyfr)" 
+                                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0" 
+                                {...field}
+                                value={field.value || ''}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormDescription>
+                            Numer Identyfikacji Podatkowej (opcjonalnie).
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
