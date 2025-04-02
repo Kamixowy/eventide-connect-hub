@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
@@ -167,7 +166,6 @@ const Profile = () => {
         }
 
         if (orgData) {
-          // Define the expected type for the organization data
           interface OrganizationDBData {
             id: string;
             name: string;
@@ -192,13 +190,11 @@ const Profile = () => {
             updated_at: string;
           }
 
-          // Cast the data to the expected type
           const typedOrgData = orgData as unknown as OrganizationDBData;
           
           console.log('Dane organizacji pobrane:', typedOrgData);
-          console.log('Logo URL:', typedOrgData.logo_url);
-          console.log('Cover URL:', typedOrgData.cover_url);
           console.log('Social Media:', typedOrgData.social_media);
+          console.log('Followers:', typedOrgData.followers);
           
           setOrganizationId(typedOrgData.id);
           form.reset({
@@ -273,6 +269,8 @@ const Profile = () => {
             achievements: achievementsArray,
             social_media: socialMedia,
             followers: data.followers || 0,
+            logo_url: logoUrl,
+            cover_url: coverUrl,
             updated_at: new Date().toISOString(),
           })
           .eq('id', organizationId);

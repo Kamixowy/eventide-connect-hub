@@ -227,12 +227,15 @@ export type Database = {
           address: string | null
           category: string | null
           contact_email: string | null
+          cover_url: string | null
           created_at: string
           description: string | null
+          followers: number | null
           id: string
           logo_url: string | null
           name: string
           phone: string | null
+          social_media: Json | null
           updated_at: string
           user_id: string
           website: string | null
@@ -242,12 +245,15 @@ export type Database = {
           address?: string | null
           category?: string | null
           contact_email?: string | null
+          cover_url?: string | null
           created_at?: string
           description?: string | null
+          followers?: number | null
           id?: string
           logo_url?: string | null
           name: string
           phone?: string | null
+          social_media?: Json | null
           updated_at?: string
           user_id: string
           website?: string | null
@@ -257,12 +263,15 @@ export type Database = {
           address?: string | null
           category?: string | null
           contact_email?: string | null
+          cover_url?: string | null
           created_at?: string
           description?: string | null
+          followers?: number | null
           id?: string
           logo_url?: string | null
           name?: string
           phone?: string | null
+          social_media?: Json | null
           updated_at?: string
           user_id?: string
           website?: string | null
