@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   User, 
   MapPin, 
@@ -27,7 +26,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
-// Schemat walidacji formularza
 const profileFormSchema = z.object({
   organizationName: z.string().min(2, {
     message: "Nazwa organizacji musi mieć co najmniej 2 znaki.",
@@ -66,7 +64,6 @@ const Profile = () => {
     },
   });
 
-  // Sprawdź czy użytkownik jest zalogowany i jest organizacją
   useEffect(() => {
     if (!user) {
       navigate('/logowanie');
@@ -86,10 +83,8 @@ const Profile = () => {
       return;
     }
 
-    // Pobierz dane organizacji
     const fetchOrganizationData = async () => {
       if (!isSupabaseConfigured() || !user) {
-        // Obsługujemy tryb demo
         setLoading(false);
         form.reset({
           organizationName: user.user_metadata?.name || 'Demo Organizacja',
@@ -103,7 +98,6 @@ const Profile = () => {
       }
 
       try {
-        // Pobierz dane organizacji powiązanej z użytkownikiem
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')
           .select('*')
@@ -151,7 +145,6 @@ const Profile = () => {
   const onSubmit = async (data: ProfileFormValues) => {
     if (!user) return;
 
-    // Tryb demo
     if (!isSupabaseConfigured()) {
       toast({
         title: "Sukces",
@@ -161,7 +154,6 @@ const Profile = () => {
     }
 
     try {
-      // Aktualizacja danych organizacji w Supabase
       if (organizationId) {
         const { error } = await supabase
           .from('organizations')
@@ -202,7 +194,7 @@ const Profile = () => {
   };
 
   if (!isOrganization) {
-    return null; // Już nawigujemy do innej strony w useEffect
+    return null;
   }
 
   return (
