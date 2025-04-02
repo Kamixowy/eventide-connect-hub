@@ -1,34 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { 
-  Calendar, 
-  MapPin, 
-  Mail, 
-  Globe, 
-  Users, 
-  FileText, 
-  Clock, 
-  MessageSquare,
-  Edit,
-  Plus,
-  Heart,
-  User,
-  Facebook,
-  Twitter,
-  Linkedin,
-  Instagram
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import Layout from '@/components/layout/Layout';
-import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
+import OrganizationHeader from '@/components/organizations/profile/OrganizationHeader';
+import AboutTab from '@/components/organizations/profile/AboutTab';
+import EventsTab from '@/components/organizations/profile/EventsTab';
+import GalleryTab from '@/components/organizations/profile/GalleryTab';
+import ContactSidebar from '@/components/organizations/profile/ContactSidebar';
+import SponsorshipCard from '@/components/organizations/profile/SponsorshipCard';
 
-// Przykładowe dane organizacji
+// Example organization data
 const organizationData = {
   id: 101,
   name: 'Fundacja Szczęśliwe Dzieciństwo',
@@ -134,16 +118,6 @@ const OrganizationProfile = () => {
   const isLoggedIn = !!user;
   const isOwner = userType === 'organization' && user?.id === id;
 
-  const handleFollow = () => {
-    setFollowing(!following);
-    toast({
-      title: following ? "Przestałeś obserwować" : "Obserwujesz organizację",
-      description: following 
-        ? "Nie będziesz już otrzymywać powiadomień o nowościach" 
-        : "Będziesz otrzymywać powiadomienia o nowych wydarzeniach",
-    });
-  };
-
   const handleContact = () => {
     toast({
       title: "Wiadomość wysłana",
@@ -153,73 +127,14 @@ const OrganizationProfile = () => {
 
   return (
     <Layout>
-      {/* Cover i avatar */}
-      <div className="relative h-64 md:h-80 w-full overflow-hidden bg-gray-100">
-        <img 
-          src={organization.cover} 
-          alt={organization.name} 
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/30" />
-      </div>
-      
-      <div className="container relative z-10">
-        <div className="flex flex-col md:flex-row -mt-16 md:-mt-24 mb-8 items-start">
-          <Avatar className="h-32 w-32 md:h-48 md:w-48 border-4 border-white">
-            <AvatarImage src={organization.logo} alt={organization.name} />
-            <AvatarFallback className="text-3xl">{organization.name.substring(0, 2)}</AvatarFallback>
-          </Avatar>
-          
-          <div className="mt-4 md:mt-20 md:ml-6 flex-grow">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-end">
-              <div>
-                <Badge className="mb-2 bg-ngo text-white">
-                  {organization.category}
-                </Badge>
-                <h1 className="text-3xl md:text-4xl font-bold">{organization.name}</h1>
-                <div className="flex items-center text-sm text-muted-foreground mt-1">
-                  <MapPin size={14} className="mr-1" /> {organization.location}
-                </div>
-              </div>
-              
-              <div className="mt-4 md:mt-0 flex gap-3">
-                {isLoggedIn && !isOwner && (
-                  <Button 
-                    variant={following ? "default" : "outline"} 
-                    onClick={handleFollow}
-                    className={following ? "bg-ngo hover:bg-ngo/90" : ""}
-                  >
-                    {following ? (
-                      <>
-                        <Heart size={16} className="mr-2 fill-current" /> Obserwujesz
-                      </>
-                    ) : (
-                      <>
-                        <Heart size={16} className="mr-2" /> Obserwuj
-                      </>
-                    )}
-                  </Button>
-                )}
-                
-                {isLoggedIn && !isOwner && (
-                  <Button 
-                    variant="outline" 
-                    onClick={handleContact}
-                  >
-                    <MessageSquare size={16} className="mr-2" /> Kontakt
-                  </Button>
-                )}
-                
-                {isOwner && (
-                  <Button>
-                    <Edit size={16} className="mr-2" /> Edytuj profil
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <OrganizationHeader
+        organization={organization}
+        isLoggedIn={isLoggedIn}
+        isOwner={isOwner}
+        following={following}
+        setFollowing={setFollowing}
+        handleContact={handleContact}
+      />
 
       <div className="container pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -247,286 +162,24 @@ const OrganizationProfile = () => {
               </TabsList>
               
               <TabsContent value="about" className="mt-0">
-                <div className="prose max-w-none mb-8">
-                  <h2 className="text-2xl font-bold mb-4">O nas</h2>
-                  {organization.description.split('\n\n').map((paragraph, index) => (
-                    <p key={index} className="mb-4 text-gray-700">{paragraph}</p>
-                  ))}
-                </div>
-
-                <div className="mb-8">
-                  <h3 className="text-xl font-bold mb-4">Osiągnięcia</h3>
-                  <ul className="space-y-2">
-                    {organization.achievements.map((achievement, index) => (
-                      <li key={index} className="flex items-start">
-                        <div className="flex-shrink-0 h-5 w-5 rounded-full bg-green-100 flex items-center justify-center mt-1 mr-3">
-                          <div className="h-2 w-2 rounded-full bg-green-600"></div>
-                        </div>
-                        <span>{achievement}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="mb-8">
-                  <h3 className="text-xl font-bold mb-4">Nasz zespół</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {organization.team.map((member) => (
-                      <Card key={member.id} className="border">
-                        <CardContent className="p-6 flex flex-col items-center text-center">
-                          <Avatar className="h-20 w-20 mb-4">
-                            <AvatarImage src={member.avatar} alt={member.name} />
-                            <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
-                          </Avatar>
-                          <h4 className="font-semibold">{member.name}</h4>
-                          <p className="text-sm text-muted-foreground">{member.position}</p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
+                <AboutTab organization={organization} />
               </TabsContent>
               
               <TabsContent value="events" className="mt-0">
-                <div className="mb-8">
-                  <h2 className="text-2xl font-bold mb-6">Nadchodzące wydarzenia</h2>
-                  
-                  {organization.upcomingEvents.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {organization.upcomingEvents.map((event) => (
-                        <Link to={`/wydarzenia/${event.id}`} key={event.id}>
-                          <Card className="overflow-hidden h-full transition-all hover:shadow-md">
-                            <div className="relative h-48 w-full overflow-hidden">
-                              <img 
-                                src={event.image} 
-                                alt={event.title} 
-                                className="object-cover w-full h-full"
-                              />
-                            </div>
-                            <CardContent className="p-4">
-                              <h3 className="font-semibold text-lg mb-2">{event.title}</h3>
-                              <div className="flex items-center text-sm">
-                                <Calendar size={16} className="mr-2 text-ngo" /> 
-                                <span>{event.date}</span>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground">
-                      Nie ma żadnych nadchodzących wydarzeń.
-                    </p>
-                  )}
-                  
-                  {isOwner && (
-                    <div className="mt-6">
-                      <Link to="/dodaj-wydarzenie">
-                        <Button>
-                          <Plus size={16} className="mr-2" /> Dodaj nowe wydarzenie
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <h2 className="text-2xl font-bold mb-6">Poprzednie wydarzenia</h2>
-                  
-                  {organization.pastEvents.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {organization.pastEvents.map((event) => (
-                        <Link to={`/wydarzenia/${event.id}`} key={event.id}>
-                          <Card className="overflow-hidden h-full transition-all hover:shadow-md">
-                            <div className="relative h-48 w-full overflow-hidden">
-                              <img 
-                                src={event.image} 
-                                alt={event.title} 
-                                className="object-cover w-full h-full"
-                              />
-                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                <Badge variant="outline" className="bg-white text-black">
-                                  Zakończone
-                                </Badge>
-                              </div>
-                            </div>
-                            <CardContent className="p-4">
-                              <h3 className="font-semibold text-lg mb-2">{event.title}</h3>
-                              <div className="flex items-center text-sm">
-                                <Calendar size={16} className="mr-2 text-ngo" /> 
-                                <span>{event.date}</span>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground">
-                      Nie ma żadnych poprzednich wydarzeń.
-                    </p>
-                  )}
-                </div>
+                <EventsTab organization={organization} isOwner={isOwner} />
               </TabsContent>
               
               <TabsContent value="gallery" className="mt-0">
-                <h2 className="text-2xl font-bold mb-6">Galeria</h2>
-                
-                {organization.gallery.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {organization.gallery.map((image, index) => (
-                      <div key={index} className="aspect-square overflow-hidden rounded-md">
-                        <img 
-                          src={image} 
-                          alt={`Galeria ${index + 1}`} 
-                          className="object-cover w-full h-full hover:scale-105 transition-transform"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">
-                    Galeria jest pusta.
-                  </p>
-                )}
-                
-                {isOwner && (
-                  <div className="mt-6">
-                    <Button>
-                      <Plus size={16} className="mr-2" /> Dodaj zdjęcia
-                    </Button>
-                  </div>
-                )}
+                <GalleryTab organization={organization} isOwner={isOwner} />
               </TabsContent>
             </Tabs>
           </div>
 
           <div className="lg:col-span-1">
-            <Card className="mb-6">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold mb-4">Informacje kontaktowe</h3>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center">
-                    <Mail className="text-ngo mr-3" size={20} />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
-                      <a href={`mailto:${organization.email}`} className="font-medium hover:underline">
-                        {organization.email}
-                      </a>
-                    </div>
-                  </div>
-                  
-                  {organization.phone && (
-                    <div className="flex items-center">
-                      <User className="text-ngo mr-3" size={20} />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Telefon</p>
-                        <a href={`tel:${organization.phone}`} className="font-medium hover:underline">
-                          {organization.phone}
-                        </a>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center">
-                    <MapPin className="text-ngo mr-3" size={20} />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Lokalizacja</p>
-                      <p className="font-medium">{organization.location}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <Globe className="text-ngo mr-3" size={20} />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Strona internetowa</p>
-                      <a href={organization.website} target="_blank" rel="noopener noreferrer" className="font-medium hover:underline">
-                        {organization.website.replace(/^https?:\/\//, '')}
-                      </a>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <Clock className="text-ngo mr-3" size={20} />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Rok założenia</p>
-                      <p className="font-medium">{organization.foundationYear}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <Users className="text-ngo mr-3" size={20} />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Obserwujący</p>
-                      <p className="font-medium">{organization.followers}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                {organization.socialMedia && (
-                  <div className="mt-6">
-                    <h4 className="font-semibold mb-3">Media społecznościowe</h4>
-                    <div className="flex space-x-3">
-                      {organization.socialMedia.facebook && (
-                        <a 
-                          href={organization.socialMedia.facebook} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-blue-100 transition-colors"
-                        >
-                          <Facebook size={20} className="text-blue-600" />
-                        </a>
-                      )}
-                      {organization.socialMedia.twitter && (
-                        <a 
-                          href={organization.socialMedia.twitter} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-blue-100 transition-colors"
-                        >
-                          <Twitter size={20} className="text-blue-400" />
-                        </a>
-                      )}
-                      {organization.socialMedia.linkedin && (
-                        <a 
-                          href={organization.socialMedia.linkedin} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-blue-100 transition-colors"
-                        >
-                          <Linkedin size={20} className="text-blue-700" />
-                        </a>
-                      )}
-                      {organization.socialMedia.instagram && (
-                        <a 
-                          href={organization.socialMedia.instagram} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-pink-100 transition-colors"
-                        >
-                          <Instagram size={20} className="text-pink-600" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <ContactSidebar organization={organization} />
 
             {isLoggedIn && userType === 'sponsor' && (
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold mb-4">Zainteresowany sponsoringiem?</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Sprawdź aktualne wydarzenia tej organizacji i nawiąż współpracę!
-                  </p>
-                  <Button className="w-full btn-gradient">
-                    <FileText size={16} className="mr-2" /> Zobacz ofertę współpracy
-                  </Button>
-                </CardContent>
-              </Card>
+              <SponsorshipCard userType={userType} />
             )}
           </div>
         </div>
