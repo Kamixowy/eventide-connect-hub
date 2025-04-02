@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -34,6 +33,7 @@ import {
   DialogTitle,
   DialogTrigger 
 } from "@/components/ui/dialog";
+import { useAuth } from '@/contexts/AuthContext';
 
 // Przykładowe dane współprac
 const sampleCollaborations = [
@@ -258,7 +258,42 @@ const sampleCollaborations = [
         text: 'Jako firma zajmująca się rozwiązaniami ekologicznymi, chcielibyśmy wesprzeć Państwa wydarzenie. Możemy przygotować strefę edukacyjną dla dzieci i dorosłych.',
         date: '05.01.2022 13:20'
       },
-      // ... pozostała część historii konwersacji
+      {
+        id: 2,
+        sender: 'organization',
+        text: 'Dzień dobry, dziękujemy za propozycję. Jesteśmy zainteresowani Państwa ofertą. Czy mogliby Państwo przedstawić szczegółowy plan strefy edukacyjnej?',
+        date: '10.01.2022 09:45'
+      },
+      {
+        id: 3,
+        sender: 'sponsor',
+        text: 'Oczywiście. Proponujemy interaktywne warsztaty dla dzieci o segregacji odpadów, konkursy z nagrodami oraz prezentacje o odnawialnych źródłach energii. Dodatkowo możemy przygotować materiały edukacyjne dla dorosłych.',
+        date: '15.01.2022 14:00'
+      },
+      {
+        id: 4,
+        sender: 'organization',
+        text: 'Brzmi świetnie! Czy moglibyśmy zobaczyć przykładowe materiały edukacyjne i projekty warsztatów?',
+        date: '20.01.2022 11:30'
+      },
+      {
+        id: 5,
+        sender: 'sponsor',
+        text: 'Oczywiście, przesyłamy załączniki z materiałami. Jesteśmy otwarci na Państwa sugestie i propozycje zmian.',
+        date: '25.01.2022 16:15'
+      },
+      {
+        id: 6,
+        sender: 'organization',
+        text: 'Materiały są bardzo interesujące. Proponujemy dodanie elementu związanego z oszczędzaniem wody. Czy byliby Państwo w stanie to uwzględnić?',
+        date: '01.02.2022 10:00'
+      },
+      {
+        id: 7,
+        sender: 'sponsor',
+        text: 'Oczywiście, możemy dodać warsztaty o oszczędzaniu wody oraz przygotować ulotki informacyjne. Dziękujemy za cenną sugestię.',
+        date: '05.02.2022 14:45'
+      },
       {
         id: 8,
         sender: 'organization',
@@ -615,7 +650,10 @@ const Collaborations = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [userType, setUserType] = useState<'organization' | 'sponsor'>('organization');
+  const { user } = useAuth();
+  
+  // Determine user type from authentication context
+  const userType = user?.user_metadata?.userType === 'organization' ? 'organization' : 'sponsor';
 
   // Filtrowanie współprac
   const filteredCollaborations = sampleCollaborations.filter((collaboration) => {
@@ -624,166 +662,4 @@ const Collaborations = () => {
       collaboration.event.organization.toLowerCase().includes(searchQuery.toLowerCase()) ||
       collaboration.sponsor.name.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesStatus = statusFilter === '' || collaboration.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
-
-  return (
-    <Layout>
-      <div className="container py-12">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Współprace</h1>
-          <p className="text-muted-foreground">
-            Zarządzaj swoimi współpracami
-          </p>
-        </div>
-
-        {/* Przełącznik typu użytkownika (demo) */}
-        <div className="mb-6 flex justify-end">
-          <div className="inline-flex rounded-md border">
-            <Button
-              variant="ghost"
-              className={`rounded-r-none ${userType === 'organization' ? 'bg-ngo/10 text-ngo' : ''}`}
-              onClick={() => setUserType('organization')}
-            >
-              Widok organizacji
-            </Button>
-            <Button
-              variant="ghost"
-              className={`rounded-l-none ${userType === 'sponsor' ? 'bg-ngo/10 text-ngo' : ''}`}
-              onClick={() => setUserType('sponsor')}
-            >
-              Widok sponsora
-            </Button>
-          </div>
-        </div>
-
-        {/* Wyszukiwarka i filtry */}
-        <div className="mb-8 space-y-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-grow">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-              <Input
-                placeholder="Szukaj współprac..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-2"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter size={18} />
-              Filtry
-            </Button>
-            <div className="hidden md:flex items-center gap-2 ml-auto">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                size="icon"
-                onClick={() => setViewMode('grid')}
-                className={viewMode === 'grid' ? 'bg-ngo hover:bg-ngo/90' : ''}
-              >
-                <Grid size={18} />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                size="icon"
-                onClick={() => setViewMode('list')}
-                className={viewMode === 'list' ? 'bg-ngo hover:bg-ngo/90' : ''}
-              >
-                <List size={18} />
-              </Button>
-            </div>
-          </div>
-          
-          {showFilters && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-md">
-              <div>
-                <label className="text-sm font-medium block mb-2">Status</label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Wszystkie statusy" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Wszystkie statusy</SelectItem>
-                    <SelectItem value="Przesłana">Przesłana</SelectItem>
-                    <SelectItem value="Negocjacje">Negocjacje</SelectItem>
-                    <SelectItem value="W trakcie">W trakcie</SelectItem>
-                    <SelectItem value="Zrealizowana">Zrealizowana</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-          
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-muted-foreground">
-              Znaleziono {filteredCollaborations.length} współprac
-            </p>
-            <div className="flex md:hidden items-center gap-2">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                size="icon"
-                onClick={() => setViewMode('grid')}
-                className={viewMode === 'grid' ? 'bg-ngo hover:bg-ngo/90' : ''}
-              >
-                <Grid size={18} />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                size="icon"
-                onClick={() => setViewMode('list')}
-                className={viewMode === 'list' ? 'bg-ngo hover:bg-ngo/90' : ''}
-              >
-                <List size={18} />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Lista współprac */}
-        {viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredCollaborations.map((collaboration) => (
-              <CollaborationCardGrid 
-                key={collaboration.id} 
-                collaboration={collaboration} 
-                userType={userType}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {filteredCollaborations.map((collaboration) => (
-              <CollaborationCardList 
-                key={collaboration.id} 
-                collaboration={collaboration} 
-                userType={userType}
-              />
-            ))}
-          </div>
-        )}
-        
-        {filteredCollaborations.length === 0 && (
-          <div className="text-center py-12">
-            <h3 className="text-xl font-semibold mb-2">Brak współprac spełniających kryteria</h3>
-            <p className="text-muted-foreground mb-6">
-              Spróbuj zmienić kryteria wyszukiwania lub filtry
-            </p>
-            <Button onClick={() => {
-              setSearchQuery('');
-              setStatusFilter('');
-            }}>
-              Wyczyść filtry
-            </Button>
-          </div>
-        )}
-      </div>
-    </Layout>
-  );
-};
-
-export default Collaborations;
+    const matchesStatus = statusFilter === '' ||

@@ -89,30 +89,38 @@ const Navbar = () => {
             >
               Organizacje
             </Link>
-            <Link 
-              to="/wspolprace" 
-              className={`text-sm font-medium transition-colors hover:text-ngo ${
-                isActive('/wspolprace') ? 'text-ngo' : 'text-muted-foreground'
-              }`}
-            >
-              Współprace
-            </Link>
-            <Link 
-              to="/o-nas" 
-              className={`text-sm font-medium transition-colors hover:text-ngo ${
-                isActive('/o-nas') ? 'text-ngo' : 'text-muted-foreground'
-              }`}
-            >
-              O nas
-            </Link>
-            <Link 
-              to="/kontakt" 
-              className={`text-sm font-medium transition-colors hover:text-ngo ${
-                isActive('/kontakt') ? 'text-ngo' : 'text-muted-foreground'
-              }`}
-            >
-              Kontakt
-            </Link>
+            {/* Współprace tylko dla zalogowanych */}
+            {user && (
+              <Link 
+                to="/wspolprace" 
+                className={`text-sm font-medium transition-colors hover:text-ngo ${
+                  isActive('/wspolprace') ? 'text-ngo' : 'text-muted-foreground'
+                }`}
+              >
+                Współprace
+              </Link>
+            )}
+            {/* O nas i Kontakt tylko dla niezalogowanych */}
+            {!user && (
+              <>
+                <Link 
+                  to="/o-nas" 
+                  className={`text-sm font-medium transition-colors hover:text-ngo ${
+                    isActive('/o-nas') ? 'text-ngo' : 'text-muted-foreground'
+                  }`}
+                >
+                  O nas
+                </Link>
+                <Link 
+                  to="/kontakt" 
+                  className={`text-sm font-medium transition-colors hover:text-ngo ${
+                    isActive('/kontakt') ? 'text-ngo' : 'text-muted-foreground'
+                  }`}
+                >
+                  Kontakt
+                </Link>
+              </>
+            )}
           </nav>
           
           {/* Przyciski logowania / Profil użytkownika */}
@@ -229,33 +237,41 @@ const Navbar = () => {
                 <Users className="mr-2 h-5 w-5" />
                 Organizacje
               </Link>
-              <Link 
-                to="/wspolprace" 
-                className={`flex items-center py-2 text-base font-medium transition-colors hover:text-ngo ${
-                  isActive('/wspolprace') ? 'text-ngo' : 'text-muted-foreground'
-                }`}
-              >
-                <Briefcase className="mr-2 h-5 w-5" />
-                Współprace
-              </Link>
-              <Link 
-                to="/o-nas" 
-                className={`flex items-center py-2 text-base font-medium transition-colors hover:text-ngo ${
-                  isActive('/o-nas') ? 'text-ngo' : 'text-muted-foreground'
-                }`}
-              >
-                <Info className="mr-2 h-5 w-5" />
-                O nas
-              </Link>
-              <Link 
-                to="/kontakt" 
-                className={`flex items-center py-2 text-base font-medium transition-colors hover:text-ngo ${
-                  isActive('/kontakt') ? 'text-ngo' : 'text-muted-foreground'
-                }`}
-              >
-                <ContactIcon className="mr-2 h-5 w-5" />
-                Kontakt
-              </Link>
+              {/* Współprace tylko dla zalogowanych */}
+              {user && (
+                <Link 
+                  to="/wspolprace" 
+                  className={`flex items-center py-2 text-base font-medium transition-colors hover:text-ngo ${
+                    isActive('/wspolprace') ? 'text-ngo' : 'text-muted-foreground'
+                  }`}
+                >
+                  <Briefcase className="mr-2 h-5 w-5" />
+                  Współprace
+                </Link>
+              )}
+              {/* O nas i Kontakt tylko dla niezalogowanych */}
+              {!user && (
+                <>
+                  <Link 
+                    to="/o-nas" 
+                    className={`flex items-center py-2 text-base font-medium transition-colors hover:text-ngo ${
+                      isActive('/o-nas') ? 'text-ngo' : 'text-muted-foreground'
+                    }`}
+                  >
+                    <Info className="mr-2 h-5 w-5" />
+                    O nas
+                  </Link>
+                  <Link 
+                    to="/kontakt" 
+                    className={`flex items-center py-2 text-base font-medium transition-colors hover:text-ngo ${
+                      isActive('/kontakt') ? 'text-ngo' : 'text-muted-foreground'
+                    }`}
+                  >
+                    <ContactIcon className="mr-2 h-5 w-5" />
+                    Kontakt
+                  </Link>
+                </>
+              )}
               {user && (
                 <Link 
                   to="/wiadomosci" 
