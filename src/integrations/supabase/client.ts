@@ -17,6 +17,10 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 
 // Function to check if Supabase is properly configured
 export const isSupabaseConfigured = () => {
-  return SUPABASE_URL !== "https://xyzcompany.supabase.co" && 
-         SUPABASE_PUBLISHABLE_KEY !== "public-anon-key";
+  // Use type casting to avoid TypeScript literal type errors
+  const defaultUrl = "https://xyzcompany.supabase.co" as string;
+  const defaultKey = "public-anon-key" as string;
+  
+  return SUPABASE_URL !== defaultUrl && 
+         SUPABASE_PUBLISHABLE_KEY !== defaultKey;
 };
