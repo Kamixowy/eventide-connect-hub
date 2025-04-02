@@ -111,15 +111,21 @@ const AddEvent = () => {
   const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const stopEvent = (e: Event) => {
+      e.stopPropagation();
+    };
+
     const preventScroll = (e: Event) => {
       const target = e.target as HTMLElement;
       const isFormElement = 
         target.tagName === 'INPUT' || 
         target.tagName === 'TEXTAREA' || 
         target.tagName === 'SELECT' ||
-        target.hasAttribute('role') || // For checkboxes and other custom elements
-        target.closest('[role="combobox"]') || // For select dropdowns
-        target.closest('[role="dialog"]'); // For date pickers
+        target.hasAttribute('role') || 
+        target.closest('[role="combobox"]') || 
+        target.closest('[role="dialog"]') ||
+        target.closest('.checkbox-wrapper') ||
+        target.closest('.file-upload-container'); 
       
       if (isFormElement) {
         e.stopPropagation();
@@ -151,6 +157,16 @@ const AddEvent = () => {
       formElement.addEventListener('focus', preventScroll, true);
       formElement.addEventListener('click', preventScroll, true);
       formElement.addEventListener('input', preventInputScroll, true);
+      
+      const checkboxes = formElement.querySelectorAll('.checkbox-wrapper');
+      checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('click', stopEvent, true);
+      });
+      
+      const fileUploads = formElement.querySelectorAll('.file-upload-container');
+      fileUploads.forEach(upload => {
+        upload.addEventListener('click', stopEvent, true);
+      });
     }
 
     return () => {
@@ -162,6 +178,16 @@ const AddEvent = () => {
         formElement.removeEventListener('focus', preventScroll, true);
         formElement.removeEventListener('click', preventScroll, true);
         formElement.removeEventListener('input', preventInputScroll, true);
+        
+        const checkboxes = formElement.querySelectorAll('.checkbox-wrapper');
+        checkboxes.forEach(checkbox => {
+          checkbox.removeEventListener('click', stopEvent, true);
+        });
+        
+        const fileUploads = formElement.querySelectorAll('.file-upload-container');
+        fileUploads.forEach(upload => {
+          upload.removeEventListener('click', stopEvent, true);
+        });
       }
     };
   }, []);
@@ -171,6 +197,8 @@ const AddEvent = () => {
       const file = e.target.files[0];
       setBannerImage(file);
       setBannerPreview(URL.createObjectURL(file));
+      
+      e.stopPropagation();
     }
   };
   
@@ -382,7 +410,8 @@ const AddEvent = () => {
   };
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
-    setter(e.target.value);
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    setter(value);
   };
 
   return (
@@ -461,10 +490,11 @@ const AddEvent = () => {
                         <Input 
                           id="startDate" 
                           type="date" 
-                          className="pl-10" 
+                          className="pl-10 pointer-events-auto" 
                           value={startDate}
                           onChange={(e) => setStartDate(e.target.value)}
                           required
+                          onClick={(e) => e.stopPropagation()}
                         />
                       </div>
                     </div>
@@ -476,10 +506,11 @@ const AddEvent = () => {
                         <Input 
                           id="endDate" 
                           type="date" 
-                          className="pl-10" 
+                          className="pl-10 pointer-events-auto" 
                           value={endDate}
                           onChange={(e) => setEndDate(e.target.value)}
                           min={startDate}
+                          onClick={(e) => e.stopPropagation()}
                         />
                       </div>
                     </div>
@@ -555,12 +586,14 @@ const AddEvent = () => {
                       <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
                       <Input 
                         id="attendees" 
-                        type="number" 
+                        type="text" 
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         placeholder="Np. 100" 
                         className="pl-10" 
                         value={attendees}
                         onChange={(e) => handleNumberChange(e, setAttendees)}
-                        min="0"
+                        onClick={(e) => e.stopPropagation()}
                       />
                     </div>
                   </div>
@@ -569,15 +602,21 @@ const AddEvent = () => {
                     <Label>Grupa docelowa (możesz wybrać kilka)</Label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {audienceTypes.map((audience) => (
-                        <div key={audience} className="flex items-center space-x-2">
+                        <div key={audience} className="checkbox-wrapper flex items-center space-x-2 pointer-events-auto">
                           <Checkbox 
                             id={`audience-${audience}`} 
                             checked={selectedAudience.includes(audience)}
                             onCheckedChange={() => handleAudienceChange(audience)}
+                            onClick={(e) => e.stopPropagation()}
                           />
                           <label 
                             htmlFor={`audience-${audience}`}
                             className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleAudienceChange(audience);
+                            }}
                           >
                             {audience}
                           </label>
@@ -801,7 +840,7 @@ const AddEvent = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="border-2 border-dashed rounded-lg p-4 text-center space-y-4">
+                    <div className="border-2 border-dashed rounded-lg p-4 text-center space-y-4 file-upload-container pointer-events-auto">
                       {bannerPreview ? (
                         <div className="relative">
                           <img 
@@ -814,7 +853,8 @@ const AddEvent = () => {
                             variant="destructive"
                             size="sm"
                             className="absolute top-2 right-2"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setBannerImage(null);
                               setBannerPreview(null);
                             }}
@@ -848,7 +888,10 @@ const AddEvent = () => {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => document.getElementById('banner-upload')?.click()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            document.getElementById('banner-upload')?.click();
+                          }}
                           className="mt-2"
                         >
                           <Upload size={16} className="mr-2" /> Wybierz plik

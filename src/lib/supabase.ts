@@ -31,6 +31,11 @@ export const ensureStorageBuckets = async () => {
       });
       
       if (error) {
+        // Check if the error is because the bucket already exists
+        if (error.message.includes('already exists')) {
+          console.log('Events bucket already exists');
+          return;
+        }
         console.error('Error creating events bucket:', error);
       } else {
         console.log('Events storage bucket created successfully');
