@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
@@ -127,20 +128,40 @@ const Profile = () => {
         }
 
         if (orgData) {
-          setOrganizationId(orgData.id);
+          // Define the expected type for the organization data
+          interface OrganizationDBData {
+            id: string;
+            name: string;
+            description: string | null;
+            address: string | null;
+            contact_email: string | null;
+            phone: string | null;
+            website: string | null;
+            logo_url: string | null;
+            user_id: string;
+            category: string | null;
+            achievements: string[] | null;
+            created_at: string;
+            updated_at: string;
+          }
+
+          // Cast the data to the expected type
+          const typedOrgData = orgData as unknown as OrganizationDBData;
+          
+          setOrganizationId(typedOrgData.id);
           form.reset({
-            organizationName: orgData.name || '',
-            description: orgData.description || '',
-            location: orgData.address || '',
-            email: orgData.contact_email || user.email || '',
-            phone: orgData.phone || '',
-            website: orgData.website || '',
-            category: orgData.category || '',
-            achievements: Array.isArray(orgData.achievements) 
-              ? orgData.achievements.join('\n') 
-              : (orgData.achievements || ''),
+            organizationName: typedOrgData.name || '',
+            description: typedOrgData.description || '',
+            location: typedOrgData.address || '',
+            email: typedOrgData.contact_email || user.email || '',
+            phone: typedOrgData.phone || '',
+            website: typedOrgData.website || '',
+            category: typedOrgData.category || '',
+            achievements: Array.isArray(typedOrgData.achievements) 
+              ? typedOrgData.achievements.join('\n') 
+              : (typedOrgData.achievements || ''),
           });
-          setAvatarUrl(orgData.logo_url);
+          setAvatarUrl(typedOrgData.logo_url);
         }
       } catch (error) {
         console.error('Błąd:', error);

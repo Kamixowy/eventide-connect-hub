@@ -71,26 +71,6 @@ const fallbackOrganizationData: OrganizationData = {
     'Wyróżnienie za działalność charytatywną od Prezydenta miasta Warszawa w 2020 roku',
     'Status Organizacji Pożytku Publicznego od 2012 roku'
   ],
-  team: [
-    {
-      id: 1,
-      name: 'Anna Nowak',
-      position: 'Prezes Zarządu',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80'
-    },
-    {
-      id: 2,
-      name: 'Marek Kowalski',
-      position: 'Wiceprezes ds. Finansowych',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80'
-    },
-    {
-      id: 3,
-      name: 'Katarzyna Wiśniewska',
-      position: 'Koordynator Projektów',
-      avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80'
-    }
-  ],
   upcomingEvents: [
     {
       id: 201,
@@ -185,20 +165,38 @@ const OrganizationProfile = () => {
           return;
         }
 
+        interface OrganizationDBData {
+          id: string;
+          name: string;
+          description: string | null;
+          logo_url: string | null;
+          address: string | null;
+          contact_email: string | null;
+          phone: string | null;
+          website: string | null;
+          category: string | null;
+          achievements: string[] | null;
+          user_id: string;
+          created_at: string;
+          updated_at: string;
+        }
+
+        const orgData = data as unknown as OrganizationDBData;
+
         const formattedData: OrganizationData = {
           ...fallbackOrganizationData,
-          id: data.id,
-          name: data.name || 'Organizacja bez nazwy',
-          description: data.description || fallbackOrganizationData.description,
-          logo: data.logo_url || fallbackOrganizationData.logo,
-          cover: data.logo_url || fallbackOrganizationData.cover,
-          location: data.address || 'Brak adresu',
-          email: data.contact_email || 'Brak adresu email',
-          phone: data.phone || 'Brak numeru telefonu',
-          website: data.website || 'https://www.example.com',
-          category: data.category || fallbackOrganizationData.category,
-          achievements: data.achievements || fallbackOrganizationData.achievements,
-          user_id: data.user_id || '',
+          id: orgData.id,
+          name: orgData.name || 'Organizacja bez nazwy',
+          description: orgData.description || fallbackOrganizationData.description,
+          logo: orgData.logo_url || fallbackOrganizationData.logo,
+          cover: orgData.logo_url || fallbackOrganizationData.cover,
+          location: orgData.address || 'Brak adresu',
+          email: orgData.contact_email || 'Brak adresu email',
+          phone: orgData.phone || 'Brak numeru telefonu',
+          website: orgData.website || 'https://www.example.com',
+          category: orgData.category || fallbackOrganizationData.category,
+          achievements: orgData.achievements || fallbackOrganizationData.achievements,
+          user_id: orgData.user_id || '',
         };
 
         setOrganization(formattedData);
