@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { 
   Calendar, 
   MapPin, 
@@ -25,7 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 
 // Przykładowe dane wydarzenia
-const eventData = {
+const demoEventData = {
   id: 1,
   title: 'Bieg Charytatywny "Pomagamy Dzieciom"',
   organization: {
@@ -94,17 +94,152 @@ const EventDetails = () => {
   const { id } = useParams();
   const { toast } = useToast();
   const { user } = useAuth();
-  const [event, setEvent] = useState(eventData);
+  const navigate = useNavigate();
+  const [event, setEvent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchEventDetails = async () => {
+      setLoading(true);
+      
+      // Dla użytkowników demo lub gdy id zaczyna się od "evt-"
+      if ((user && user.id.startsWith('demo-')) || (id && id.startsWith('evt-'))) {
+        setEvent(demoEventData);
+        setLoading(false);
+        return;
+      }
+      
+      if (!id) {
+        toast({
+          title: "Błąd",
+          description: "Nie znaleziono identyfikatora wydarzenia.",
+          variant: "destructive"
+        });
+        navigate('/wydarzenia');
+        return;
+      }
+      
+      try {
+        const { data: eventData, error: eventError } = await supabase
+          .from('events')
+          .select(`
+            *,
+            organizations(id, name, logo_url)
+          `)
+          .eq('id', id)
+          .maybeSingle();
+          
+        if (eventError) {
+          console.error('Error fetching event details:', eventError);
+          toast({
+            title: "Błąd",
+            description: "Nie udało się pobrać szczegółów wydarzenia.",
+            variant: "destructive"
+          });
+          navigate('/wydarzenia');
+          return;
+        }
+        
+        if (!eventData) {
+          toast({
+            title: "Nie znaleziono",
+            description: "Wydarzenie o podanym ID nie istnieje.",
+            variant: "destructive"
+          });
+          navigate('/wydarzenia');
+          return;
+        }
+        
+        console.log('Event data:', eventData);
+        
+        // Pobierz opcje sponsorowania dla tego wydarzenia
+        const { data: sponsorshipData, error: sponsorshipError } = await supabase
+          .from('sponsorship_options')
+          .select('*')
+          .eq('event_id', id);
+          
+        if (sponsorshipError) {
+          console.error('Error fetching sponsorship options:', sponsorshipError);
+        }
+        
+        // Przygotuj dane wydarzenia w formacie odpowiednim dla komponentu
+        const formattedEvent = {
+          id: eventData.id,
+          title: eventData.title,
+          organization: {
+            id: eventData.organizations?.id || 'unknown',
+            name: eventData.organizations?.name || 'Nieznana organizacja',
+            avatar: eventData.organizations?.logo_url || null
+          },
+          date: new Date(eventData.start_date).toLocaleDateString('pl-PL'),
+          location: eventData.location || 'Lokalizacja nieznana',
+          detailed_location: eventData.detailed_location,
+          attendees: eventData.expected_participants || 0,
+          category: eventData.category || 'Inne',
+          status: 'Planowane', // Można dodać logikę statusu bazując na datach
+          description: eventData.description,
+          banner: eventData.image_url,
+          audience: eventData.audience || [],
+          tags: eventData.tags || [],
+          socialMedia: eventData.social_media || {},
+          sponsorshipOptions: sponsorshipData ? sponsorshipData.map((option: any) => ({
+            id: option.id,
+            title: option.title,
+            description: option.description,
+            price: option.price ? { from: option.price, to: option.price * 1.5 } : null
+          })) : demoEventData.sponsorshipOptions,
+          updates: [] // Można dodać logikę pobierania aktualizacji
+        };
+        
+        setEvent(formattedEvent);
+      } catch (error) {
+        console.error('Error in fetching event details:', error);
+        toast({
+          title: "Błąd",
+          description: "Wystąpił problem z pobieraniem danych wydarzenia.",
+          variant: "destructive"
+        });
+        setEvent(demoEventData); // Fallback do danych demo
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchEventDetails();
+  }, [id, user, toast, navigate]);
   
   // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
   
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container py-8 text-center">
+          <p>Ładowanie szczegółów wydarzenia...</p>
+        </div>
+      </Layout>
+    );
+  }
+  
+  if (!event) {
+    return (
+      <Layout>
+        <div className="container py-8 text-center">
+          <h2 className="text-2xl font-bold mb-4">Nie znaleziono wydarzenia</h2>
+          <Button onClick={() => navigate('/wydarzenia')}>
+            Wróć do listy wydarzeń
+          </Button>
+        </div>
+      </Layout>
+    );
+  }
+  
   // Check if user is logged in and get user type
   const userType = user?.user_metadata?.userType || null;
   const isLoggedIn = !!user;
-  const isOwner = userType === 'organization';
+  const isOwner = userType === 'organization' && user?.id === event.organization?.userId;
 
   // Handle contact with organization
   const handleContactOrganization = () => {
@@ -119,9 +254,14 @@ const EventDetails = () => {
       {/* Banner */}
       <div className="relative h-64 md:h-80 w-full overflow-hidden bg-gray-100">
         <img 
-          src={event.banner} 
+          src={event.banner || '/placeholder.svg'} 
           alt={event.title} 
           className="w-full h-full object-cover"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.onerror = null; 
+            target.src = '/placeholder.svg'; 
+          }}
         />
         <div className="absolute inset-0 bg-black/30" />
         <div className="absolute bottom-6 left-6 md:left-12">
@@ -200,41 +340,47 @@ const EventDetails = () => {
               <TabsContent value="details" className="mt-0">
                 <div className="prose max-w-none mb-8">
                   <h2 className="text-2xl font-bold mb-4">Opis wydarzenia</h2>
-                  {event.description.split('\n\n').map((paragraph, index) => (
+                  {event.description && event.description.split('\n\n').map((paragraph: string, index: number) => (
                     <p key={index} className="mb-4 text-gray-700">{paragraph}</p>
                   ))}
                 </div>
 
-                <div className="mb-8">
-                  <h3 className="text-xl font-bold mb-4">Odbiorcy</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {event.audience.map((audience, index) => (
-                      <Badge key={index} variant="outline" className="bg-gray-50">
-                        {audience}
-                      </Badge>
-                    ))}
+                {event.audience && event.audience.length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="text-xl font-bold mb-4">Odbiorcy</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {event.audience.map((audience: string, index: number) => (
+                        <Badge key={index} variant="outline" className="bg-gray-50">
+                          {audience}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div className="mb-8">
-                  <h3 className="text-xl font-bold mb-4">Kategoria</h3>
-                  <Badge className="bg-ngo text-white px-3 py-1 text-sm">
-                    {event.category}
-                  </Badge>
-                </div>
-
-                <div className="mb-8">
-                  <h3 className="text-xl font-bold mb-4">Tagi</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {event.tags.map((tag, index) => (
-                      <Badge key={index} variant="secondary" className="bg-gray-100">
-                        <Tag size={14} className="mr-1" /> {tag}
-                      </Badge>
-                    ))}
+                {event.category && (
+                  <div className="mb-8">
+                    <h3 className="text-xl font-bold mb-4">Kategoria</h3>
+                    <Badge className="bg-ngo text-white px-3 py-1 text-sm">
+                      {event.category}
+                    </Badge>
                   </div>
-                </div>
+                )}
 
-                {event.socialMedia && (
+                {event.tags && event.tags.length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="text-xl font-bold mb-4">Tagi</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {event.tags.map((tag: string, index: number) => (
+                        <Badge key={index} variant="secondary" className="bg-gray-100">
+                          <Tag size={14} className="mr-1" /> {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {event.socialMedia && (event.socialMedia.facebook || event.socialMedia.linkedin) && (
                   <div>
                     <h3 className="text-xl font-bold mb-4">Media społecznościowe</h3>
                     <div className="flex space-x-4">
@@ -266,9 +412,9 @@ const EventDetails = () => {
               <TabsContent value="updates" className="mt-0">
                 <h2 className="text-2xl font-bold mb-6">Aktualności</h2>
                 
-                {event.updates.length > 0 ? (
+                {event.updates && event.updates.length > 0 ? (
                   <div className="space-y-8">
-                    {event.updates.map((update) => (
+                    {event.updates.map((update: any) => (
                       <Card key={update.id} className="border">
                         <CardHeader className="pb-2">
                           <div className="flex items-center justify-between">
@@ -286,6 +432,11 @@ const EventDetails = () => {
                               src={update.image} 
                               alt={update.title} 
                               className="rounded-md w-full max-h-72 object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.onerror = null; 
+                                target.src = '/placeholder.svg'; 
+                              }}
                             />
                           )}
                         </CardContent>
@@ -320,7 +471,7 @@ const EventDetails = () => {
                 )}
 
                 <div className="space-y-4">
-                  {event.sponsorshipOptions.map((option) => (
+                  {event.sponsorshipOptions && event.sponsorshipOptions.map((option: any) => (
                     <div key={option.id} className="border rounded-md p-4">
                       <h4 className="font-semibold mb-2">{option.title}</h4>
                       <p className="text-sm text-muted-foreground mb-3">{option.description}</p>

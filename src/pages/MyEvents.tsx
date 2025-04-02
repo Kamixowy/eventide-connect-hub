@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Calendar, MapPin, Users, Plus, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ const MyEvents = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Przykładowe dane dla użytkowników demo
   const demoEvents = [
@@ -76,7 +77,7 @@ const MyEvents = () => {
             .from('organizations')
             .select('id')
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
             
           if (orgError) {
             console.error('Error fetching organization:', orgError);
@@ -85,6 +86,13 @@ const MyEvents = () => {
               description: "Nie udało się pobrać danych organizacji.",
               variant: "destructive"
             });
+            setLoading(false);
+            return;
+          }
+          
+          if (!orgData) {
+            console.log('No organization found for user:', user.id);
+            setEvents([]);
             setLoading(false);
             return;
           }
@@ -104,6 +112,7 @@ const MyEvents = () => {
               variant: "destructive"
             });
           } else {
+            console.log('Events fetched:', eventsData);
             setEvents(eventsData || []);
           }
         }
@@ -121,6 +130,11 @@ const MyEvents = () => {
     
     fetchMyEvents();
   }, [user, toast]);
+
+  // Handle event click to navigate to event details
+  const handleEventClick = (eventId: string) => {
+    navigate(`/wydarzenia/${eventId}`);
+  };
 
   // Filter events based on search query
   const filteredEvents = events.filter(event => 
@@ -181,7 +195,11 @@ const MyEvents = () => {
         ) : filteredEvents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredEvents.map((event) => (
-              <Link to={`/wydarzenia/${event.id}`} key={event.id}>
+              <div 
+                key={event.id} 
+                onClick={() => handleEventClick(event.id)}
+                className="cursor-pointer"
+              >
                 <Card className="h-full transition-all hover:shadow-md">
                   {event.image_url ? (
                     <div className="relative h-48 w-full overflow-hidden">
@@ -189,6 +207,11 @@ const MyEvents = () => {
                         src={event.image_url} 
                         alt={event.title} 
                         className="object-cover w-full h-full"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null; 
+                          target.src = '/placeholder.svg'; 
+                        }}
                       />
                     </div>
                   ) : (
@@ -222,7 +245,7 @@ const MyEvents = () => {
                     </div>
                   </CardContent>
                 </Card>
-              </Link>
+              </div>
             ))}
           </div>
         ) : (
