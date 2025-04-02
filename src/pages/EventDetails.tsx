@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -11,7 +10,8 @@ import {
   Clock, 
   Tag,
   MessageSquare,
-  Edit
+  Edit,
+  Pencil
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -97,6 +97,7 @@ const EventDetails = () => {
   const navigate = useNavigate();
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isOwner, setIsOwner] = useState(false);
   
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -124,7 +125,7 @@ const EventDetails = () => {
           .from('events')
           .select(`
             *,
-            organizations(id, name, logo_url)
+            organizations(id, name, logo_url, user_id)
           `)
           .eq('id', id)
           .maybeSingle();
@@ -152,6 +153,11 @@ const EventDetails = () => {
         
         console.log('Event data:', eventData);
         
+        // Check if current user is the owner of the organization
+        if (user && eventData.organizations?.user_id === user.id) {
+          setIsOwner(true);
+        }
+        
         // Pobierz opcje sponsorowania dla tego wydarzenia
         const { data: sponsorshipData, error: sponsorshipError } = await supabase
           .from('sponsorship_options')
@@ -169,7 +175,8 @@ const EventDetails = () => {
           organization: {
             id: eventData.organizations?.id || 'unknown',
             name: eventData.organizations?.name || 'Nieznana organizacja',
-            avatar: eventData.organizations?.logo_url || null
+            avatar: eventData.organizations?.logo_url || null,
+            userId: eventData.organizations?.user_id
           },
           date: new Date(eventData.start_date).toLocaleDateString('pl-PL'),
           location: eventData.location || 'Lokalizacja nieznana',
@@ -239,7 +246,7 @@ const EventDetails = () => {
   // Check if user is logged in and get user type
   const userType = user?.user_metadata?.userType || null;
   const isLoggedIn = !!user;
-  const isOwner = userType === 'organization' && user?.id === event.organization?.userId;
+  const isOwnerVar = userType === 'organization' && user?.id === event.organization?.userId;
 
   // Handle contact with organization
   const handleContactOrganization = () => {
@@ -278,6 +285,19 @@ const EventDetails = () => {
             {event.title}
           </h1>
         </div>
+        
+        {/* Add Edit Button for owners */}
+        {isOwner && (
+          <div className="absolute top-6 right-6">
+            <Button 
+              onClick={() => navigate(`/edytuj-wydarzenie/${id}`)}
+              variant="success"
+              className="shadow-md"
+            >
+              <Pencil size={16} className="mr-2" /> Edytuj wydarzenie
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="container py-8">
@@ -500,7 +520,7 @@ const EventDetails = () => {
                   </Button>
                 )}
                 
-                {isLoggedIn && userType === 'organization' && isOwner && (
+                {isLoggedIn && userType === 'organization' && isOwnerVar && (
                   <Button className="w-full mt-4">
                     <Edit size={16} className="mr-2" /> Edytuj wydarzenie
                   </Button>
