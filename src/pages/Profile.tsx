@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
@@ -29,6 +28,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { useOrganizationStorage } from '@/hooks/useOrganizationStorage';
 
 const profileFormSchema = z.object({
   organizationName: z.string().min(2, {
@@ -110,6 +110,8 @@ const Profile = () => {
       }
 
       try {
+        console.log('Pobieranie danych organizacji dla użytkownika:', user.id);
+        
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')
           .select('*')
@@ -148,6 +150,9 @@ const Profile = () => {
           // Cast the data to the expected type
           const typedOrgData = orgData as unknown as OrganizationDBData;
           
+          console.log('Dane organizacji pobrane:', typedOrgData);
+          console.log('Logo URL:', typedOrgData.logo_url);
+          
           setOrganizationId(typedOrgData.id);
           form.reset({
             organizationName: typedOrgData.name || '',
@@ -159,7 +164,7 @@ const Profile = () => {
             category: typedOrgData.category || '',
             achievements: Array.isArray(typedOrgData.achievements) 
               ? typedOrgData.achievements.join('\n') 
-              : (typedOrgData.achievements || ''),
+              : (typedOrgData.achievements ? String(typedOrgData.achievements) : ''),
           });
           setAvatarUrl(typedOrgData.logo_url);
         }
@@ -245,54 +250,21 @@ const Profile = () => {
     const file = event.target.files?.[0];
     if (!file || !organizationId) return;
 
-    if (!isSupabaseConfigured()) {
-      setAvatarUrl(URL.createObjectURL(file));
-      toast({
-        title: "Sukces",
-        description: "Zdjęcie profilowe zaktualizowane (tryb demo).",
-      });
-      return;
-    }
-
     try {
       setUploading(true);
-
-      const fileExt = file.name.split('.').pop();
-      const filePath = `organizations/${organizationId}/logo.${fileExt}`;
       
-      const { error: uploadError, data } = await supabase.storage
-        .from('organizations')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('organizations')
-        .getPublicUrl(filePath);
-
-      const { error: updateError } = await supabase
-        .from('organizations')
-        .update({ logo_url: publicUrl })
-        .eq('id', organizationId);
-
-      if (updateError) {
-        throw updateError;
-      }
-
-      setAvatarUrl(publicUrl);
-      toast({
-        title: "Sukces",
-        description: "Zdjęcie profilowe zostało zaktualizowane.",
-      });
+      console.log('Wybrano plik:', file.name, 'dla organizacji:', organizationId);
+      
+      // Use our custom hook for file upload
+      const { uploadLogo } = useOrganizationStorage();
+      const { url } = await uploadLogo(file, organizationId);
+      
+      console.log('Otrzymano URL:', url);
+      setAvatarUrl(url);
+      
     } catch (error) {
       console.error('Błąd podczas przesyłania zdjęcia:', error);
-      toast({
-        title: "Błąd",
-        description: "Nie udało się zaktualizować zdjęcia profilowego.",
-        variant: "destructive",
-      });
+      // Toast is already shown in the hook
     } finally {
       setUploading(false);
     }
