@@ -57,9 +57,16 @@ export const updateEvent = async (id: string, data: EventFormValues, imageUrl: s
 };
 
 export const updateEventStatus = async (id: string, status: string) => {
+  // Use a proper type annotation to indicate we're updating only the status field
+  interface StatusUpdate {
+    status: string;
+  }
+  
+  const updateData: StatusUpdate = { status };
+  
   const { error } = await supabase
     .from('events')
-    .update({ status })
+    .update(updateData)
     .eq('id', id);
     
   if (error) throw error;

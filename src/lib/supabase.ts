@@ -41,11 +41,14 @@ export const ensureEventsSchema = async () => {
       return;
     }
 
-    // Check if the status column exists in the events table using our new function
-    const { data, error } = await supabase.rpc('check_column_exists', { 
-      table_name: 'events',
-      column_name: 'status'
-    });
+    // Check if the status column exists in the events table
+    const { data, error } = await supabase.rpc(
+      'check_column_exists',
+      { 
+        table_name: 'events' as string, 
+        column_name: 'status' as string 
+      }
+    );
 
     if (error) {
       console.log('Error checking if status column exists:', error);
