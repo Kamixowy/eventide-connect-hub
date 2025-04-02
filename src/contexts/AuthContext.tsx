@@ -83,11 +83,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const demoUser = {
       id: type === 'organization' ? 'demo-org-1' : 'demo-sponsor-1',
       email: type === 'organization' ? 'demo-org@n-go.pl' : 'demo-sponsor@n-go.pl',
+      app_metadata: {}, // Dodane wymagane pole
+      aud: 'authenticated', // Dodane wymagane pole
+      created_at: new Date().toISOString(), // Dodane wymagane pole
       user_metadata: {
         name: type === 'organization' ? 'Demo Organizacja' : 'Demo Sponsor',
         userType: type
       }
-    };
+    } as User; // Użycie "as User" do bezpiecznego rzutowania typu
     
     localStorage.setItem('demoUser', JSON.stringify(demoUser));
     
@@ -98,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     
     // Symulujemy ustawienie użytkownika (w rzeczywistości używalibyśmy Supabase)
-    setUser(demoUser as User);
+    setUser(demoUser);
     
     return Promise.resolve();
   };
