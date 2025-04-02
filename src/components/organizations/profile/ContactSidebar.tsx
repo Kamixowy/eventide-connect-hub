@@ -4,7 +4,20 @@ import { Mail, MapPin, Globe, User, Users, Clock, Facebook, Twitter, Linkedin, I
 import { Card, CardContent } from '@/components/ui/card';
 
 interface ContactSidebarProps {
-  organization: any;
+  organization: {
+    email: string;
+    phone: string;
+    location: string;
+    website: string;
+    foundationYear: number;
+    followers: number;
+    socialMedia: {
+      facebook?: string;
+      twitter?: string;
+      linkedin?: string;
+      instagram?: string;
+    };
+  };
 }
 
 const ContactSidebar: React.FC<ContactSidebarProps> = ({ organization }) => {

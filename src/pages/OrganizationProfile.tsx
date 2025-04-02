@@ -23,10 +23,10 @@ interface OrganizationData {
   phone: string;
   website: string;
   socialMedia: {
-    facebook: string;
-    twitter: string;
-    linkedin: string;
-    instagram: string;
+    facebook?: string;
+    twitter?: string;
+    linkedin?: string;
+    instagram?: string;
   };
   category: string;
   followers: number;

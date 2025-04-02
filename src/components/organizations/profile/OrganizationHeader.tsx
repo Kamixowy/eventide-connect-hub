@@ -8,7 +8,20 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 
 interface OrganizationHeaderProps {
-  organization: any;
+  organization: {
+    name: string;
+    logo: string;
+    cover: string;
+    location: string;
+    category: string;
+    followers: number;
+    socialMedia: {
+      facebook?: string;
+      twitter?: string;
+      linkedin?: string;
+      instagram?: string;
+    };
+  };
   isLoggedIn: boolean;
   isOwner: boolean;
   following: boolean;
