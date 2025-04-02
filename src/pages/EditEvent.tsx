@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -250,6 +249,7 @@ const EditEvent = () => {
           </p>
         </div>
         
+        {/* This is the key fix - spread the form object into FormProvider */}
         <FormProvider {...form}>
           <Form>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
