@@ -25,7 +25,7 @@ const AboutTab: React.FC<AboutTabProps> = ({ organization }) => {
         </div>
         <div className="flex items-center text-sm text-muted-foreground mt-4">
           <CalendarIcon size={16} className="mr-2" />
-          Rok założenia: {organization.foundationYear}
+          Rok założenia: {organization.foundingYear || 'Nie podano'}
         </div>
       </div>
       

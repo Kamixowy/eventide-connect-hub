@@ -30,7 +30,7 @@ interface OrganizationData {
   };
   category: string;
   followers: number;
-  foundationYear: number;
+  foundingYear: number | null;
   achievements: string[];
   upcomingEvents: {
     id: number;
@@ -46,6 +46,7 @@ interface OrganizationData {
   }[];
   gallery: string[];
   user_id?: string;
+  nip?: string;
 }
 
 const fallbackOrganizationData: OrganizationData = {
@@ -66,7 +67,7 @@ const fallbackOrganizationData: OrganizationData = {
   },
   category: 'Pomoc dzieciom',
   followers: 356,
-  foundationYear: 2010,
+  foundingYear: 2010,
   achievements: [
     'Nagroda "Organizacja Roku 2018" przyznana przez Ministerstwo Rodziny i Polityki Społecznej',
     'Wyróżnienie za działalność charytatywną od Prezydenta miasta Warszawa w 2020 roku',
@@ -186,11 +187,20 @@ const OrganizationProfile = () => {
           } | null;
           followers: number | null;
           user_id: string;
+          founding_date: string | null;
+          nip: string | null;
           created_at: string;
           updated_at: string;
         }
 
         const orgData = data as unknown as OrganizationDBData;
+
+        // Convert date string to year if available
+        let foundingYear: number | null = null;
+        if (orgData.founding_date) {
+          const date = new Date(orgData.founding_date);
+          foundingYear = date.getFullYear();
+        }
 
         const formattedData: OrganizationData = {
           ...fallbackOrganizationData,
@@ -208,6 +218,8 @@ const OrganizationProfile = () => {
           followers: orgData.followers || 0,
           achievements: orgData.achievements || fallbackOrganizationData.achievements,
           user_id: orgData.user_id || '',
+          foundingYear: foundingYear,
+          nip: orgData.nip || undefined,
         };
 
         setOrganization(formattedData);
