@@ -82,20 +82,23 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
     setError(null);
 
     try {
+      console.log("Attempting to start conversation with:", selectedOrganization.id);
       const result = await startConversation(selectedOrganization.id, message);
       
-      if (result) {
+      if (result?.conversationId) {
         toast({
           title: "Wiadomość wysłana",
           description: "Twoja wiadomość została wysłana pomyślnie",
         });
         
+        console.log("Conversation created with ID:", result.conversationId);
         onConversationCreated(result.conversationId);
         onOpenChange(false);
         setMessage("");
         setSelectedOrganization(null);
         setSearchQuery("");
       } else {
+        console.error("Missing conversation ID in response");
         toast({
           title: "Błąd",
           description: "Nie udało się wysłać wiadomości. Spróbuj ponownie.",
@@ -127,7 +130,7 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
       >
         <DialogHeader>
           <DialogTitle>Nowa wiadomość</DialogTitle>
-          <DialogDescription id="dialog-description" className="sr-only">
+          <DialogDescription id="dialog-description">
             Wybierz organizację i napisz wiadomość, aby rozpocząć nową konwersację
           </DialogDescription>
         </DialogHeader>
