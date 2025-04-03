@@ -29,7 +29,7 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       console.error('Error checking conversation participation:', participantError);
       
       // Special case: Check if we're responding to a newly created conversation
-      // In this case, let's query the conversation to make sure it exists
+      // In this case, let's query the conversation to make sure it exists first
       const { data: conversation, error: conversationError } = await supabase
         .from('direct_conversations')
         .select('id')
@@ -38,10 +38,29 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       
       if (conversationError || !conversation) {
         console.error('Conversation does not exist:', conversationError);
-        throw new Error('Conversation does not exist');
+        
+        // Since we're trying to send a message to a new conversation,
+        // let's try to create the conversation first
+        console.log('Attempting to create a new conversation with ID:', conversationId);
+        
+        const { data: newConversation, error: createError } = await supabase
+          .from('direct_conversations')
+          .insert({
+            id: conversationId
+          })
+          .select()
+          .single();
+        
+        if (createError) {
+          console.error('Error creating conversation:', createError);
+          throw new Error('Failed to create conversation');
+        }
+        
+        console.log('Successfully created conversation:', newConversation.id);
       }
       
-      // The conversation exists, try to add the user as a participant
+      // Now try to add the user as a participant
+      console.log('Adding current user as participant to conversation');
       const { error: insertError } = await supabase
         .from('conversation_participants')
         .insert({
@@ -51,12 +70,12 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       
       if (insertError) {
         console.error('Failed to add user as participant:', insertError);
-        throw new Error('User is not a participant in this conversation');
+        throw new Error('Failed to add user as participant');
       }
       
-      console.log('Added user as participant to conversation');
+      console.log('Successfully added user as participant to conversation');
     } else {
-      console.log('User is a participant in the conversation');
+      console.log('User is already a participant in the conversation');
     }
     
     // Create the message

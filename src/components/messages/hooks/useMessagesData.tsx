@@ -47,6 +47,10 @@ export const useMessagesData = (selectedConversationId: string | null) => {
           if (!oldData) return [result];
           return [...oldData, result];
         });
+        
+        // Force refetch conversations to make sure we get the latest data
+        // This helps with newly created conversations
+        refetchConversations();
         return result;
       } else {
         console.error("Message sending returned null result");

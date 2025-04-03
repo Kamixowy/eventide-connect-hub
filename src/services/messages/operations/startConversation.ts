@@ -30,28 +30,36 @@ export const startConversation = async (organizationUserId: string, initialMessa
       throw new Error('One or both users do not exist');
     }
 
-    // Create a new conversation using the stored procedure
-    const { data: conversation, error: conversationError } = await supabase.rpc(
-      'create_conversation_and_participants',
-      { 
-        user_one: user.id,
-        user_two: organizationUserId 
-      }
-    );
+    // Create a new conversation - removed the call to stored procedure which might be causing issues
+    // Instead, we'll manually create the conversation and participants
+    const { data: newConversation, error: conversationError } = await supabase
+      .from('direct_conversations')
+      .insert({})
+      .select()
+      .single();
 
-    if (conversationError) {
+    if (conversationError || !newConversation) {
       console.error('Error creating conversation:', conversationError);
-      throw conversationError;
+      throw new Error('Failed to create conversation');
     }
-
-    if (!conversation || !conversation[0]) {
-      console.error('Failed to create conversation');
-      return null;
-    }
-
-    // Extract the conversation ID from the result
-    const conversationId = conversation[0].conversation_id;
+    
+    const conversationId = newConversation.id;
     console.log('Created conversation with ID:', conversationId);
+    
+    // Add both users as participants
+    const { error: participantsError } = await supabase
+      .from('conversation_participants')
+      .insert([
+        { conversation_id: conversationId, user_id: user.id },
+        { conversation_id: conversationId, user_id: organizationUserId }
+      ]);
+      
+    if (participantsError) {
+      console.error('Error adding conversation participants:', participantsError);
+      throw new Error('Failed to add participants to conversation');
+    }
+    
+    console.log('Added participants to conversation');
     
     // Send the initial message
     if (initialMessage.trim() && conversationId) {
