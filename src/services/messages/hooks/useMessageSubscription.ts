@@ -2,40 +2,27 @@
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Message } from '../types';
-import { useEffect, useRef } from 'react';
+import { Message } from '@/services/messages/types';
+import { useEffect } from 'react';
 
-// Hook for subscribing to new messages in a conversation
+// Hook to subscribe to new messages in a specific conversation
 export const useMessageSubscription = (
-  conversationId: string | null, 
+  conversationId: string | null,
   onNewMessage: (message: Message) => void
 ): { subscription: RealtimeChannel | null } => {
   const { user } = useAuth();
-  const subscriptionRef = useRef<RealtimeChannel | null>(null);
   
   useEffect(() => {
-    if (!conversationId || !user) {
-      console.log('No conversation ID or user, skipping subscription');
-      return () => {
-        if (subscriptionRef.current) {
-          subscriptionRef.current.unsubscribe();
-          subscriptionRef.current = null;
-        }
-      };
+    if (!user || !conversationId) {
+      console.log('No user or conversation ID, skipping message subscription');
+      return () => {};
     }
 
-    console.log(`Setting up subscription for messages in conversation: ${conversationId}`);
+    console.log('Setting up subscription for messages in conversation:', conversationId);
     
-    // Unsubscribe from previous subscription if it exists
-    if (subscriptionRef.current) {
-      console.log('Cleaning up previous subscription');
-      subscriptionRef.current.unsubscribe();
-      subscriptionRef.current = null;
-    }
-    
-    // Subscribe to new messages
+    // Subscribe to direct_messages table for new messages in this conversation
     const channel = supabase
-      .channel(`messages:${conversationId}`)
+      .channel(`messages-${conversationId}`)
       .on(
         'postgres_changes',
         {
@@ -44,47 +31,33 @@ export const useMessageSubscription = (
           table: 'direct_messages',
           filter: `conversation_id=eq.${conversationId}`
         },
-        async (payload) => {
-          console.log('Received new message event:', payload);
+        (payload) => {
+          console.log('New message detected:', payload);
           
-          if (payload.new && payload.new.sender_id !== user.id) {
-            console.log('Received new message from another user');
-            
-            try {
-              // Mark the message as read if the conversation is open
-              await supabase.rpc('mark_messages_as_read', { conversation_id: conversationId });
-              console.log('Marked messages as read');
-              
-              // Just use the payload data directly
-              const newMessage = payload.new as Message;
-              onNewMessage(newMessage);
-            } catch (err) {
-              console.error('Error processing new message:', err);
-              // Fall back to basic message data
-              const newMessage = payload.new as Message;
-              onNewMessage(newMessage);
-            }
-          } else {
-            console.log('Ignoring message sent by current user');
+          if (payload.new) {
+            const newMessage = payload.new as Message;
+            console.log('Processing new message:', newMessage);
+            // Make sure we pass the message to the callback
+            onNewMessage(newMessage);
           }
         }
       )
       .subscribe((status) => {
-        console.log(`Message subscription status: ${status}`);
+        console.log(`Message subscription status for conversation ${conversationId}:`, status);
       });
 
-    console.log('Message subscription set up successfully');
-    subscriptionRef.current = channel;
+    console.log('Message subscription set up successfully for conversation:', conversationId);
 
     // Clean up subscription on unmount
     return () => {
-      console.log('Cleaning up message subscription');
-      if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe();
-        subscriptionRef.current = null;
-      }
+      console.log('Cleaning up message subscription for conversation:', conversationId);
+      channel.unsubscribe();
     };
-  }, [conversationId, user, onNewMessage]);
+  }, [user, conversationId, onNewMessage]);
 
-  return { subscription: subscriptionRef.current };
+  return { 
+    subscription: (user && conversationId) 
+      ? supabase.channel(`messages-${conversationId}`) 
+      : null 
+  };
 };

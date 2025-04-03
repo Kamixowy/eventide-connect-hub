@@ -1,12 +1,14 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { Message } from '@/services/messages/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useMessageHandlers = (
   selectedConversationId: string | null,
   refetchConversations: () => Promise<any>
 ) => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Handler for new messages from subscription
   const handleNewMessage = (newMessage: Message) => {

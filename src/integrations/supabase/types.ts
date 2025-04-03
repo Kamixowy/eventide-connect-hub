@@ -274,41 +274,6 @@ export type Database = {
           },
         ]
       }
-      messages: {
-        Row: {
-          collaboration_id: string
-          created_at: string
-          id: string
-          read_at: string | null
-          sender_id: string
-          text: string
-        }
-        Insert: {
-          collaboration_id: string
-          created_at?: string
-          id?: string
-          read_at?: string | null
-          sender_id: string
-          text: string
-        }
-        Update: {
-          collaboration_id?: string
-          created_at?: string
-          id?: string
-          read_at?: string | null
-          sender_id?: string
-          text?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_collaboration_id_fkey"
-            columns: ["collaboration_id"]
-            isOneToOne: false
-            referencedRelation: "collaborations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       organization_profiles: {
         Row: {
           content: Json

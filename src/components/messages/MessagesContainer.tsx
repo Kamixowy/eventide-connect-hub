@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import NewMessageDialog from '@/components/messages/NewMessageDialog';
 import ConversationsList from '@/components/messages/ConversationsList';
@@ -9,8 +9,8 @@ import MessageHeader from '@/components/messages/MessageHeader';
 import { getRecipient } from '@/services/messages';
 import { useMessagesData } from '@/components/messages/hooks/useMessagesData';
 import { useMessagesSubscriptions } from '@/components/messages/hooks/useMessagesSubscriptions';
-import { useConversationSelection } from '@/components/messages/hooks/useConversationSelection';
 import { useMessageHandlers } from '@/components/messages/hooks/useMessageHandlers';
+import { useConversationSelection } from '@/components/messages/hooks/useConversationSelection';
 import { formatDate, formatMessageTime } from '@/components/messages/utils/dateUtils';
 
 const MessagesContainer = () => {
@@ -28,7 +28,7 @@ const MessagesContainer = () => {
     sendMessageMutation,
     selectedConversationId,
     setSelectedConversationId
-  } = useMessagesData(null);  // We'll set the selected ID in useEffect
+  } = useMessagesData(null);
 
   // Conversation selection functionality
   const {
@@ -44,13 +44,13 @@ const MessagesContainer = () => {
 
   // Message handling functionality
   const { handleNewMessage, handleConversationUpdate } = useMessageHandlers(
-    selectedId,  // Pass the selected conversation ID from the selection hook
+    selectedId,
     refetchConversations
   );
 
   // Setup realtime subscriptions
   useMessagesSubscriptions(
-    selectedId,  // Pass the selected conversation ID from the selection hook
+    selectedId,
     handleNewMessage,
     handleConversationUpdate
   );
@@ -62,10 +62,20 @@ const MessagesContainer = () => {
     : undefined;
 
   // Log debugging information
-  console.log("Current user ID:", user?.id);
-  console.log("Selected conversation ID:", selectedId);
-  console.log("Conversation count:", conversations.length);
-  console.log("Message count:", messages.length);
+  useEffect(() => {
+    console.log("Current user ID:", user?.id);
+    console.log("Selected conversation ID:", selectedId);
+    console.log("Conversation count:", conversations.length);
+    console.log("Available conversations:", conversations.map(c => ({
+      id: c.id,
+      participants: c.participants?.map(p => p.user_id)
+    })));
+    
+    // Force a refetch of conversations when the component mounts
+    if (user && !isLoadingConversations) {
+      refetchConversations();
+    }
+  }, [user, selectedId, conversations.length, isLoadingConversations, refetchConversations]);
 
   return (
     <div className="container py-8">
