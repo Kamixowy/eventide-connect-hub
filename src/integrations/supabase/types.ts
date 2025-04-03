@@ -508,6 +508,12 @@ export type Database = {
           conversation_id: string
         }[]
       }
+      is_conversation_participant: {
+        Args: {
+          conversation_id: string
+        }
+        Returns: boolean
+      }
       mark_messages_as_read: {
         Args: {
           conversation_id: string

@@ -25,18 +25,14 @@ const MessagesContainer = () => {
     isLoadingMessages,
     refetchConversations,
     refetchMessages,
-    sendMessageMutation
+    sendMessageMutation,
+    selectedConversationId,
+    setSelectedConversationId
   } = useMessagesData(null);  // We'll set the selected ID in useEffect
-
-  // Message handling functionality
-  const { handleNewMessage, handleConversationUpdate } = useMessageHandlers(
-    null,  // We'll update this with selectedConversationId
-    refetchConversations
-  );
 
   // Conversation selection functionality
   const {
-    selectedConversationId,
+    selectedConversationId: selectedId,
     handleConversationSelect,
     handleNewConversationCreated,
     handleSendMessage
@@ -46,18 +42,30 @@ const MessagesContainer = () => {
     sendMessageMutation
   );
 
+  // Message handling functionality
+  const { handleNewMessage, handleConversationUpdate } = useMessageHandlers(
+    selectedId,  // Pass the selected conversation ID from the selection hook
+    refetchConversations
+  );
+
   // Setup realtime subscriptions
   useMessagesSubscriptions(
-    selectedConversationId,
+    selectedId,  // Pass the selected conversation ID from the selection hook
     handleNewMessage,
     handleConversationUpdate
   );
 
   // Get selected conversation and recipient
-  const selectedConversation = conversations.find(c => c.id === selectedConversationId);
+  const selectedConversation = conversations.find(c => c.id === selectedId);
   const selectedRecipient = selectedConversation && user 
     ? getRecipient(selectedConversation, user.id)
     : undefined;
+
+  // Log debugging information
+  console.log("Current user ID:", user?.id);
+  console.log("Selected conversation ID:", selectedId);
+  console.log("Conversation count:", conversations.length);
+  console.log("Message count:", messages.length);
 
   return (
     <div className="container py-8">
@@ -68,7 +76,7 @@ const MessagesContainer = () => {
         <ConversationsList 
           conversations={conversations}
           isLoading={isLoadingConversations}
-          selectedConversationId={selectedConversationId}
+          selectedConversationId={selectedId}
           onSelectConversation={handleConversationSelect}
           onNewMessageClick={() => setIsNewMessageDialogOpen(true)}
           userId={user?.id}
