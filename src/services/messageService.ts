@@ -132,8 +132,15 @@ export const fetchConversations = async (): Promise<Conversation[]> => {
           throw unreadError;
         }
 
+        // Add conversation_id to each participant
+        const enhancedParticipants = conversation.participants.map(p => ({
+          ...p,
+          conversation_id: conversation.id
+        })) as ConversationParticipant[];
+
         return {
           ...conversation,
+          participants: enhancedParticipants,
           lastMessage: messages && messages.length > 0 ? messages[0] : null,
           unreadCount: unreadMessages ? unreadMessages.length : 0,
         } as Conversation;
@@ -171,7 +178,19 @@ export const fetchMessages = async (conversationId: string): Promise<Message[]> 
       throw error;
     }
     
-    return data || [];
+    // Ensure each message has the correct sender format
+    const messagesWithFormattedSenders = data?.map(msg => {
+      // If sender is an error or undefined, create a default sender
+      const defaultSender = { id: msg.sender_id, name: 'Unknown', avatar_url: undefined };
+      const formattedSender = msg.sender && !('error' in msg.sender) ? msg.sender : defaultSender;
+      
+      return {
+        ...msg,
+        sender: formattedSender
+      };
+    }) as Message[];
+    
+    return messagesWithFormattedSenders || [];
   } catch (error) {
     console.error('Error fetching messages:', error);
     return [];
