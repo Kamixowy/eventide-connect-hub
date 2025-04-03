@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -32,7 +33,8 @@ const Messages = () => {
   } = useQuery({
     queryKey: ['conversations'],
     queryFn: fetchConversations,
-    enabled: !!user
+    enabled: !!user,
+    retry: 1, // Only retry once to avoid excessive requests on error
   });
 
   // Set default selected conversation
@@ -50,7 +52,8 @@ const Messages = () => {
   } = useQuery({
     queryKey: ['messages', selectedConversationId],
     queryFn: () => selectedConversationId ? fetchMessages(selectedConversationId) : Promise.resolve([]),
-    enabled: !!selectedConversationId
+    enabled: !!selectedConversationId,
+    retry: 1, // Only retry once to avoid excessive requests on error
   });
 
   // Subscribe to new messages
