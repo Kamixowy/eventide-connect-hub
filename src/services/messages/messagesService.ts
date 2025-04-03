@@ -4,4 +4,5 @@
 
 export { fetchMessages } from './operations/fetchMessages';
 export { sendMessage } from './operations/sendMessage';
-export { checkConversationParticipation, markMessagesAsRead } from './utils/messageUtils';
+export { checkConversationParticipation } from './operations/checkConversationParticipation';
+export { markMessagesAsRead } from './utils/messageUtils';
