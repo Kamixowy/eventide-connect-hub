@@ -79,20 +79,7 @@ export const fetchConversations = async (): Promise<Conversation[]> => {
         *,
         participants:conversation_participants(
           id, 
-          user_id,
-          profile:profiles(
-            id, 
-            name, 
-            avatar_url, 
-            user_type,
-            email
-          ),
-          organization:organizations(
-            id,
-            name,
-            logo_url,
-            category
-          )
+          user_id
         )
       `)
       .in('id', conversationIds)
@@ -103,9 +90,45 @@ export const fetchConversations = async (): Promise<Conversation[]> => {
       throw conversationsError;
     }
 
-    // For each conversation, get the last message
-    const conversationsWithLastMessage = await Promise.all(
+    // For each conversation, fetch the participants' profiles and organizations
+    const conversationsWithProfiles = await Promise.all(
       conversations.map(async (conversation) => {
+        // For each participant, get their profile and organization details
+        const enhancedParticipants = await Promise.all(
+          conversation.participants.map(async (participant) => {
+            // Get profile for this participant
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('id, name, avatar_url, user_type, email')
+              .eq('id', participant.user_id)
+              .single();
+
+            if (profileError) {
+              console.error('Error fetching profile:', profileError);
+            }
+
+            // Get organization for this participant (if they are an organization)
+            const { data: organization, error: organizationError } = await supabase
+              .from('organizations')
+              .select('id, name, logo_url, category')
+              .eq('user_id', participant.user_id)
+              .maybeSingle();
+
+            if (organizationError && organizationError.code !== 'PGRST116') {
+              console.error('Error fetching organization:', organizationError);
+            }
+
+            // Return enhanced participant
+            return {
+              id: participant.id,
+              conversation_id: conversation.id,
+              user_id: participant.user_id,
+              profile: profile || undefined,
+              organization: organization || undefined
+            } as ConversationParticipant;
+          })
+        );
+
         // Get the last message for this conversation
         const { data: messages, error: messagesError } = await supabase
           .from('direct_messages')
@@ -132,12 +155,6 @@ export const fetchConversations = async (): Promise<Conversation[]> => {
           throw unreadError;
         }
 
-        // Add conversation_id to each participant
-        const enhancedParticipants = conversation.participants.map(p => ({
-          ...p,
-          conversation_id: conversation.id
-        })) as ConversationParticipant[];
-
         return {
           ...conversation,
           participants: enhancedParticipants,
@@ -147,7 +164,7 @@ export const fetchConversations = async (): Promise<Conversation[]> => {
       })
     );
 
-    return conversationsWithLastMessage;
+    return conversationsWithProfiles;
   } catch (error) {
     console.error('Error fetching conversations:', error);
     return [];
