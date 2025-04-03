@@ -2,16 +2,15 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Search, Loader2 } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { startConversation, fetchOrganizations } from "@/services/messages";
 import { useQuery } from "@tanstack/react-query";
+
+import OrganizationSearchInput from "./OrganizationSearchInput";
+import SelectedOrganization from "./SelectedOrganization";
+import OrganizationsList from "./OrganizationsList";
+import MessageInput from "./MessageInput";
 
 interface NewMessageDialogProps {
   open: boolean;
@@ -121,109 +120,32 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
         
         <div className="flex flex-col flex-grow overflow-hidden">
           <div className="mb-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-              <Input
-                placeholder="Szukaj organizacji..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+            <OrganizationSearchInput 
+              searchQuery={searchQuery} 
+              setSearchQuery={setSearchQuery} 
+            />
           </div>
           
           {selectedOrganization ? (
-            <div className="p-3 border rounded-md mb-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage 
-                      src={selectedOrganization.organization?.logo_url || selectedOrganization.avatar_url} 
-                      alt={selectedOrganization.organization?.name || selectedOrganization.name} 
-                    />
-                    <AvatarFallback>
-                      {(selectedOrganization.organization?.name || selectedOrganization.name)?.substring(0, 2) || 'OR'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-medium">{selectedOrganization.organization?.name || selectedOrganization.name}</h3>
-                    <p className="text-sm text-muted-foreground">{selectedOrganization.organization?.category || 'Organizacja'}</p>
-                  </div>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setSelectedOrganization(null)}
-                >
-                  Zmień
-                </Button>
-              </div>
-            </div>
+            <SelectedOrganization 
+              organization={selectedOrganization} 
+              onChangeOrganization={() => setSelectedOrganization(null)} 
+            />
           ) : (
-            <ScrollArea className="flex-grow border rounded-md h-[200px] mb-4">
-              {isLoading ? (
-                <div className="p-4 text-center text-muted-foreground flex items-center justify-center">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Ładowanie organizacji...
-                </div>
-              ) : filteredOrganizations.length === 0 ? (
-                <div className="p-4 text-center text-muted-foreground">
-                  Nie znaleziono organizacji spełniających kryteria wyszukiwania
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {filteredOrganizations.map((org) => (
-                    <div
-                      key={org.id}
-                      className="p-3 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => setSelectedOrganization(org)}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <Avatar className="h-10 w-10 flex-shrink-0">
-                          <AvatarImage 
-                            src={org.organization?.logo_url || org.avatar_url} 
-                            alt={org.organization?.name || org.name} 
-                          />
-                          <AvatarFallback>
-                            {(org.organization?.name || org.name)?.substring(0, 2) || 'OR'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium">
-                            {org.organization?.name || org.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {org.email}
-                          </p>
-                          <div className="mt-1">
-                            {org.organization?.category && (
-                              <Badge 
-                                variant="outline"
-                                className="text-xs px-1.5 py-0 bg-blue-50 text-blue-700 hover:bg-blue-50"
-                              >
-                                {org.organization.category}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
+            <OrganizationsList 
+              organizations={organizations}
+              filteredOrganizations={filteredOrganizations}
+              isLoading={isLoading}
+              onSelectOrganization={setSelectedOrganization}
+            />
           )}
           
           <Separator className="my-4" />
           
-          <div className="mb-4">
-            <Textarea
-              placeholder="Napisz wiadomość..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="min-h-[120px] resize-none"
-            />
-          </div>
+          <MessageInput 
+            message={message} 
+            onChange={setMessage} 
+          />
         </div>
         
         <DialogFooter>
