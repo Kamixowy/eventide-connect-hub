@@ -3,8 +3,11 @@ import { useEffect } from 'react';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { useAuth } from '@/contexts/AuthContext';
 import { Message } from '@/services/messages/types';
-import { useMessageSubscription, useConversationsSubscription } from '@/services/messages';
-import { checkConversationParticipation } from '@/services/messages/utils/messageUtils';
+import { 
+  useMessageSubscription, 
+  useConversationsSubscription, 
+  checkConversationParticipation 
+} from '@/services/messages';
 
 export const useMessagesSubscriptions = (
   selectedConversationId: string | null,

@@ -11,8 +11,8 @@ import MessageHeader from '@/components/messages/MessageHeader';
 import { Message } from '@/services/messages/types';
 import { useMessagesData } from '@/components/messages/hooks/useMessagesData';
 import { useMessagesSubscriptions } from '@/components/messages/hooks/useMessagesSubscriptions';
-import { getRecipient } from '@/services/messages/utils/conversationUtils';
-import { checkConversationParticipation } from '@/services/messages/utils/messageUtils';
+import { getRecipient } from '@/services/messages';
+import { checkConversationParticipation } from '@/services/messages';
 
 const MessagesContainer = () => {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
