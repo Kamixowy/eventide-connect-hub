@@ -174,7 +174,6 @@ const EventDetails = () => {
         console.error('Error fetching sponsorship options:', sponsorshipError);
       }
       
-      // Fetch posts - use any type to bypass type checking
       const { data: postsData, error: postsError } = await (supabase
         .from('event_posts' as any)
         .select('*')
@@ -304,14 +303,6 @@ const EventDetails = () => {
     });
   };
 
-  const statusOptions = [
-    "Planowane",
-    "W przygotowaniu",
-    "W trakcie",
-    "Zakończone",
-    "Anulowane"
-  ];
-
   return (
     <Layout>
       <div className="relative h-64 md:h-80 w-full overflow-hidden bg-gray-100">
@@ -434,12 +425,6 @@ const EventDetails = () => {
                 >
                   Posty
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="updates" 
-                  className="rounded-none border-b-2 data-[state=active]:border-ngo data-[state=active]:text-foreground px-4 py-2"
-                >
-                  Aktualności
-                </TabsTrigger>
               </TabsList>
               
               <TabsContent value="details" className="mt-0">
@@ -552,47 +537,6 @@ const EventDetails = () => {
                   isOwner={isOwner}
                   onPostDeleted={fetchEventDetails}
                 />
-              </TabsContent>
-              
-              <TabsContent value="updates" className="mt-0">
-                <h2 className="text-2xl font-bold mb-6">Aktualności</h2>
-                
-                {event.updates && event.updates.length > 0 ? (
-                  <div className="space-y-8">
-                    {event.updates.map((update: any) => (
-                      <Card key={update.id} className="border">
-                        <CardHeader className="pb-2">
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="text-xl">{update.title}</CardTitle>
-                            <div className="flex items-center text-sm text-muted-foreground">
-                              <Clock size={14} className="mr-1" />
-                              {update.date}
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="mb-4">{update.content}</p>
-                          {update.image && (
-                            <img 
-                              src={update.image} 
-                              alt={update.title} 
-                              className="rounded-md w-full max-h-72 object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.onerror = null; 
-                                target.src = '/placeholder.svg'; 
-                              }}
-                            />
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">
-                    Nie dodano jeszcze żadnych aktualności dla tego wydarzenia.
-                  </p>
-                )}
               </TabsContent>
             </Tabs>
           </div>
