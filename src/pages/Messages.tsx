@@ -1,175 +1,196 @@
 
-import { useState } from 'react';
-import { Search, Send, ChevronDown, ChevronUp, Plus } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, Send, ChevronDown, ChevronUp, Plus, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/layout/Layout';
-
-// Przykładowe dane wiadomości
-const sampleConversations = [
-  {
-    id: 1,
-    recipient: {
-      id: 101,
-      name: 'Fundacja Szczęśliwe Dzieciństwo',
-      avatar: 'https://images.unsplash.com/photo-1607799279861-4dd421887fb3?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
-      type: 'organization'
-    },
-    lastMessage: {
-      text: 'Dzień dobry, jesteśmy zainteresowani sponsorowaniem Państwa wydarzenia jako Partner Główny. Proszę o kontakt w celu ustalenia szczegółów współpracy.',
-      timestamp: '28.04.2023 10:25',
-      isRead: true,
-      sender: 'user'
-    },
-    messages: [
-      {
-        id: 1,
-        text: 'Dzień dobry, jesteśmy zainteresowani sponsorowaniem Państwa wydarzenia jako Partner Główny. Proszę o kontakt w celu ustalenia szczegółów współpracy.',
-        timestamp: '28.04.2023 10:25',
-        sender: 'user'
-      }
-    ]
-  },
-  {
-    id: 2,
-    recipient: {
-      id: 102,
-      name: 'CreativeDesign Sp. z o.o.',
-      avatar: 'https://images.unsplash.com/photo-1549297161-14f79605a74c?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
-      type: 'sponsor'
-    },
-    lastMessage: {
-      text: 'Propozycja brzmi interesująco. Czy moglibyśmy ustalić szczegóły dotyczące projektów graficznych? Jakie materiały byliby Państwo w stanie przygotować i w jakim terminie?',
-      timestamp: '26.04.2023 15:20',
-      isRead: false,
-      sender: 'recipient'
-    },
-    messages: [
-      {
-        id: 1,
-        text: 'Witam, jako firma z branży kreatywnej chcielibyśmy wesprzeć Państwa wydarzenie. Interesują nas dwie opcje współpracy - Partner Wspierający oraz Sponsor Nagród.',
-        timestamp: '15.04.2023 14:30',
-        sender: 'recipient'
-      },
-      {
-        id: 2,
-        text: 'Dzień dobry, dziękujemy za zainteresowanie. Jesteśmy otwarci na współpracę, jednak w przypadku opcji Partner Wspierający oczekujemy minimalnego wsparcia w wysokości 3500 zł. Czy taka kwota byłaby dla Państwa akceptowalna?',
-        timestamp: '18.04.2023 09:15',
-        sender: 'user'
-      },
-      {
-        id: 3,
-        text: 'Dzień dobry, rozumiemy Państwa oczekiwania. Proponujemy kompromis: 3000 zł za opcję Partner Wspierający plus dodatkowe wsparcie w postaci usług projektowych o wartości 1000 zł (projekty graficzne materiałów promocyjnych). Łącznie wartość wsparcia wyniesie 4000 zł. Czy taka propozycja jest dla Państwa interesująca?',
-        timestamp: '20.04.2023 11:45',
-        sender: 'recipient'
-      },
-      {
-        id: 4,
-        text: 'Propozycja brzmi interesująco. Czy moglibyśmy ustalić szczegóły dotyczące projektów graficznych? Jakie materiały byliby Państwo w stanie przygotować i w jakim terminie?',
-        timestamp: '26.04.2023 15:20',
-        sender: 'user'
-      }
-    ]
-  },
-  {
-    id: 3,
-    recipient: {
-      id: 103,
-      name: 'SportEquipment Polska',
-      avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
-      type: 'sponsor'
-    },
-    lastMessage: {
-      text: 'Świetnie! Przesyłamy logo w załączniku. Koszulki proponujemy w kolorze białym z niebieskimi akcentami, zgodnie z naszą identyfikacją wizualną. Czy taka kolorystyka Państwu odpowiada?',
-      timestamp: '20.03.2023 10:10',
-      isRead: true,
-      sender: 'recipient'
-    },
-    messages: [
-      {
-        id: 1,
-        text: 'Jako firma produkująca sprzęt sportowy chcielibyśmy zostać Partnerem Głównym Państwa turnieju. Oferujemy wsparcie finansowe oraz sprzęt sportowy dla uczestników.',
-        timestamp: '10.03.2023 11:00',
-        sender: 'recipient'
-      },
-      {
-        id: 2,
-        text: 'Dzień dobry, dziękujemy za zainteresowanie. Bardzo cieszymy się z możliwości współpracy. Prosimy o doprecyzowanie, jaki sprzęt sportowy byliby Państwo w stanie przekazać?',
-        timestamp: '12.03.2023 14:30',
-        sender: 'user'
-      },
-      {
-        id: 3,
-        text: 'Proponujemy przekazanie 20 profesjonalnych piłek do siatkówki, 4 siatek turniejowych oraz 50 kompletów koszulek dla uczestników z logo naszej firmy oraz Państwa turnieju.',
-        timestamp: '15.03.2023 09:45',
-        sender: 'recipient'
-      },
-      {
-        id: 4,
-        text: 'Propozycja jest bardzo atrakcyjna. Akceptujemy warunki współpracy. Prosimy o przesłanie logo w wysokiej rozdzielczości oraz określenie kolorystyki koszulek.',
-        timestamp: '18.03.2023 13:20',
-        sender: 'user'
-      },
-      {
-        id: 5,
-        text: 'Świetnie! Przesyłamy logo w załączniku. Koszulki proponujemy w kolorze białym z niebieskimi akcentami, zgodnie z naszą identyfikacją wizualną. Czy taka kolorystyka Państwu odpowiada?',
-        timestamp: '20.03.2023 10:10',
-        sender: 'recipient'
-      }
-    ]
-  },
-  {
-    id: 4,
-    recipient: {
-      id: 104,
-      name: 'Stowarzyszenie Młodych Artystów',
-      avatar: 'https://images.unsplash.com/photo-1431794062232-2a99a5431c6c?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
-      type: 'organization'
-    },
-    lastMessage: {
-      text: 'Zapraszamy na nasz najbliższy festiwal. Byłoby nam bardzo miło, gdyby przedstawiciele Państwa firmy mogli być obecni na wydarzeniu.',
-      timestamp: '05.05.2023 11:30',
-      isRead: true,
-      sender: 'recipient'
-    },
-    messages: [
-      {
-        id: 1,
-        text: 'Zapraszamy na nasz najbliższy festiwal. Byłoby nam bardzo miło, gdyby przedstawiciele Państwa firmy mogli być obecni na wydarzeniu.',
-        timestamp: '05.05.2023 11:30',
-        sender: 'recipient'
-      }
-    ]
-  }
-];
+import { useAuth } from '@/contexts/AuthContext';
+import NewMessageDialog from '@/components/messages/NewMessageDialog';
+import { 
+  fetchConversations, 
+  fetchMessages, 
+  sendMessage,
+  Conversation,
+  Message,
+  getRecipient,
+  useMessageSubscription,
+  useConversationsSubscription
+} from '@/services/messageService';
 
 const Messages = () => {
-  const [selectedConversation, setSelectedConversation] = useState(sampleConversations[0]);
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [newMessage, setNewMessage] = useState('');
   const [expandedFilters, setExpandedFilters] = useState(false);
   const [typeFilter, setTypeFilter] = useState<'all' | 'organization' | 'sponsor'>('all');
-  
-  // Filtrowanie konwersacji
-  const filteredConversations = sampleConversations.filter((conversation) => {
-    const matchesSearch = searchQuery === '' || 
-      conversation.recipient.name.toLowerCase().includes(searchQuery.toLowerCase());
+  const [isNewMessageDialogOpen, setIsNewMessageDialogOpen] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const messageEndRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch conversations
+  const { 
+    data: conversations = [], 
+    isLoading: isLoadingConversations,
+    refetch: refetchConversations
+  } = useQuery({
+    queryKey: ['conversations'],
+    queryFn: fetchConversations,
+    enabled: !!user
+  });
+
+  // Set default selected conversation
+  useEffect(() => {
+    if (conversations.length > 0 && !selectedConversationId) {
+      setSelectedConversationId(conversations[0].id);
+    }
+  }, [conversations, selectedConversationId]);
+
+  // Fetch messages for selected conversation
+  const { 
+    data: messages = [], 
+    isLoading: isLoadingMessages,
+    refetch: refetchMessages
+  } = useQuery({
+    queryKey: ['messages', selectedConversationId],
+    queryFn: () => selectedConversationId ? fetchMessages(selectedConversationId) : Promise.resolve([]),
+    enabled: !!selectedConversationId
+  });
+
+  // Subscribe to new messages
+  const handleNewMessage = (message: Message) => {
+    queryClient.setQueryData(['messages', selectedConversationId], (oldData: Message[] | undefined) => {
+      if (!oldData) return [message];
+      return [...oldData, message];
+    });
     
-    const matchesType = typeFilter === 'all' || conversation.recipient.type === typeFilter;
+    // Refetch conversations to update last message and unread count
+    refetchConversations();
+  };
+
+  // Setup realtime subscriptions
+  const { subscription: messageSubscription } = useMessageSubscription(
+    selectedConversationId,
+    handleNewMessage
+  );
+
+  const { subscription: conversationsSubscription } = useConversationsSubscription(
+    () => {
+      refetchConversations();
+    }
+  );
+
+  // Cleanup subscriptions on unmount
+  useEffect(() => {
+    return () => {
+      messageSubscription?.unsubscribe();
+      conversationsSubscription?.unsubscribe();
+    };
+  }, [messageSubscription, conversationsSubscription]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (messageEndRef.current) {
+      messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  // Get selected conversation
+  const selectedConversation = conversations.find(c => c.id === selectedConversationId);
+  
+  // Filter conversations
+  const filteredConversations = conversations.filter((conversation) => {
+    const recipient = user ? getRecipient(conversation, user.id) : undefined;
+    if (!recipient) return false;
+    
+    const recipientName = recipient.profile?.name || recipient.organization?.name || '';
+    const matchesSearch = searchQuery === '' || 
+      recipientName.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const recipientType = recipient.profile?.user_type || 'organization';
+    const matchesType = typeFilter === 'all' || recipientType === typeFilter;
     
     return matchesSearch && matchesType;
   });
 
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      // W pełnej aplikacji tutaj byłoby wysyłanie wiadomości do API
-      console.log('Wysyłanie wiadomości:', newMessage);
-      setNewMessage('');
+  const handleSendMessage = async () => {
+    if (!selectedConversationId || !newMessage.trim() || !user) return;
+    
+    setIsSending(true);
+    try {
+      const result = await sendMessage(selectedConversationId, newMessage);
+      if (result) {
+        setNewMessage('');
+        // Add the message to the local cache
+        queryClient.setQueryData(['messages', selectedConversationId], (oldData: Message[] | undefined) => {
+          if (!oldData) return [result];
+          return [...oldData, result];
+        });
+        
+        // Refetch conversations to update last message
+        refetchConversations();
+      } else {
+        toast({
+          title: "Błąd",
+          description: "Nie udało się wysłać wiadomości. Spróbuj ponownie.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Błąd",
+        description: "Wystąpił błąd podczas wysyłania wiadomości",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSending(false);
     }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const handleConversationSelect = (conversationId: string) => {
+    setSelectedConversationId(conversationId);
+    // Refetch messages for the selected conversation
+    queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+  };
+
+  const handleNewConversationCreated = (conversationId: string) => {
+    setSelectedConversationId(conversationId);
+    refetchConversations();
+  };
+
+  // Get recipient of the selected conversation
+  const selectedRecipient = selectedConversation && user 
+    ? getRecipient(selectedConversation, user.id) 
+    : undefined;
+
+  // Format date to display only the date part
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pl-PL');
+  };
+
+  // Format time to display in messages
+  const formatMessageTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }) + 
+           ' • ' + 
+           date.toLocaleDateString('pl-PL');
   };
 
   return (
@@ -199,7 +220,12 @@ const Messages = () => {
                   Filtry
                   {expandedFilters ? <ChevronUp size={16} className="ml-1" /> : <ChevronDown size={16} className="ml-1" />}
                 </button>
-                <Button variant="ghost" size="sm" className="text-ngo">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-ngo"
+                  onClick={() => setIsNewMessageDialogOpen(true)}
+                >
                   <Plus size={16} className="mr-1" /> Nowa wiadomość
                 </Button>
               </div>
@@ -232,111 +258,146 @@ const Messages = () => {
             </div>
             
             <ScrollArea className="h-[calc(100vh-320px)]">
-              <div className="divide-y">
-                {filteredConversations.map((conversation) => (
-                  <div 
-                    key={conversation.id}
-                    className={`p-4 hover:bg-gray-50 cursor-pointer ${selectedConversation.id === conversation.id ? 'bg-gray-50' : ''}`}
-                    onClick={() => setSelectedConversation(conversation)}
-                  >
-                    <div className="flex items-start space-x-3">
-                      <Avatar className="h-10 w-10 flex-shrink-0">
-                        <AvatarImage src={conversation.recipient.avatar} alt={conversation.recipient.name} />
-                        <AvatarFallback>{conversation.recipient.name.substring(0, 2)}</AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="text-sm font-medium truncate">
-                            {conversation.recipient.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {conversation.lastMessage.timestamp.split(' ')[0]}
-                          </p>
-                        </div>
-                        <div className="flex items-center">
-                          <p className={`text-xs truncate ${!conversation.lastMessage.isRead && conversation.lastMessage.sender === 'recipient' ? 'font-semibold' : 'text-muted-foreground'}`}>
-                            {conversation.lastMessage.text}
-                          </p>
-                          {!conversation.lastMessage.isRead && conversation.lastMessage.sender === 'recipient' && (
-                            <span className="ml-2 h-2 w-2 rounded-full bg-ngo"></span>
-                          )}
-                        </div>
-                        <div className="mt-1">
-                          <Badge 
-                            variant="outline"
-                            className={`text-xs px-1.5 py-0 ${
-                              conversation.recipient.type === 'organization' 
-                                ? 'bg-blue-50 text-blue-700 hover:bg-blue-50' 
-                                : 'bg-green-50 text-green-700 hover:bg-green-50'
-                            }`}
-                          >
-                            {conversation.recipient.type === 'organization' ? 'Organizacja' : 'Sponsor'}
-                          </Badge>
+              {isLoadingConversations ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-ngo" />
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {filteredConversations.map((conversation) => {
+                    const recipient = user ? getRecipient(conversation, user.id) : undefined;
+                    if (!recipient) return null;
+                    
+                    const recipientName = recipient.profile?.name || recipient.organization?.name || 'Użytkownik';
+                    const recipientAvatar = recipient.profile?.avatar_url || recipient.organization?.logo_url;
+                    const recipientType = recipient.profile?.user_type || 'organization';
+                    
+                    return (
+                      <div 
+                        key={conversation.id}
+                        className={`p-4 hover:bg-gray-50 cursor-pointer ${selectedConversationId === conversation.id ? 'bg-gray-50' : ''}`}
+                        onClick={() => handleConversationSelect(conversation.id)}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <Avatar className="h-10 w-10 flex-shrink-0">
+                            <AvatarImage src={recipientAvatar || ''} alt={recipientName} />
+                            <AvatarFallback>{recipientName.substring(0, 2)}</AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-sm font-medium truncate">
+                                {recipientName}
+                              </p>
+                              {conversation.lastMessage && (
+                                <p className="text-xs text-muted-foreground">
+                                  {formatDate(conversation.lastMessage.created_at)}
+                                </p>
+                              )}
+                            </div>
+                            {conversation.lastMessage && (
+                              <div className="flex items-center">
+                                <p className={`text-xs truncate ${conversation.unreadCount ? 'font-semibold' : 'text-muted-foreground'}`}>
+                                  {conversation.lastMessage.content}
+                                </p>
+                                {conversation.unreadCount > 0 && (
+                                  <span className="ml-2 h-2 w-2 rounded-full bg-ngo"></span>
+                                )}
+                              </div>
+                            )}
+                            <div className="mt-1">
+                              <Badge 
+                                variant="outline"
+                                className={`text-xs px-1.5 py-0 ${
+                                  recipientType === 'organization' 
+                                    ? 'bg-blue-50 text-blue-700 hover:bg-blue-50' 
+                                    : 'bg-green-50 text-green-700 hover:bg-green-50'
+                                }`}
+                              >
+                                {recipientType === 'organization' ? 'Organizacja' : 'Sponsor'}
+                              </Badge>
+                            </div>
+                          </div>
                         </div>
                       </div>
+                    );
+                  })}
+                  
+                  {filteredConversations.length === 0 && (
+                    <div className="p-8 text-center text-muted-foreground">
+                      {conversations.length === 0 
+                        ? "Brak konwersacji. Rozpocznij nową konwersację, klikając przycisk 'Nowa wiadomość'." 
+                        : "Nie znaleziono wiadomości spełniających kryteria wyszukiwania"}
                     </div>
-                  </div>
-                ))}
-                
-                {filteredConversations.length === 0 && (
-                  <div className="p-8 text-center text-muted-foreground">
-                    Nie znaleziono wiadomości spełniających kryteria wyszukiwania
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </ScrollArea>
           </div>
           
           {/* Widok konwersacji */}
           <div className="md:col-span-2 border rounded-lg overflow-hidden flex flex-col bg-white">
-            {selectedConversation ? (
+            {selectedConversation && selectedRecipient ? (
               <>
                 <div className="p-4 border-b">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={selectedConversation.recipient.avatar} alt={selectedConversation.recipient.name} />
-                      <AvatarFallback>{selectedConversation.recipient.name.substring(0, 2)}</AvatarFallback>
+                      <AvatarImage 
+                        src={selectedRecipient.profile?.avatar_url || selectedRecipient.organization?.logo_url || ''} 
+                        alt={selectedRecipient.profile?.name || selectedRecipient.organization?.name || 'User'} 
+                      />
+                      <AvatarFallback>
+                        {(selectedRecipient.profile?.name || selectedRecipient.organization?.name || 'U').substring(0, 2)}
+                      </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium">{selectedConversation.recipient.name}</p>
+                      <p className="font-medium">
+                        {selectedRecipient.profile?.name || selectedRecipient.organization?.name || 'Użytkownik'}
+                      </p>
                       <Badge 
                         variant="outline"
                         className={`text-xs px-1.5 py-0 ${
-                          selectedConversation.recipient.type === 'organization' 
+                          selectedRecipient.profile?.user_type === 'organization' 
                             ? 'bg-blue-50 text-blue-700 hover:bg-blue-50' 
                             : 'bg-green-50 text-green-700 hover:bg-green-50'
                         }`}
                       >
-                        {selectedConversation.recipient.type === 'organization' ? 'Organizacja' : 'Sponsor'}
+                        {selectedRecipient.profile?.user_type === 'organization' ? 'Organizacja' : 'Sponsor'}
                       </Badge>
                     </div>
                   </div>
                 </div>
                 
                 <ScrollArea className="flex-grow p-4 h-[calc(100vh-420px)]">
-                  <div className="space-y-4">
-                    {selectedConversation.messages.map((message) => (
-                      <div 
-                        key={message.id} 
-                        className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                      >
+                  {isLoadingMessages ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="h-6 w-6 animate-spin text-ngo" />
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {messages.map((message) => (
                         <div 
-                          className={`max-w-[80%] rounded-lg p-3 ${
-                            message.sender === 'user' 
-                              ? 'bg-ngo text-white rounded-tr-none' 
-                              : 'bg-gray-100 text-gray-800 rounded-tl-none'
-                          }`}
+                          key={message.id} 
+                          className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
                         >
-                          <p className="text-sm">{message.text}</p>
-                          <p className={`text-xs mt-1 ${
-                            message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
-                          }`}>
-                            {message.timestamp}
-                          </p>
+                          <div 
+                            className={`max-w-[80%] rounded-lg p-3 ${
+                              message.sender_id === user?.id 
+                                ? 'bg-ngo text-white rounded-tr-none' 
+                                : 'bg-gray-100 text-gray-800 rounded-tl-none'
+                            }`}
+                          >
+                            <p className="text-sm">{message.content}</p>
+                            <p className={`text-xs mt-1 ${
+                              message.sender_id === user?.id ? 'text-blue-100' : 'text-gray-500'
+                            }`}>
+                              {formatMessageTime(message.created_at)}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                      <div ref={messageEndRef} />
+                    </div>
+                  )}
                 </ScrollArea>
                 
                 <div className="p-4 border-t">
@@ -345,26 +406,61 @@ const Messages = () => {
                       placeholder="Napisz wiadomość..."
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyDown={handleKeyDown}
                       className="min-h-[80px] resize-none"
+                      disabled={isSending}
                     />
                     <Button 
                       className="btn-gradient"
                       size="icon"
                       onClick={handleSendMessage}
+                      disabled={!newMessage.trim() || isSending}
                     >
-                      <Send size={18} />
+                      {isSending ? (
+                        <Loader2 size={18} className="animate-spin" />
+                      ) : (
+                        <Send size={18} />
+                      )}
                     </Button>
                   </div>
                 </div>
               </>
             ) : (
               <div className="flex items-center justify-center h-full p-8 text-center text-muted-foreground">
-                Wybierz konwersację, aby wyświetlić wiadomości
+                {isLoadingConversations ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="h-6 w-6 animate-spin text-ngo" />
+                    <p>Ładowanie konwersacji...</p>
+                  </div>
+                ) : (
+                  <>
+                    {conversations.length === 0 ? (
+                      <div className="max-w-md">
+                        <h3 className="text-lg font-medium mb-2">Brak konwersacji</h3>
+                        <p className="mb-4">Rozpocznij nową konwersację, aby nawiązać kontakt z organizacjami.</p>
+                        <Button 
+                          className="btn-gradient" 
+                          onClick={() => setIsNewMessageDialogOpen(true)}
+                        >
+                          <Plus size={16} className="mr-1" /> Nowa wiadomość
+                        </Button>
+                      </div>
+                    ) : (
+                      "Wybierz konwersację, aby wyświetlić wiadomości"
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>
         </div>
       </div>
+      
+      <NewMessageDialog 
+        open={isNewMessageDialogOpen} 
+        onOpenChange={setIsNewMessageDialogOpen}
+        onConversationCreated={handleNewConversationCreated}
+      />
     </Layout>
   );
 };
