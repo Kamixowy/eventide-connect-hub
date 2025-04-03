@@ -18,7 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,6 +32,7 @@ import {
 import { updateEventStatus } from '@/services/eventService';
 import EventPostForm from '@/components/events/posts/EventPostForm';
 import EventPostsList from '@/components/events/posts/EventPostsList';
+import SponsorshipTooltip from '@/components/events/SponsorshipTooltip';
 
 const statusOptions = [
   "Planowane",
@@ -67,25 +68,29 @@ const demoEventData = {
       id: 1,
       title: 'Partner Główny',
       description: 'Logo na materiałach promocyjnych, bannery na miejscu wydarzenia, miejsce na stoisko, logo na koszulkach uczestników, wyróżnienie podczas ceremonii.',
-      price: { from: 5000, to: 10000 }
+      price: { from: 5000, to: 10000 },
+      benefits: ['Logo na materiałach promocyjnych', 'Bannery na miejscu wydarzenia', 'Miejsce na stoisko', 'Logo na koszulkach uczestników', 'Wyróżnienie podczas ceremonii']
     },
     {
       id: 2,
       title: 'Partner Wspierający',
       description: 'Logo na materiałach promocyjnych, banner na miejscu wydarzenia, wyróżnienie podczas ceremonii.',
-      price: { from: 2000, to: 4000 }
+      price: { from: 2000, to: 4000 },
+      benefits: ['Logo na materiałach promocyjnych', 'Banner na miejscu wydarzenia', 'Wyróżnienie podczas ceremonii']
     },
     {
       id: 3,
       title: 'Partner Medialny',
       description: 'Relacje z wydarzenia, promocja w mediach partnera.',
-      price: null
+      price: null,
+      benefits: ['Relacje z wydarzenia', 'Promocja w mediach partnera']
     },
     {
       id: 4,
       title: 'Sponsor Nagród',
       description: 'Przekazanie nagród dla uczestników, wyróżnienie podczas ceremonii wręczenia nagród.',
-      price: { from: 1000, to: 3000 }
+      price: { from: 1000, to: 3000 },
+      benefits: ['Przekazanie nagród dla uczestników', 'Wyróżnienie podczas ceremonii wręczenia nagród']
     }
   ],
   updates: [
@@ -219,7 +224,8 @@ const EventDetails = () => {
           price: { 
             from: option.price, 
             to: option.price_to || option.price 
-          }
+          },
+          benefits: option.benefits || []
         })) : demoEventData.sponsorshipOptions,
         posts: postsData || [],
         updates: []
@@ -571,25 +577,30 @@ const EventDetails = () => {
 
                 <div className="space-y-4">
                   {event.sponsorshipOptions && event.sponsorshipOptions.map((option: any) => (
-                    <div key={option.id} className="border rounded-md p-4">
-                      <h4 className="font-semibold mb-2">{option.title}</h4>
-                      <p className="text-sm text-muted-foreground mb-3">{option.description}</p>
-                      
-                      {isLoggedIn && option.price && (
-                        <p className="text-sm font-medium">
-                          Budżet: {option.price.from}
-                          {option.price.to && option.price.to !== option.price.from 
-                            ? ` - ${option.price.to}` 
-                            : ''} PLN
-                        </p>
-                      )}
-                      
-                      {!isLoggedIn && option.price && (
-                        <p className="text-sm italic text-muted-foreground">
-                          Szczegóły cenowe dostępne po zalogowaniu
-                        </p>
-                      )}
-                    </div>
+                    <SponsorshipTooltip 
+                      key={option.id} 
+                      benefits={option.benefits || []}
+                    >
+                      <div className="border rounded-md p-4 hover:bg-gray-50 transition-colors cursor-help">
+                        <h4 className="font-semibold mb-2">{option.title}</h4>
+                        <p className="text-sm text-muted-foreground mb-3">{option.description}</p>
+                        
+                        {isLoggedIn && option.price && (
+                          <p className="text-sm font-medium">
+                            Budżet: {option.price.from}
+                            {option.price.to && option.price.to !== option.price.from 
+                              ? ` - ${option.price.to}` 
+                              : ''} PLN
+                          </p>
+                        )}
+                        
+                        {!isLoggedIn && option.price && (
+                          <p className="text-sm italic text-muted-foreground">
+                            Szczegóły cenowe dostępne po zalogowaniu
+                          </p>
+                        )}
+                      </div>
+                    </SponsorshipTooltip>
                   ))}
                 </div>
 

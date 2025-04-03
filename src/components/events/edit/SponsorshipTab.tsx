@@ -4,12 +4,18 @@ import { UseFormReturn } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EventFormValues, SponsorshipOption } from './EventEditSchema';
 import { Button } from '@/components/ui/button';
-import { HandCoins, Plus, Trash } from 'lucide-react';
+import { HandCoins, Plus, Trash, Info } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface SponsorshipTabProps {
   methods: UseFormReturn<EventFormValues>;
@@ -104,7 +110,21 @@ const SponsorshipTab: React.FC<SponsorshipTabProps> = ({
                 </div>
                 
                 <div>
-                  <label className="text-sm font-medium">Korzyści</label>
+                  <div className="flex items-center mb-2">
+                    <label className="text-sm font-medium mr-2">Korzyści</label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info size={16} className="text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs max-w-xs">
+                            Korzyści będą widoczne po najechaniu kursorem na pakiet sponsorski na stronie wydarzenia
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {option.benefits.map((benefit, index) => (
                       <Badge 
