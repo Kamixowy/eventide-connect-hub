@@ -76,6 +76,7 @@ export const updateEvent = async (id: string, data: EventFormValues, imageUrl: s
     tags: tagsArray.length > 0 ? tagsArray : null,
     social_media: socialMedia,
     image_url: imageUrl || null,
+    status: data.status || 'Planowane',
   };
   
   // Update event in the database

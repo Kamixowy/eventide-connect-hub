@@ -17,6 +17,7 @@ export const eventFormSchema = z.object({
   facebook: z.string().optional(),
   instagram: z.string().optional(),
   linkedin: z.string().optional(),
+  status: z.string().optional().default("Planowane"),
 });
 
 // Type for form values

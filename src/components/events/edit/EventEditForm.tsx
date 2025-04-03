@@ -11,6 +11,15 @@ import DetailsTab from './DetailsTab';
 import MediaTab from './MediaTab';
 import SponsorshipTab from './SponsorshipTab';
 
+// Define status options for event status selection
+const statusOptions = [
+  "Planowane",
+  "W przygotowaniu",
+  "W trakcie",
+  "Zakończone",
+  "Odwołane"
+];
+
 interface EventEditFormProps {
   methods: UseFormReturn<EventFormValues>;
   onSubmit: (data: EventFormValues) => Promise<void>;

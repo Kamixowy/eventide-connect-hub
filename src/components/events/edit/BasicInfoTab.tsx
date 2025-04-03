@@ -11,13 +11,24 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EventFormValues } from './EventEditSchema';
+
+// Define status options for event status selection
+const statusOptions = [
+  "Planowane",
+  "W przygotowaniu",
+  "W trakcie",
+  "Zakończone",
+  "Odwołane"
+];
 
 interface BasicInfoTabProps {
   methods: UseFormReturn<EventFormValues>;
@@ -59,6 +70,38 @@ const BasicInfoTab = ({ methods }: BasicInfoTabProps) => {
                   {...field}
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        {/* Status field */}
+        <FormField
+          control={control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status wydarzenia</FormLabel>
+              <Select 
+                onValueChange={field.onChange} 
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Wybierz status" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {statusOptions.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Status określa etap wydarzenia
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

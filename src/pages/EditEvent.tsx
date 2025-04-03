@@ -45,6 +45,7 @@ const EditEvent = () => {
       tags: '',
       facebook: '',
       linkedin: '',
+      status: 'Planowane',
     },
   });
 
@@ -116,6 +117,8 @@ const EditEvent = () => {
           image_url: eventData.image_url || '',
           facebook: socialMedia && typeof socialMedia === 'object' ? (socialMedia as any).facebook || '' : '',
           linkedin: socialMedia && typeof socialMedia === 'object' ? (socialMedia as any).linkedin || '' : '',
+          instagram: socialMedia && typeof socialMedia === 'object' ? (socialMedia as any).instagram || '' : '',
+          status: eventData.status || 'Planowane',
         });
 
         setUploadedImageUrl(eventData.image_url || null);
