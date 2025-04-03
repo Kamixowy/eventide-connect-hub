@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -130,7 +129,7 @@ const EditEvent = () => {
             title: option.title || '',
             description: option.description || '',
             priceFrom: option.price ? String(option.price) : '0',
-            priceTo: '0', // Default value, as we don't store priceTo in the DB
+            priceTo: option.price_to ? String(option.price_to) : '0', // Fix here: use price_to from the database
             benefits: Array.isArray(option.benefits) ? option.benefits : [],
           }));
           setSponsorshipOptions(formattedOptions);
