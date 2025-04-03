@@ -2,46 +2,38 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Znajduje lub tworzy konwersację między dwoma użytkownikami
- * Zwraca ID konwersacji
+ * Tworzy nową konwersację lub zwraca ID istniejącej
  */
-export const createOrGetConversation = async (
-  otherUserId: string
-): Promise<string | null> => {
+export const createOrGetConversation = async (recipientUserId: string): Promise<string | null> => {
   try {
-    console.log("Szukanie lub tworzenie konwersacji z użytkownikiem:", otherUserId);
-    
-    // Pobierz aktualnego użytkownika
+    // Sprawdź czy mamy zalogowanego użytkownika
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.error("Użytkownik nie zalogowany");
-      throw new Error("Musisz być zalogowany, aby utworzyć konwersację");
+      throw new Error('Musisz być zalogowany, aby utworzyć konwersację');
     }
-    
-    // Użyj funkcji bazodanowej do znalezienia lub utworzenia konwersacji
+
+    console.log('Szukanie lub tworzenie konwersacji z użytkownikiem:', recipientUserId);
+
+    // Użyj funkcji Supabase do utworzenia lub pobrania konwersacji
     const { data, error } = await supabase.rpc(
       'create_conversation_and_participants',
-      {
-        user_one: user.id,
-        user_two: otherUserId
-      }
+      { user_one: user.id, user_two: recipientUserId }
     );
-    
+
     if (error) {
-      console.error("Błąd podczas tworzenia/wyszukiwania konwersacji:", error);
+      console.error('Błąd podczas tworzenia konwersacji:', error);
       throw error;
     }
-    
+
     if (!data || data.length === 0) {
-      console.error("Nie zwrócono ID konwersacji");
+      console.error('Nie otrzymano ID konwersacji');
       return null;
     }
-    
-    const conversationId = data[0].conversation_id;
-    console.log("Znaleziono lub utworzono konwersację:", conversationId);
-    return conversationId;
+
+    console.log('Znaleziono lub utworzono konwersację:', data[0].conversation_id);
+    return data[0].conversation_id;
   } catch (error) {
-    console.error("Błąd w createOrGetConversation:", error);
+    console.error('Błąd w createOrGetConversation:', error);
     throw error;
   }
 };

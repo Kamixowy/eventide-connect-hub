@@ -4,7 +4,7 @@
 
 export { getRecipient } from './utils/conversationUtils';
 export { fetchConversations } from './operations/fetchConversations';
-export { startConversation } from './operations/startConversation';
+export { createOrGetConversation as startConversation } from './operations/createOrGetConversation';
 
-// Powinniśmy importować bezpośrednio z operacji, aby uniknąć cyklicznych zależności
+// Unikamy eksportu z messagesService aby uniknąć cyklicznych zależności
 export { sendMessageToConversation as sendMessage } from './operations/sendMessageService';

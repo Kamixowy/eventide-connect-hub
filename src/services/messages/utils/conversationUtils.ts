@@ -1,5 +1,6 @@
 
 import { Conversation, ConversationParticipant } from '../types';
+import { supabase } from '@/integrations/supabase/client';
 
 // Helper function to get the other participant in a conversation
 export const getRecipient = (conversation: Conversation, currentUserId: string): ConversationParticipant | undefined => {
@@ -9,13 +10,13 @@ export const getRecipient = (conversation: Conversation, currentUserId: string):
 // Helper function to enhance participants with profile and organization data
 export const enhanceParticipantsWithProfiles = async (
   participants: any[], 
-  supabase: any
+  supabaseClient: any
 ): Promise<ConversationParticipant[]> => {
   try {
     return await Promise.all(
       participants.map(async (participant) => {
         // Get profile for this participant
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile, error: profileError } = await supabaseClient
           .from('profiles')
           .select('id, name, avatar_url, user_type, email')
           .eq('id', participant.user_id)
@@ -26,7 +27,7 @@ export const enhanceParticipantsWithProfiles = async (
         }
 
         // Get organization for this participant (if they are an organization)
-        const { data: organization, error: organizationError } = await supabase
+        const { data: organization, error: organizationError } = await supabaseClient
           .from('organizations')
           .select('id, name, logo_url, category')
           .eq('user_id', participant.user_id)
@@ -56,10 +57,10 @@ export const enhanceParticipantsWithProfiles = async (
 export const getUnreadCount = async (
   conversationId: string, 
   userId: string,
-  supabase: any
+  supabaseClient: any
 ): Promise<number> => {
   try {
-    const { data: unreadMessages, error: unreadError } = await supabase
+    const { data: unreadMessages, error: unreadError } = await supabaseClient
       .from('direct_messages')
       .select('id', { count: 'exact' })
       .eq('conversation_id', conversationId)
@@ -81,10 +82,10 @@ export const getUnreadCount = async (
 // Helper function to get the last message for a conversation
 export const getLastMessage = async (
   conversationId: string,
-  supabase: any
+  supabaseClient: any
 ) => {
   try {
-    const { data: messages, error: messagesError } = await supabase
+    const { data: messages, error: messagesError } = await supabaseClient
       .from('direct_messages')
       .select('*')
       .eq('conversation_id', conversationId)

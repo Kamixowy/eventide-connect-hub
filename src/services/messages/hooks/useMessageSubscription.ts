@@ -1,63 +1,46 @@
 
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Message } from '@/services/messages/types';
-import { useEffect } from 'react';
+import { RealtimeChannel } from '@supabase/supabase-js';
+import { Message } from '../types';
 
-// Hook do subskrypcji nowych wiadomości w określonej konwersacji
 export const useMessageSubscription = (
   conversationId: string | null,
-  onNewMessage: (message: Message) => void
-): { subscription: RealtimeChannel | null } => {
-  const { user } = useAuth();
-  
+  handleNewMessage: (message: Message) => void
+) => {
+  const [subscription, setSubscription] = useState<RealtimeChannel | null>(null);
+
   useEffect(() => {
-    if (!user || !conversationId) {
+    if (!conversationId) {
       console.log('Brak użytkownika lub ID konwersacji, pomijanie subskrypcji wiadomości');
-      return () => {};
+      return;
     }
 
-    console.log('Konfigurowanie subskrypcji wiadomości w konwersacji:', conversationId);
-    
-    // Subskrybuj tabelę direct_messages dla nowych wiadomości w tej konwersacji
-    const channel = supabase
-      .channel(`messages-${conversationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'direct_messages',
-          filter: `conversation_id=eq.${conversationId}`
-        },
-        (payload) => {
-          console.log('Wykryto nową wiadomość:', payload);
-          
-          if (payload.new) {
-            const newMessage = payload.new as Message;
-            console.log('Przetwarzanie nowej wiadomości:', newMessage);
-            // Upewnij się, że przekazujesz wiadomość do callbacka
-            onNewMessage(newMessage);
-          }
-        }
-      )
+    console.log('Konfigurowanie subskrypcji wiadomości dla konwersacji:', conversationId);
+
+    const messageChannel = supabase
+      .channel(`messages:${conversationId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'direct_messages',
+        filter: `conversation_id=eq.${conversationId}`
+      }, (payload) => {
+        console.log('Odebrano nową wiadomość:', payload);
+        const newMessage = payload.new as Message;
+        handleNewMessage(newMessage);
+      })
       .subscribe((status) => {
-        console.log(`Status subskrypcji wiadomości dla konwersacji ${conversationId}:`, status);
+        console.log('Status subskrypcji wiadomości:', status);
       });
 
-    console.log('Subskrypcja wiadomości skonfigurowana pomyślnie dla konwersacji:', conversationId);
+    setSubscription(messageChannel);
 
-    // Wyczyść subskrypcję przy odmontowaniu
     return () => {
-      console.log('Czyszczenie subskrypcji wiadomości dla konwersacji:', conversationId);
-      channel.unsubscribe();
+      console.log('Czyszczenie subskrypcji wiadomości');
+      supabase.removeChannel(messageChannel);
     };
-  }, [user, conversationId, onNewMessage]);
+  }, [conversationId, handleNewMessage]);
 
-  return { 
-    subscription: (user && conversationId) 
-      ? supabase.channel(`messages-${conversationId}`) 
-      : null 
-  };
+  return { subscription };
 };

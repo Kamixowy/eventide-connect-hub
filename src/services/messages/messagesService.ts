@@ -4,7 +4,7 @@
 
 export { fetchMessages } from './operations/fetchMessages';
 export { 
-  sendMessageToConversation, 
+  sendMessageToConversation,
   startConversationWithMessage, 
   createTestConversation 
 } from './operations/sendMessageService';

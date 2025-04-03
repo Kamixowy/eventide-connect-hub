@@ -23,7 +23,17 @@ export const sendMessageToConversation = async (
       throw new Error("Musisz być zalogowany, aby wysyłać wiadomości");
     }
     
-    // Tworzenie i wysyłanie wiadomości
+    // Sprawdzenie, czy użytkownik jest uczestnikiem konwersacji
+    const { data: isParticipant } = await supabase.rpc(
+      'is_conversation_participant', 
+      { conversation_id: conversationId }
+    );
+    
+    if (!isParticipant) {
+      throw new Error("Nie masz uprawnień do wysyłania wiadomości w tej konwersacji");
+    }
+    
+    // Tworzenie i wysyłanie wiadomości z kwalifikowanymi nazwami kolumn
     const { data: message, error } = await supabase
       .from('direct_messages')
       .insert({
@@ -67,6 +77,12 @@ export const startConversationWithMessage = async (
     if (!initialMessage.trim()) throw new Error("Treść wiadomości nie może być pusta");
     
     console.log(`Rozpoczynanie konwersacji z użytkownikiem ${recipientUserId}: ${initialMessage}`);
+    
+    // Pobierz aktualnego użytkownika
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error("Musisz być zalogowany, aby rozpocząć konwersację");
+    }
     
     // Najpierw utwórz lub pobierz konwersację
     const conversationId = await createOrGetConversation(recipientUserId);
@@ -121,25 +137,21 @@ export const createTestConversation = async (
     }
     
     // Dodaj kilka testowych wiadomości
-    await supabase
-      .from('direct_messages')
-      .insert([
-        {
-          conversation_id: conversationId,
-          sender_id: user.id,
-          content: `Witaj ${targetUser.name || 'tam'}! To jest testowa wiadomość.`
-        },
-        {
-          conversation_id: conversationId,
-          sender_id: targetUser.id,
-          content: 'Cześć! To jest automatyczna odpowiedź testowa.'
-        },
-        {
-          conversation_id: conversationId,
-          sender_id: user.id,
-          content: 'Jak się dziś masz?'
-        }
-      ]);
+    await Promise.all([
+      sendMessageToConversation(
+        conversationId,
+        `Witaj ${targetUser.name || 'tam'}! To jest testowa wiadomość.`
+      ),
+      supabase.from('direct_messages').insert({
+        conversation_id: conversationId,
+        sender_id: targetUser.id,
+        content: 'Cześć! To jest automatyczna odpowiedź testowa.'
+      }),
+      sendMessageToConversation(
+        conversationId,
+        'Jak się dziś masz?'
+      )
+    ]);
     
     return { conversationId };
   } catch (error) {
