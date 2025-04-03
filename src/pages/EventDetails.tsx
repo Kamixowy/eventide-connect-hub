@@ -216,7 +216,10 @@ const EventDetails = () => {
           id: option.id,
           title: option.title,
           description: option.description,
-          price: option.price ? { from: option.price, to: option.price * 1.5 } : null
+          price: option.price ? { 
+            from: option.price, 
+            to: option.price_to || option.price * 1.5 
+          } : null
         })) : demoEventData.sponsorshipOptions,
         posts: postsData || [],
         updates: []
