@@ -17,7 +17,6 @@ export const sendMessage = async (conversationId: string, content: string): Prom
     console.log('Sending message to conversation:', conversationId);
     
     // Verify that the current user is a participant in this conversation
-    // We'll check the participant status directly from the database
     const { data: participant, error: participantError } = await supabase
       .from('conversation_participants')
       .select('id')
@@ -28,8 +27,7 @@ export const sendMessage = async (conversationId: string, content: string): Prom
     if (participantError) {
       console.error('Error checking conversation participation:', participantError);
       
-      // Special case: Check if we're responding to a newly created conversation
-      // In this case, let's query the conversation to make sure it exists first
+      // Check if the conversation exists at all
       const { data: conversation, error: conversationError } = await supabase
         .from('direct_conversations')
         .select('id')
@@ -38,28 +36,10 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       
       if (conversationError || !conversation) {
         console.error('Conversation does not exist:', conversationError);
-        
-        // Since we're trying to send a message to a new conversation,
-        // let's try to create the conversation first
-        console.log('Attempting to create a new conversation with ID:', conversationId);
-        
-        const { data: newConversation, error: createError } = await supabase
-          .from('direct_conversations')
-          .insert({
-            id: conversationId
-          })
-          .select()
-          .single();
-        
-        if (createError) {
-          console.error('Error creating conversation:', createError);
-          throw new Error('Failed to create conversation');
-        }
-        
-        console.log('Successfully created conversation:', newConversation.id);
+        throw new Error('Conversation does not exist');
       }
       
-      // Now try to add the user as a participant
+      // If the conversation exists but user is not a participant, add them
       console.log('Adding current user as participant to conversation');
       const { error: insertError } = await supabase
         .from('conversation_participants')
