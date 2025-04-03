@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -34,7 +33,6 @@ import { updateEventStatus } from '@/services/eventService';
 import EventPostForm from '@/components/events/posts/EventPostForm';
 import EventPostsList from '@/components/events/posts/EventPostsList';
 
-// Define status options array
 const statusOptions = [
   "Planowane",
   "W przygotowaniu",
@@ -433,7 +431,7 @@ const EventDetails = () => {
                   value="posts" 
                   className="rounded-none border-b-2 data-[state=active]:border-ngo data-[state=active]:text-foreground px-4 py-2"
                 >
-                  Posty
+                  Aktualności
                 </TabsTrigger>
               </TabsList>
               
@@ -511,7 +509,7 @@ const EventDetails = () => {
               
               <TabsContent value="posts" className="mt-0">
                 <div className="mb-6 flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">Posty</h2>
+                  <h2 className="text-2xl font-bold">Aktualności</h2>
                   
                   {isOwner && !showPostForm && (
                     <Button onClick={() => setShowPostForm(true)}>
