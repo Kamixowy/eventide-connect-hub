@@ -12,6 +12,7 @@ import { useMessagesSubscriptions } from '@/components/messages/hooks/useMessage
 import { useMessageHandlers } from '@/components/messages/hooks/useMessageHandlers';
 import { useConversationSelection } from '@/components/messages/hooks/useConversationSelection';
 import { formatDate, formatMessageTime } from '@/components/messages/utils/dateUtils';
+import { markMessagesAsRead } from '@/services/messages';
 
 const MessagesContainer = () => {
   const [isNewMessageDialogOpen, setIsNewMessageDialogOpen] = useState(false);
@@ -23,11 +24,10 @@ const MessagesContainer = () => {
     messages,
     isLoadingConversations,
     isLoadingMessages,
+    isConversationsError,
     refetchConversations,
     refetchMessages,
-    sendMessageMutation,
-    selectedConversationId,
-    setSelectedConversationId
+    sendMessageMutation
   } = useMessagesData(null);
 
   // Conversation selection functionality
@@ -60,6 +60,23 @@ const MessagesContainer = () => {
   const selectedRecipient = selectedConversation && user 
     ? getRecipient(selectedConversation, user.id)
     : undefined;
+
+  // Mark messages as read when conversation is selected
+  useEffect(() => {
+    if (selectedId && user) {
+      markMessagesAsRead(selectedId)
+        .then(success => {
+          if (success) {
+            console.log('Messages marked as read');
+            // Refetch to update unread counts
+            refetchConversations();
+          }
+        })
+        .catch(err => {
+          console.error('Error marking messages as read:', err);
+        });
+    }
+  }, [selectedId, user, refetchConversations]);
 
   // Log debugging information
   useEffect(() => {
@@ -110,6 +127,7 @@ const MessagesContainer = () => {
               isLoading={isLoadingConversations}
               conversationsCount={conversations.length}
               onNewMessageClick={() => setIsNewMessageDialogOpen(true)}
+              isError={isConversationsError}
             />
           )}
         </div>

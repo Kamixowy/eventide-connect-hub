@@ -1,15 +1,15 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchConversations } from '@/services/messages';
-import { fetchMessages } from '@/services/messages';
-import { sendMessage } from '@/services/messages';
+import { fetchConversations, fetchMessages, sendMessage } from '@/services/messages';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 export const useMessagesData = (initialSelectedConversationId: string | null) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(initialSelectedConversationId);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (initialSelectedConversationId !== selectedConversationId) {
@@ -20,24 +20,42 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
   const { 
     data: conversations = [], 
     isLoading: isLoadingConversations,
+    isError: isConversationsError,
     refetch: refetchConversations
   } = useQuery({
     queryKey: ['conversations'],
     queryFn: fetchConversations,
     enabled: !!user,
-    retry: 1,
+    retry: 2,
     staleTime: 30000,
+    onError: (error: any) => {
+      console.error('Error fetching conversations:', error);
+      toast({
+        title: 'Błąd',
+        description: 'Nie udało się pobrać konwersacji. Spróbuj ponownie.',
+        variant: 'destructive',
+      });
+    }
   });
 
   const { 
     data: messages = [], 
     isLoading: isLoadingMessages,
+    isError: isMessagesError,
     refetch: refetchMessages
   } = useQuery({
     queryKey: ['messages', selectedConversationId],
     queryFn: () => selectedConversationId ? fetchMessages(selectedConversationId) : Promise.resolve([]),
     enabled: !!selectedConversationId,
-    retry: 1,
+    retry: 2,
+    onError: (error: any) => {
+      console.error('Error fetching messages:', error);
+      toast({
+        title: 'Błąd',
+        description: 'Nie udało się pobrać wiadomości. Spróbuj ponownie.',
+        variant: 'destructive',
+      });
+    }
   });
 
   const sendMessageMutation = async (conversationId: string, content: string) => {
@@ -74,15 +92,29 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
       }
     } catch (error) {
       console.error('Error in send message mutation:', error);
+      toast({
+        title: 'Błąd',
+        description: 'Nie udało się wysłać wiadomości. Spróbuj ponownie.',
+        variant: 'destructive',
+      });
       throw error;
     }
   };
+
+  // Force refetch conversations on component mount
+  useEffect(() => {
+    if (user) {
+      refetchConversations();
+    }
+  }, [user, refetchConversations]);
 
   return {
     conversations,
     messages,
     isLoadingConversations,
     isLoadingMessages,
+    isConversationsError,
+    isMessagesError,
     refetchConversations,
     refetchMessages,
     sendMessageMutation,
