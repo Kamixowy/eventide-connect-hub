@@ -30,8 +30,8 @@ export const startConversation = async (organizationUserId: string, initialMessa
       throw new Error('One or both users do not exist');
     }
 
-    // Check if a conversation already exists between these users
-    console.log('Checking if conversation already exists');
+    // Check if a conversation already exists between these users using our new function
+    console.log('Checking if conversation already exists between users');
     const { data: existingConversation, error: existingConvError } = await supabase
       .rpc('find_conversation_between_users', { 
         user_one: user.id, 
@@ -42,15 +42,14 @@ export const startConversation = async (organizationUserId: string, initialMessa
     
     if (existingConvError) {
       console.error('Error checking existing conversation:', existingConvError);
-      // Continue with creating a new conversation
-    } else if (existingConversation && existingConversation.length > 0) {
-      // If conversation exists, use that
-      console.log('Found existing conversation:', existingConversation[0]);
-      conversationId = existingConversation[0];
-    }
+      throw existingConvError;
+    } 
     
-    // If no existing conversation was found, create a new one
-    if (!conversationId) {
+    if (existingConversation && existingConversation.length > 0) {
+      // If conversation exists, use that
+      console.log('Found existing conversation:', existingConversation[0].conversation_id);
+      conversationId = existingConversation[0].conversation_id;
+    } else {
       console.log('No existing conversation found, creating new one');
       
       // Create a new conversation

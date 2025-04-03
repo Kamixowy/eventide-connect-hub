@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Message } from '../types';
-import { checkConversationParticipation } from '../utils/messageUtils';
 
 /**
  * Send a new message in a conversation
@@ -34,7 +33,7 @@ export const sendMessage = async (conversationId: string, content: string): Prom
         .eq('id', conversationId)
         .single();
       
-      if (conversationError || !conversation) {
+      if (conversationError) {
         console.error('Conversation does not exist:', conversationError);
         throw new Error('Conversation does not exist');
       }

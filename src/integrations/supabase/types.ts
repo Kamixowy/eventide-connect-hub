@@ -499,6 +499,15 @@ export type Database = {
           conversation_id: string
         }[]
       }
+      find_conversation_between_users: {
+        Args: {
+          user_one: string
+          user_two: string
+        }
+        Returns: {
+          conversation_id: string
+        }[]
+      }
       mark_messages_as_read: {
         Args: {
           conversation_id: string
