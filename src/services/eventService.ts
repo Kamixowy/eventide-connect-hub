@@ -1,4 +1,7 @@
 
+import { supabase } from '@/lib/supabase';
+import { EventFormValues, SponsorshipOption } from '@/components/events/edit/EventEditSchema';
+
 export const fetchEventById = async (id: string) => {
   const { data: eventData, error: eventError } = await supabase
     .from('events')
@@ -39,4 +42,141 @@ export const fetchEventById = async (id: string) => {
   };
   
   return fullEventData;
+};
+
+// Add function to update event status
+export const updateEventStatus = async (eventId: string, newStatus: string) => {
+  const { error } = await supabase
+    .from('events')
+    .update({ status: newStatus })
+    .eq('id', eventId);
+    
+  if (error) {
+    console.error('Error updating event status:', error);
+    throw error;
+  }
+  
+  return true;
+};
+
+// Add event post functions
+export const addEventPost = async (eventId: string, title: string, content: string) => {
+  const { data, error } = await supabase
+    .from('event_posts')
+    .insert([
+      { event_id: eventId, title, content }
+    ])
+    .select()
+    .single();
+    
+  if (error) {
+    console.error('Error adding event post:', error);
+    throw error;
+  }
+  
+  return data;
+};
+
+export const deleteEventPost = async (postId: string) => {
+  const { error } = await supabase
+    .from('event_posts')
+    .delete()
+    .eq('id', postId);
+    
+  if (error) {
+    console.error('Error deleting event post:', error);
+    throw error;
+  }
+  
+  return true;
+};
+
+// Update event with sponsorship options
+export const updateEvent = async (
+  eventId: string, 
+  data: EventFormValues, 
+  imageUrl: string | null,
+  sponsorshipOptions: SponsorshipOption[]
+) => {
+  // Prepare social media data
+  const socialMedia = {
+    facebook: data.facebook || '',
+    instagram: data.instagram || '',
+    linkedin: data.linkedin || '',
+  };
+  
+  // Format audience and tags fields (if they are comma-separated strings)
+  const audience = typeof data.audience === 'string' 
+    ? data.audience.split(',').map(item => item.trim()).filter(Boolean)
+    : data.audience || [];
+    
+  const tags = typeof data.tags === 'string'
+    ? data.tags.split(',').map(item => item.trim()).filter(Boolean)
+    : data.tags || [];
+  
+  // Convert expected_participants to number
+  const expectedParticipants = data.expected_participants 
+    ? parseInt(data.expected_participants, 10) 
+    : null;
+  
+  // Update event
+  const { error: eventError } = await supabase
+    .from('events')
+    .update({
+      title: data.title,
+      description: data.description,
+      start_date: data.start_date,
+      end_date: data.end_date || null,
+      location: data.location,
+      detailed_location: data.detailed_location,
+      expected_participants: expectedParticipants,
+      category: data.category,
+      audience: audience,
+      tags: tags,
+      image_url: imageUrl,
+      social_media: socialMedia,
+      status: data.status,
+      updated_at: new Date()
+    })
+    .eq('id', eventId);
+  
+  if (eventError) {
+    console.error('Error updating event:', eventError);
+    throw eventError;
+  }
+  
+  // Handle sponsorship options
+  // First delete existing options
+  const { error: deleteError } = await supabase
+    .from('sponsorship_options')
+    .delete()
+    .eq('event_id', eventId);
+  
+  if (deleteError) {
+    console.error('Error deleting sponsorship options:', deleteError);
+    throw deleteError;
+  }
+  
+  // Add new sponsorship options if any
+  if (sponsorshipOptions && sponsorshipOptions.length > 0) {
+    const sponsorshipData = sponsorshipOptions.map(option => ({
+      event_id: eventId,
+      title: option.title,
+      description: option.description,
+      price: parseFloat(option.priceFrom) || 0,
+      price_to: parseFloat(option.priceTo) || 0,
+      benefits: option.benefits
+    }));
+    
+    const { error: insertError } = await supabase
+      .from('sponsorship_options')
+      .insert(sponsorshipData);
+    
+    if (insertError) {
+      console.error('Error adding sponsorship options:', insertError);
+      throw insertError;
+    }
+  }
+  
+  return true;
 };

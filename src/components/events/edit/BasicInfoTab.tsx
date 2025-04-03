@@ -1,56 +1,37 @@
 
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { format } from 'date-fns';
-import { Calendar } from 'lucide-react';
-
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-  FormDescription,
-} from '@/components/ui/form';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { EventFormValues } from './EventEditSchema';
-
-// Define status options for event status selection
-const statusOptions = [
-  "Planowane",
-  "W przygotowaniu",
-  "W trakcie",
-  "Zakończone",
-  "Odwołane"
-];
+import { EventFormValues, statusOptions } from './EventEditSchema';
 
 interface BasicInfoTabProps {
   methods: UseFormReturn<EventFormValues>;
 }
 
-const BasicInfoTab = ({ methods }: BasicInfoTabProps) => {
-  const { control } = methods;
-
+const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ methods }) => {
+  // Basic Info Tab implementation
   return (
     <Card>
       <CardHeader>
         <CardTitle>Podstawowe informacje</CardTitle>
+        <CardDescription>
+          Podstawowe dane wydarzenia
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <FormField
-          control={control}
+          control={methods.control}
           name="title"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Tytuł wydarzenia*</FormLabel>
               <FormControl>
-                <Input placeholder="Nazwa wydarzenia" {...field} />
+                <Input placeholder="Wpisz tytuł..." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -58,16 +39,16 @@ const BasicInfoTab = ({ methods }: BasicInfoTabProps) => {
         />
         
         <FormField
-          control={control}
+          control={methods.control}
           name="description"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Opis wydarzenia*</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="Opisz swoje wydarzenie..."
-                  className="min-h-32"
-                  {...field}
+                <Textarea 
+                  placeholder="Opisz swoje wydarzenie..." 
+                  className="min-h-32" 
+                  {...field} 
                 />
               </FormControl>
               <FormMessage />
@@ -75,9 +56,40 @@ const BasicInfoTab = ({ methods }: BasicInfoTabProps) => {
           )}
         />
         
-        {/* Status field */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={methods.control}
+            name="start_date"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Data rozpoczęcia*</FormLabel>
+                <DatePicker 
+                  date={field.value} 
+                  setDate={(date) => field.onChange(date)} 
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={methods.control}
+            name="end_date"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Data zakończenia</FormLabel>
+                <DatePicker 
+                  date={field.value} 
+                  setDate={(date) => field.onChange(date)} 
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
         <FormField
-          control={control}
+          control={methods.control}
           name="status"
           render={({ field }) => (
             <FormItem>
@@ -85,6 +97,7 @@ const BasicInfoTab = ({ methods }: BasicInfoTabProps) => {
               <Select 
                 onValueChange={field.onChange} 
                 defaultValue={field.value}
+                value={field.value}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -99,91 +112,10 @@ const BasicInfoTab = ({ methods }: BasicInfoTabProps) => {
                   ))}
                 </SelectContent>
               </Select>
-              <FormDescription>
-                Status określa etap wydarzenia
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={control}
-            name="start_date"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Data rozpoczęcia*</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className={`w-full justify-start text-left font-normal ${
-                          !field.value && "text-muted-foreground"
-                        }`}
-                      >
-                        <Calendar className="mr-2 h-4 w-4" />
-                        {field.value ? (
-                          format(field.value, "dd.MM.yyyy")
-                        ) : (
-                          <span>Wybierz datę</span>
-                        )}
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <CalendarComponent
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={control}
-            name="end_date"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Data zakończenia</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className={`w-full justify-start text-left font-normal ${
-                          !field.value && "text-muted-foreground"
-                        }`}
-                      >
-                        <Calendar className="mr-2 h-4 w-4" />
-                        {field.value ? (
-                          format(field.value, "dd.MM.yyyy")
-                        ) : (
-                          <span>Wybierz datę (opcjonalnie)</span>
-                        )}
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <CalendarComponent
-                      mode="single"
-                      selected={field.value || undefined}
-                      onSelect={field.onChange}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
       </CardContent>
     </Card>
   );

@@ -40,3 +40,12 @@ export type SponsorshipOption = {
   priceTo: string;
   benefits: string[];
 };
+
+// Define status options that can be used in multiple components
+export const statusOptions = [
+  "Planowane",
+  "W przygotowaniu",
+  "W trakcie",
+  "Zakończone",
+  "Anulowane"
+];

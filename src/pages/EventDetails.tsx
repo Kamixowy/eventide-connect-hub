@@ -216,10 +216,10 @@ const EventDetails = () => {
           id: option.id,
           title: option.title,
           description: option.description,
-          price: option.price ? { 
+          price: { 
             from: option.price, 
-            to: option.price_to || option.price * 1.5 
-          } : null
+            to: option.price_to || option.price 
+          }
         })) : demoEventData.sponsorshipOptions,
         posts: postsData || [],
         updates: []
@@ -577,7 +577,10 @@ const EventDetails = () => {
                       
                       {isLoggedIn && option.price && (
                         <p className="text-sm font-medium">
-                          Budżet: {option.price.from} - {option.price.to} PLN
+                          Budżet: {option.price.from}
+                          {option.price.to && option.price.to !== option.price.from 
+                            ? ` - ${option.price.to}` 
+                            : ''} PLN
                         </p>
                       )}
                       

@@ -357,6 +357,7 @@ export type Database = {
           event_id: string
           id: string
           price: number
+          price_to: number | null
           title: string
           updated_at: string
         }
@@ -367,6 +368,7 @@ export type Database = {
           event_id: string
           id?: string
           price: number
+          price_to?: number | null
           title: string
           updated_at?: string
         }
@@ -377,6 +379,7 @@ export type Database = {
           event_id?: string
           id?: string
           price?: number
+          price_to?: number | null
           title?: string
           updated_at?: string
         }
