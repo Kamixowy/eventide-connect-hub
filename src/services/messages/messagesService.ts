@@ -62,6 +62,23 @@ export const sendMessage = async (conversationId: string, content: string): Prom
 
     console.log('Sender ID:', user.id);
     
+    // Check if conversation exists and user is a participant
+    const { data: participantCheck, error: participantError } = await supabase
+      .from('conversation_participants')
+      .select('id')
+      .eq('conversation_id', conversationId)
+      .eq('user_id', user.id)
+      .single();
+      
+    if (participantError) {
+      console.error('Error checking conversation participant:', participantError);
+      if (participantError.code === 'PGRST116') {
+        throw new Error('You are not a participant in this conversation');
+      }
+      throw participantError;
+    }
+
+    // Insert the new message
     const { data, error } = await supabase
       .from('direct_messages')
       .insert({
@@ -69,7 +86,14 @@ export const sendMessage = async (conversationId: string, content: string): Prom
         sender_id: user.id,
         content,
       })
-      .select()
+      .select(`
+        *,
+        sender:profiles(
+          id,
+          name,
+          avatar_url
+        )
+      `)
       .single();
 
     if (error) {
@@ -78,7 +102,14 @@ export const sendMessage = async (conversationId: string, content: string): Prom
     }
     
     console.log('Message sent successfully:', data.id);
-    return data;
+    
+    // Format the message to match the Message type
+    const formattedMessage: Message = {
+      ...data,
+      sender: data.sender || { id: user.id, name: 'You', avatar_url: undefined }
+    };
+    
+    return formattedMessage;
   } catch (error) {
     console.error('Error sending message:', error);
     return null;

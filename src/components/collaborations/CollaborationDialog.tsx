@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   Dialog, 
@@ -9,9 +10,10 @@ import {
   DialogTrigger 
 } from "@/components/ui/dialog";
 import { Input } from '@/components/ui/input';
-import { CheckCircle, Edit, XCircle } from 'lucide-react';
+import { Loader2, CheckCircle, Edit, XCircle } from 'lucide-react';
 import { CollaborationType } from '@/types/collaboration';
 import { ReactNode } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 interface CollaborationDialogProps {
   collaboration: CollaborationType;
@@ -20,6 +22,35 @@ interface CollaborationDialogProps {
 }
 
 export const CollaborationDialog = ({ collaboration, userType, children }: CollaborationDialogProps) => {
+  const [message, setMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const { toast } = useToast();
+
+  const handleSendMessage = async () => {
+    if (!message.trim() || isSending) return;
+    
+    setIsSending(true);
+    try {
+      // Mock sending a message - in real implementation, this would send to Supabase
+      setTimeout(() => {
+        toast({
+          title: "Wiadomość wysłana",
+          description: "Twoja wiadomość została wysłana pomyślnie",
+        });
+        setMessage('');
+        setIsSending(false);
+      }, 1000);
+    } catch (error) {
+      console.error('Error sending collaboration message:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie udało się wysłać wiadomości",
+        variant: "destructive"
+      });
+      setIsSending(false);
+    }
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -90,8 +121,24 @@ export const CollaborationDialog = ({ collaboration, userType, children }: Colla
           </div>
           
           <div className="flex items-center gap-2 mt-4">
-            <Input placeholder="Napisz wiadomość..." className="flex-grow" />
-            <Button>Wyślij</Button>
+            <Input 
+              placeholder="Napisz wiadomość..." 
+              className="flex-grow"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              disabled={isSending}
+            />
+            <Button 
+              onClick={handleSendMessage}
+              disabled={!message.trim() || isSending}
+            >
+              {isSending ? (
+                <>
+                  <Loader2 size={16} className="mr-2 animate-spin" />
+                  Wysyłanie...
+                </>
+              ) : 'Wyślij'}
+            </Button>
           </div>
           
           <div className="flex justify-between mt-6">
