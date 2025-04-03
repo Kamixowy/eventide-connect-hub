@@ -34,6 +34,7 @@ const MessageView = ({
   const { toast } = useToast();
 
   useEffect(() => {
+    // Scroll to bottom when messages change
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }

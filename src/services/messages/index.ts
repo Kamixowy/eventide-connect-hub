@@ -7,7 +7,8 @@ export * from './organizationsService';
 export * from './operations/checkConversationParticipation';
 export * from './operations/fetchMessages';
 export * from './operations/fetchConversations';
-export * from './operations/sendMessage';
-export * from './operations/startConversation';
+export * from './operations/sendMessageService';
+export * from './operations/createOrGetConversation';
 export * from './utils/messageUtils';
 export * from './utils/conversationUtils';
+

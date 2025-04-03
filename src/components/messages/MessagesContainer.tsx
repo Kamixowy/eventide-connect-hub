@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import NewMessageDialog from '@/components/messages/NewMessageDialog';
 import ConversationsList from '@/components/messages/ConversationsList';
@@ -10,9 +10,7 @@ import { getRecipient } from '@/services/messages';
 import { useMessagesData } from '@/components/messages/hooks/useMessagesData';
 import { useMessagesSubscriptions } from '@/components/messages/hooks/useMessagesSubscriptions';
 import { useMessageHandlers } from '@/components/messages/hooks/useMessageHandlers';
-import { useConversationSelection } from '@/components/messages/hooks/useConversationSelection';
 import { formatDate, formatMessageTime } from '@/components/messages/utils/dateUtils';
-import { markMessagesAsRead } from '@/services/messages';
 
 const MessagesContainer = () => {
   const [isNewMessageDialogOpen, setIsNewMessageDialogOpen] = useState(false);
@@ -27,64 +25,56 @@ const MessagesContainer = () => {
     isConversationsError,
     refetchConversations,
     refetchMessages,
-    sendMessageMutation
+    sendMessageMutation,
+    startNewConversation,
+    createTestConversationWithEmail,
+    selectedConversationId,
+    setSelectedConversationId
   } = useMessagesData(null);
-
-  // Conversation selection functionality
-  const {
-    selectedConversationId: selectedId,
-    handleConversationSelect,
-    handleNewConversationCreated,
-    handleSendMessage
-  } = useConversationSelection(
-    conversations,
-    refetchConversations,
-    sendMessageMutation
-  );
 
   // Message handling functionality
   const { handleNewMessage, handleConversationUpdate } = useMessageHandlers(
-    selectedId,
+    selectedConversationId,
     refetchConversations
   );
 
   // Setup realtime subscriptions
   useMessagesSubscriptions(
-    selectedId,
+    selectedConversationId,
     handleNewMessage,
     handleConversationUpdate
   );
 
+  // Handler for selecting a conversation
+  const handleConversationSelect = (conversationId: string) => {
+    console.log('Selecting conversation:', conversationId);
+    setSelectedConversationId(conversationId);
+  };
+
+  // Handler for creating a new conversation
+  const handleNewConversationCreated = (conversationId: string) => {
+    console.log('New conversation created:', conversationId);
+    refetchConversations().then(() => {
+      setSelectedConversationId(conversationId);
+    });
+  };
+
+  // Handle sending a message
+  const handleSendMessage = async (content: string) => {
+    if (!selectedConversationId || !content.trim()) {
+      console.error('Cannot send message: No conversation selected or empty message');
+      return;
+    }
+    
+    await sendMessageMutation(selectedConversationId, content);
+    refetchMessages();
+  };
+
   // Get selected conversation and recipient
-  const selectedConversation = conversations.find(c => c.id === selectedId);
+  const selectedConversation = conversations.find(c => c.id === selectedConversationId);
   const selectedRecipient = selectedConversation && user 
     ? getRecipient(selectedConversation, user.id)
     : undefined;
-
-  // Mark messages as read when conversation is selected
-  useEffect(() => {
-    if (selectedId && user) {
-      markMessagesAsRead(selectedId)
-        .then(success => {
-          if (success) {
-            console.log('Messages marked as read');
-            // Refetch to update unread counts
-            refetchConversations();
-          }
-        })
-        .catch(err => {
-          console.error('Error marking messages as read:', err);
-        });
-    }
-  }, [selectedId, user, refetchConversations]);
-
-  // Force refetch on mount and when user changes
-  useEffect(() => {
-    if (user) {
-      console.log("User logged in, fetching conversations:", user.id);
-      refetchConversations();
-    }
-  }, [user, refetchConversations]);
 
   return (
     <div className="container py-8">
@@ -95,7 +85,7 @@ const MessagesContainer = () => {
         <ConversationsList 
           conversations={conversations}
           isLoading={isLoadingConversations}
-          selectedConversationId={selectedId}
+          selectedConversationId={selectedConversationId}
           onSelectConversation={handleConversationSelect}
           onNewMessageClick={() => setIsNewMessageDialogOpen(true)}
           userId={user?.id}
@@ -121,6 +111,7 @@ const MessagesContainer = () => {
               onNewMessageClick={() => setIsNewMessageDialogOpen(true)}
               isError={isConversationsError}
               onRefetch={refetchConversations}
+              onCreateTestConversation={createTestConversationWithEmail}
             />
           )}
         </div>
@@ -130,6 +121,7 @@ const MessagesContainer = () => {
         open={isNewMessageDialogOpen} 
         onOpenChange={setIsNewMessageDialogOpen}
         onConversationCreated={handleNewConversationCreated}
+        startNewConversation={startNewConversation}
       />
     </div>
   );

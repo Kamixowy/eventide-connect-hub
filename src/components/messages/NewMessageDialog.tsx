@@ -3,9 +3,10 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "@/hooks/use-toast";
-import { startConversation, fetchOrganizations } from "@/services/messages";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { fetchOrganizations } from "@/services/messages";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 
 import OrganizationSearchInput from "./OrganizationSearchInput";
 import SelectedOrganization from "./SelectedOrganization";
@@ -16,15 +17,21 @@ interface NewMessageDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConversationCreated: (conversationId: string) => void;
+  startNewConversation: (recipientId: string, initialMessage: string) => Promise<any>;
 }
 
-const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMessageDialogProps) => {
+const NewMessageDialog = ({ 
+  open, 
+  onOpenChange, 
+  onConversationCreated,
+  startNewConversation
+}: NewMessageDialogProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrganization, setSelectedOrganization] = useState<any | null>(null);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: organizations = [], isLoading } = useQuery({
     queryKey: ["organizations"],
@@ -83,34 +90,25 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
     setError(null);
 
     try {
-      console.log("Attempting to start conversation with:", selectedOrganization.id);
-      console.log("Message content:", message);
+      console.log("Starting conversation with:", selectedOrganization.id);
+      console.log("Initial message:", message);
       
-      const result = await startConversation(selectedOrganization.id, message);
+      const result = await startNewConversation(selectedOrganization.id, message);
       
-      if (result?.conversationId) {
+      if (result && result.conversationId) {
         toast({
           title: "Wiadomość wysłana",
           description: "Twoja wiadomość została wysłana pomyślnie",
         });
         
         console.log("Conversation created with ID:", result.conversationId);
-        
-        // Invalidate the queries to refresh conversations list
-        await queryClient.invalidateQueries({ queryKey: ['conversations'] });
-        
         onConversationCreated(result.conversationId);
         onOpenChange(false);
         setMessage("");
         setSelectedOrganization(null);
         setSearchQuery("");
       } else {
-        console.error("Missing conversation ID in response");
-        toast({
-          title: "Błąd",
-          description: "Nie udało się wysłać wiadomości. Spróbuj ponownie.",
-          variant: "destructive"
-        });
+        throw new Error("Nie udało się utworzyć konwersacji");
       }
     } catch (error) {
       console.error("Error starting conversation:", error);
@@ -187,7 +185,14 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
             onClick={handleStartConversation}
             disabled={isSubmitting || !selectedOrganization || !message.trim()}
           >
-            {isSubmitting ? "Wysyłanie..." : "Wyślij wiadomość"}
+            {isSubmitting ? (
+              <>
+                <Loader2 size={16} className="mr-2 animate-spin" />
+                Wysyłanie...
+              </>
+            ) : (
+              "Wyślij wiadomość"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

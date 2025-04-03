@@ -2,7 +2,6 @@
 import { Loader2, Plus, AlertCircle, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { createTestConversation } from '@/services/messages/operations/sendMessage';
 import { useState } from 'react';
 
 interface EmptyMessageViewProps {
@@ -11,6 +10,7 @@ interface EmptyMessageViewProps {
   onNewMessageClick: () => void;
   isError?: boolean;
   onRefetch?: () => void;
+  onCreateTestConversation?: (email: string) => Promise<string | null>;
 }
 
 const EmptyMessageView = ({ 
@@ -18,19 +18,21 @@ const EmptyMessageView = ({
   conversationsCount, 
   onNewMessageClick, 
   isError = false,
-  onRefetch
+  onRefetch,
+  onCreateTestConversation
 }: EmptyMessageViewProps) => {
   const { user } = useAuth();
   const [isCreatingTest, setIsCreatingTest] = useState(false);
   const [testCreated, setTestCreated] = useState(false);
   
   const handleCreateTestConversation = async () => {
-    if (!user) return;
+    if (!user || !onCreateTestConversation) return;
     
     setIsCreatingTest(true);
     try {
-      const result = await createTestConversation('iuh15406@jioso.com');
-      if (result) {
+      // Using the email from props for the test user
+      const conversationId = await onCreateTestConversation('iuh15406@jioso.com');
+      if (conversationId) {
         setTestCreated(true);
         if (onRefetch) {
           setTimeout(() => {
@@ -87,7 +89,7 @@ const EmptyMessageView = ({
                 <Plus size={16} className="mr-1" /> Nowa wiadomość
               </Button>
               
-              {user?.email === 'iuh15406@jioso.com' && (
+              {user?.email === 'iuh15406@jioso.com' && onCreateTestConversation && (
                 <div className="mt-6 p-4 border rounded-lg bg-gray-50 w-full">
                   <h4 className="text-sm font-semibold mb-2">Opcje testowe</h4>
                   <p className="text-xs mb-3">Możesz utworzyć przykładową konwersację z testowymi danymi.</p>
