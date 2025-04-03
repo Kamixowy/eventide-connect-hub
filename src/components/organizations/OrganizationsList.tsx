@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Grid, List } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Przykładowe dane dla użytkowników demo
 const demoOrganizations = [
@@ -91,8 +92,23 @@ export const OrganizationsList = () => {
   
   if (loading) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">Ładowanie organizacji...</p>
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="overflow-hidden">
+            <div className="h-40 w-full">
+              <Skeleton className="h-full w-full" />
+            </div>
+            <CardContent className="p-6">
+              <div className="flex items-center mb-4">
+                <Skeleton className="h-12 w-12 rounded-full mr-3" />
+                <Skeleton className="h-6 w-32" />
+              </div>
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-3/4 mb-4" />
+              <Skeleton className="h-6 w-24" />
+            </CardContent>
+          </Card>
+        ))}
       </div>
     );
   }
