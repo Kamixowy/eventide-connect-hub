@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
@@ -24,14 +23,12 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch organizations
   const { data: organizations = [], isLoading } = useQuery({
     queryKey: ["organizations"],
     queryFn: fetchOrganizations,
     enabled: open
   });
 
-  // Reset state when dialog closes
   useEffect(() => {
     if (!open) {
       setSearchQuery("");
@@ -40,7 +37,6 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
     }
   }, [open]);
 
-  // Filter organizations based on search query
   const filteredOrganizations = organizations.filter(org => {
     if (!searchQuery.trim()) return true;
     
@@ -56,7 +52,6 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
            orgEmail.includes(query);
   });
 
-  // Sort organizations alphabetically
   const sortedOrganizations = [...filteredOrganizations].sort((a, b) => {
     const nameA = (a.organization?.name || a.name || "").toLowerCase();
     const nameB = (b.organization?.name || b.name || "").toLowerCase();
@@ -123,9 +118,15 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col">
+      <DialogContent 
+        className="sm:max-w-[600px] max-h-[80vh] flex flex-col"
+        aria-describedby="dialog-description"
+      >
         <DialogHeader>
           <DialogTitle>Nowa wiadomość</DialogTitle>
+          <DialogDescription id="dialog-description" className="sr-only">
+            Wybierz organizację i napisz wiadomość, aby rozpocząć nową konwersację
+          </DialogDescription>
         </DialogHeader>
         
         <div className="flex flex-col flex-grow overflow-hidden">
