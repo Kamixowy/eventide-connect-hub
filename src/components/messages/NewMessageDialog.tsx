@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,8 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
 
     try {
       console.log("Attempting to start conversation with:", selectedOrganization.id);
+      console.log("Message content:", message);
+      
       const result = await startConversation(selectedOrganization.id, message);
       
       if (result?.conversationId) {
@@ -93,6 +96,7 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
         
         console.log("Conversation created with ID:", result.conversationId);
         
+        // Invalidate the queries to refresh conversations list
         await queryClient.invalidateQueries({ queryKey: ['conversations'] });
         
         onConversationCreated(result.conversationId);

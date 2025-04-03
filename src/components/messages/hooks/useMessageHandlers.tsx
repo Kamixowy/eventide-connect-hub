@@ -10,15 +10,21 @@ export const useMessageHandlers = (
 
   // Handler for new messages from subscription
   const handleNewMessage = (newMessage: Message) => {
+    console.log("Received new message from subscription:", newMessage);
+    
     // Update messages cache
-    queryClient.setQueryData(['messages', selectedConversationId], (oldData: Message[] | undefined) => {
-      if (!oldData) return [newMessage];
-      // Avoid duplicates by checking if message already exists
-      if (oldData.some(m => m.id === newMessage.id)) return oldData;
-      return [...oldData, newMessage];
-    });
+    if (selectedConversationId && newMessage.conversation_id === selectedConversationId) {
+      queryClient.setQueryData(['messages', selectedConversationId], (oldData: Message[] | undefined) => {
+        if (!oldData) return [newMessage];
+        // Avoid duplicates by checking if message already exists
+        if (oldData.some(m => m.id === newMessage.id)) return oldData;
+        console.log("Adding new message to cache:", newMessage);
+        return [...oldData, newMessage];
+      });
+    }
     
     // Refetch conversations to update last message and unread count
+    console.log("Refetching conversations after new message");
     refetchConversations();
   };
 

@@ -54,20 +54,30 @@ export const startConversation = async (organizationUserId: string, initialMessa
     if (initialMessage.trim() && conversationId) {
       console.log('Sending initial message to conversation:', conversationId);
       
-      try {
-        // Import locally to avoid circular dependencies
-        const { sendMessage } = await import('../messagesService');
-        const messageResult = await sendMessage(conversationId, initialMessage);
-        
-        if (!messageResult) {
-          console.error('Failed to send initial message');
-        } else {
-          console.log('Initial message sent successfully');
-        }
-      } catch (msgErr) {
-        console.error('Error sending initial message:', msgErr);
-        // Don't throw here, we want to return the conversation even if message fails
+      // Send the message directly instead of importing sendMessage function
+      // This avoids potential circular dependency issues
+      const { data: message, error: messageError } = await supabase
+        .from('direct_messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_id: user.id,
+          content: initialMessage
+        })
+        .select('*')
+        .single();
+      
+      if (messageError) {
+        console.error('Error sending initial message:', messageError);
+        // Don't throw here, we still want to return the conversation ID
+      } else {
+        console.log('Initial message sent successfully:', message);
       }
+      
+      // Update the conversation timestamp
+      await supabase
+        .from('direct_conversations')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', conversationId);
     }
 
     return conversationId ? { conversationId } : null;

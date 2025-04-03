@@ -13,7 +13,7 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       throw new Error('User not authenticated');
     }
     
-    console.log('Sending message to conversation:', conversationId);
+    console.log('Sending message to conversation:', conversationId, 'with content:', content);
     
     // First check if the conversation exists
     const { data: conversation, error: conversationError } = await supabase
@@ -44,14 +44,16 @@ export const sendMessage = async (conversationId: string, content: string): Prom
     // If user is not a participant, add them
     if (!participant) {
       console.log('Adding current user as participant to conversation');
-      const { error: rpcError } = await supabase.rpc('add_participant_to_conversation', {
-        conversation_id: conversationId,
-        participant_id: user.id
-      });
+      const { error: addParticipantError } = await supabase
+        .from('conversation_participants')
+        .insert({
+          conversation_id: conversationId,
+          user_id: user.id
+        });
       
-      if (rpcError) {
-        console.error('Failed to add user as participant:', rpcError);
-        throw new Error('Failed to add user as participant: ' + rpcError.message);
+      if (addParticipantError) {
+        console.error('Failed to add user as participant:', addParticipantError);
+        throw new Error('Failed to add user as participant: ' + addParticipantError.message);
       }
       
       console.log('Successfully added user as participant to conversation');
@@ -59,14 +61,14 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       console.log('User is already a participant in the conversation');
     }
     
-    // Now create the message with explicit table name 'direct_messages'
+    // Now create the message
     console.log('Creating message with content:', content);
     const { data: message, error: messageError } = await supabase
       .from('direct_messages')
       .insert({
         conversation_id: conversationId,
         sender_id: user.id,
-        content
+        content: content
       })
       .select('*')
       .single();
@@ -76,7 +78,7 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       throw new Error('Failed to send message: ' + messageError.message);
     }
     
-    console.log('Message sent successfully, inserted into direct_messages:', message);
+    console.log('Message sent successfully:', message);
     return message;
   } catch (error) {
     console.error('Error in sendMessage:', error);
