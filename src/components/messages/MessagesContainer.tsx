@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -71,9 +70,13 @@ const MessagesContainer = () => {
     : undefined;
 
   const handleSendMessage = async (newMessage: string) => {
-    if (!selectedConversationId || !newMessage.trim() || !user) return;
+    if (!selectedConversationId || !newMessage.trim() || !user) {
+      console.error("Cannot send message - missing conversation ID, message content, or user");
+      return;
+    }
     
     try {
+      console.log("Sending message to conversation:", selectedConversationId);
       // First check participation
       const canSend = await checkConversationParticipation(selectedConversationId, user.id);
       if (!canSend) {
@@ -85,18 +88,13 @@ const MessagesContainer = () => {
         return;
       }
       
-      const result = await sendMessageMutation(selectedConversationId, newMessage);
-      if (result) {
-        // Message added to cache in mutation
-        // Refetch conversations to update last message
-        refetchConversations();
-      } else {
-        toast({
-          title: "Błąd",
-          description: "Nie udało się wysłać wiadomości. Spróbuj ponownie.",
-          variant: "destructive"
-        });
-      }
+      await sendMessageMutation(selectedConversationId, newMessage);
+      
+      // Force refresh messages
+      queryClient.invalidateQueries({ queryKey: ['messages', selectedConversationId] });
+      
+      // Refetch conversations to update last message
+      refetchConversations();
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -119,6 +117,9 @@ const MessagesContainer = () => {
     refetchConversations().then(() => {
       // Set the newly created conversation as selected
       setSelectedConversationId(conversationId);
+      
+      // Invalidate messages query to force a fresh fetch
+      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
     });
   };
 

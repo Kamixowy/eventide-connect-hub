@@ -37,15 +37,21 @@ export const useMessagesData = (selectedConversationId: string | null) => {
   // Mutation for sending messages
   const sendMessageMutation = async (conversationId: string, content: string) => {
     try {
+      console.log("Sending message using mutation:", content);
       const result = await sendMessage(conversationId, content);
+      
       if (result) {
+        console.log("Message sent successfully:", result.id);
         // Add the message to the local cache
         queryClient.setQueryData(['messages', conversationId], (oldData: any[] | undefined) => {
           if (!oldData) return [result];
           return [...oldData, result];
         });
+        return result;
+      } else {
+        console.error("Message sending returned null result");
+        throw new Error("Failed to send message");
       }
-      return result;
     } catch (error) {
       console.error('Error in send message mutation:', error);
       throw error;

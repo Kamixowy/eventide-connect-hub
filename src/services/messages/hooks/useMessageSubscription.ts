@@ -55,30 +55,8 @@ export const useMessageSubscription = (
               await supabase.rpc('mark_messages_as_read', { conversation_id: conversationId });
               console.log('Marked messages as read');
               
-              // Fetch full message data with sender info
-              const { data, error } = await supabase
-                .from('direct_messages')
-                .select(`
-                  *,
-                  sender:profiles(
-                    id,
-                    name,
-                    avatar_url
-                  )
-                `)
-                .eq('id', payload.new.id)
-                .single();
-                
-              if (error) {
-                console.error('Error fetching complete message data:', error);
-                // Still process with limited data
-                const newMessage = payload.new as Message;
-                onNewMessage(newMessage);
-                return;
-              }
-              
-              // Add the sender info and call the callback
-              const newMessage = data as Message;
+              // Just use the payload data directly
+              const newMessage = payload.new as Message;
               onNewMessage(newMessage);
             } catch (err) {
               console.error('Error processing new message:', err);

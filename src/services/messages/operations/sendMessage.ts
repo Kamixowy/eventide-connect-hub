@@ -43,6 +43,6 @@ export const sendMessage = async (conversationId: string, content: string): Prom
     return message;
   } catch (error) {
     console.error('Error in sendMessage:', error);
-    return null;
+    throw error;
   }
 };

@@ -21,13 +21,10 @@ export const fetchMessages = async (conversationId: string): Promise<Message[]> 
       // Continue execution even if marking messages fails
     }
 
-    // Fetch messages
+    // Fetch messages without trying to join with profiles
     const { data: messages, error } = await supabase
       .from('direct_messages')
-      .select(`
-        *,
-        sender:profiles(id, name, avatar_url)
-      `)
+      .select('*')
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: true });
 
