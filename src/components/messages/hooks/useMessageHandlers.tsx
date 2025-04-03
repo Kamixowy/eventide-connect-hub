@@ -17,7 +17,10 @@ export const useMessageHandlers = (
       queryClient.setQueryData(['messages', selectedConversationId], (oldData: Message[] | undefined) => {
         if (!oldData) return [newMessage];
         // Avoid duplicates by checking if message already exists
-        if (oldData.some(m => m.id === newMessage.id)) return oldData;
+        if (oldData.some(m => m.id === newMessage.id)) {
+          console.log("Message already exists in cache, skipping addition");
+          return oldData;
+        }
         console.log("Adding new message to cache:", newMessage);
         return [...oldData, newMessage];
       });
@@ -25,13 +28,17 @@ export const useMessageHandlers = (
     
     // Refetch conversations to update last message and unread count
     console.log("Refetching conversations after new message");
-    refetchConversations();
+    refetchConversations().catch(err => {
+      console.error("Error refetching conversations:", err);
+    });
   };
 
   // Handler for conversation updates from subscription
   const handleConversationUpdate = () => {
     console.log("Conversation update detected, refetching conversations");
-    refetchConversations();
+    refetchConversations().catch(err => {
+      console.error("Error refetching conversations after update:", err);
+    });
   };
 
   return {

@@ -42,7 +42,7 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
 
   const sendMessageMutation = async (conversationId: string, content: string) => {
     try {
-      console.log("Sending message to conversation:", conversationId);
+      console.log("Starting sending message to conversation:", conversationId);
       console.log("Message content:", content);
       
       if (!conversationId || !content.trim()) {
@@ -50,17 +50,20 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
         throw new Error("Missing required data for sending message");
       }
       
+      // Send message and get result
       const result = await sendMessage(conversationId, content);
       
       if (result) {
         console.log("Message sent successfully:", result);
         
+        // Optimistically update UI
         queryClient.setQueryData(['messages', conversationId], (oldData: any[] | undefined) => {
           if (!oldData) return [result];
           if (oldData.some(m => m.id === result.id)) return oldData;
           return [...oldData, result];
         });
         
+        // Invalidate queries to refresh data
         await queryClient.invalidateQueries({ queryKey: ['conversations'] });
         await queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
         

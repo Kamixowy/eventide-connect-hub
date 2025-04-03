@@ -7,6 +7,7 @@ import { Message } from '../types';
  */
 export const sendMessage = async (conversationId: string, content: string): Promise<Message | null> => {
   try {
+    // Get current user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       console.error('User not authenticated');
@@ -61,14 +62,19 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       console.log('User is already a participant in the conversation');
     }
     
-    // Now create the message
+    // Now create the message - ensuring content is not empty
+    if (!content || content.trim() === '') {
+      console.error('Cannot send empty message');
+      throw new Error('Message content cannot be empty');
+    }
+    
     console.log('Creating message with content:', content);
     const { data: message, error: messageError } = await supabase
       .from('direct_messages')
       .insert({
         conversation_id: conversationId,
         sender_id: user.id,
-        content: content
+        content: content.trim()
       })
       .select('*')
       .single();
@@ -79,6 +85,18 @@ export const sendMessage = async (conversationId: string, content: string): Prom
     }
     
     console.log('Message sent successfully:', message);
+    
+    // Update the conversation timestamp
+    const { error: updateError } = await supabase
+      .from('direct_conversations')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', conversationId);
+      
+    if (updateError) {
+      console.warn('Failed to update conversation timestamp:', updateError);
+      // Don't throw here, the message was already sent
+    }
+    
     return message;
   } catch (error) {
     console.error('Error in sendMessage:', error);
