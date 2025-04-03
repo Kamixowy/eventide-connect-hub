@@ -13,6 +13,8 @@ export const fetchConversations = async (): Promise<Conversation[]> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
+    console.log('Fetching conversations for user:', user.id);
+
     // Get all conversations the user is part of
     const { data: participantsData, error: participantsError } = await supabase
       .from('conversation_participants')
@@ -24,9 +26,13 @@ export const fetchConversations = async (): Promise<Conversation[]> => {
       throw participantsError;
     }
     
-    if (!participantsData || !participantsData.length) return [];
+    if (!participantsData || !participantsData.length) {
+      console.log('No conversations found for user');
+      return [];
+    }
 
     const conversationIds = participantsData.map(p => p.conversation_id);
+    console.log('Found conversation IDs:', conversationIds);
 
     // Get conversations with their participants
     const { data: conversations, error: conversationsError } = await supabase
@@ -45,6 +51,8 @@ export const fetchConversations = async (): Promise<Conversation[]> => {
       console.error('Error fetching conversations:', conversationsError);
       throw conversationsError;
     }
+
+    console.log('Fetched conversations:', conversations.length);
 
     // For each conversation, fetch the participants' profiles and organizations
     const conversationsWithProfiles = await Promise.all(
@@ -130,11 +138,17 @@ export const fetchConversations = async (): Promise<Conversation[]> => {
 // Function to start a new conversation with an organization
 export const startConversation = async (organizationUserId: string, initialMessage: string): Promise<{ conversationId: string } | null> => {
   try {
+    console.log('Starting new conversation with organization:', organizationUserId);
+    
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
+    if (!user) {
+      console.error('User not authenticated');
+      throw new Error('User not authenticated');
+    }
 
-    // Create a new conversation directly without checking for existing ones
-    // This avoids the RLS policy recursion issue
+    console.log('Current user ID:', user.id);
+
+    // Create a new conversation
     const { data: conversation, error: conversationError } = await supabase
       .from('direct_conversations')
       .insert({})
@@ -145,6 +159,8 @@ export const startConversation = async (organizationUserId: string, initialMessa
       console.error('Error creating conversation:', conversationError);
       throw conversationError;
     }
+
+    console.log('Created conversation:', conversation.id);
 
     // Add current user as participant
     const { error: userParticipantError } = await supabase
@@ -159,6 +175,8 @@ export const startConversation = async (organizationUserId: string, initialMessa
       throw userParticipantError;
     }
 
+    console.log('Added current user as participant');
+
     // Add organization as participant
     const { error: orgParticipantError } = await supabase
       .from('conversation_participants')
@@ -172,9 +190,21 @@ export const startConversation = async (organizationUserId: string, initialMessa
       throw orgParticipantError;
     }
 
+    console.log('Added organization as participant');
+
     // Send the initial message
     if (initialMessage.trim()) {
-      await sendMessage(conversation.id, initialMessage);
+      console.log('Sending initial message');
+      
+      // Import locally to avoid circular dependencies
+      const { sendMessage } = await import('./messagesService');
+      const messageResult = await sendMessage(conversation.id, initialMessage);
+      
+      if (!messageResult) {
+        console.error('Failed to send initial message');
+      } else {
+        console.log('Initial message sent successfully');
+      }
     }
 
     return { conversationId: conversation.id };

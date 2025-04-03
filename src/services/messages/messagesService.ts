@@ -5,6 +5,8 @@ import { Message } from './types';
 // Function to fetch messages for a specific conversation
 export const fetchMessages = async (conversationId: string): Promise<Message[]> => {
   try {
+    console.log('Fetching messages for conversation:', conversationId);
+    
     // Mark messages as read when fetching them
     await supabase.rpc('mark_messages_as_read', { conversation_id: conversationId });
 
@@ -25,6 +27,8 @@ export const fetchMessages = async (conversationId: string): Promise<Message[]> 
       console.error('Error fetching messages:', error);
       throw error;
     }
+    
+    console.log(`Fetched ${data?.length || 0} messages`);
     
     // Ensure each message has the correct sender format
     const messagesWithFormattedSenders = data?.map(msg => {
@@ -48,9 +52,16 @@ export const fetchMessages = async (conversationId: string): Promise<Message[]> 
 // Function to send a new message
 export const sendMessage = async (conversationId: string, content: string): Promise<Message | null> => {
   try {
+    console.log('Sending message to conversation:', conversationId);
+    
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
+    if (!user) {
+      console.error('User not authenticated');
+      throw new Error('User not authenticated');
+    }
 
+    console.log('Sender ID:', user.id);
+    
     const { data, error } = await supabase
       .from('direct_messages')
       .insert({
@@ -66,6 +77,7 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       throw error;
     }
     
+    console.log('Message sent successfully:', data.id);
     return data;
   } catch (error) {
     console.error('Error sending message:', error);
