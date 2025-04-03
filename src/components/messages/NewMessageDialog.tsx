@@ -42,15 +42,25 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
 
   // Filter organizations based on search query
   const filteredOrganizations = organizations.filter(org => {
-    const orgName = org.name?.toLowerCase() || "";
-    const orgOrgName = org.organization?.name?.toLowerCase() || "";
-    const orgCategory = org.organization?.category?.toLowerCase() || "";
-    const query = searchQuery.toLowerCase().trim();
+    if (!searchQuery.trim()) return true;
     
-    return query === "" || 
-      orgName.includes(query) || 
-      orgOrgName.includes(query) || 
-      orgCategory.includes(query);
+    const query = searchQuery.toLowerCase().trim();
+    const orgName = (org.name || "").toLowerCase();
+    const orgOrgName = (org.organization?.name || "").toLowerCase();
+    const orgCategory = (org.organization?.category || "").toLowerCase();
+    const orgEmail = (org.email || "").toLowerCase();
+    
+    return orgName.includes(query) || 
+           orgOrgName.includes(query) || 
+           orgCategory.includes(query) ||
+           orgEmail.includes(query);
+  });
+
+  // Sort organizations alphabetically
+  const sortedOrganizations = [...filteredOrganizations].sort((a, b) => {
+    const nameA = (a.organization?.name || a.name || "").toLowerCase();
+    const nameB = (b.organization?.name || b.name || "").toLowerCase();
+    return nameA.localeCompare(nameB);
   });
 
   console.log("Search query:", searchQuery);
@@ -134,7 +144,7 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
           ) : (
             <OrganizationsList 
               organizations={organizations}
-              filteredOrganizations={filteredOrganizations}
+              filteredOrganizations={sortedOrganizations}
               isLoading={isLoading}
               onSelectOrganization={setSelectedOrganization}
             />
