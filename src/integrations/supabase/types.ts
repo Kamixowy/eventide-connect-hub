@@ -490,6 +490,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      create_conversation_and_participants: {
+        Args: {
+          user_one: string
+          user_two: string
+        }
+        Returns: {
+          conversation_id: string
+        }[]
+      }
       mark_messages_as_read: {
         Args: {
           conversation_id: string

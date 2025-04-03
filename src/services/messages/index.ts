@@ -1,12 +1,21 @@
 
-// Export all types and functions from the messages service
+// Export message types
 export * from './types';
-export * from './operations/fetchConversations';
-export * from './operations/startConversation';
-export * from './operations/fetchMessages';
-export * from './operations/sendMessage';
-export * from './utils/conversationUtils';
-export * from './utils/messageUtils';
-export * from './organizationsService';
-export * from './hooks/useMessageSubscription';
-export * from './hooks/useConversationsSubscription';
+
+// Export message operations
+export { fetchMessages } from './operations/fetchMessages';
+export { sendMessage } from './operations/sendMessage';
+export { fetchConversations } from './operations/fetchConversations';
+export { startConversation } from './operations/startConversation';
+export { fetchOrganizations } from './organizationsService';
+
+// Export message utilities
+export { checkConversationParticipation, markMessagesAsRead } from './utils/messageUtils';
+export { getRecipient } from './utils/conversationUtils';
+
+// Export hooks for message subscriptions
+export { useMessageSubscription } from './hooks/useMessageSubscription';
+export { useConversationsSubscription } from './hooks/useConversationsSubscription';
+
+// Legacy export for backward compatibility
+export * from './messagesService';

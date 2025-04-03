@@ -30,7 +30,7 @@ export const startConversation = async (organizationUserId: string, initialMessa
       throw new Error('One or both users do not exist');
     }
 
-    // Create a new conversation directly with SQL to bypass RLS
+    // Create a new conversation using the stored procedure
     const { data: conversation, error: conversationError } = await supabase.rpc(
       'create_conversation_and_participants',
       { 
@@ -44,20 +44,22 @@ export const startConversation = async (organizationUserId: string, initialMessa
       throw conversationError;
     }
 
-    if (!conversation) {
+    if (!conversation || !conversation[0]) {
       console.error('Failed to create conversation');
       return null;
     }
 
-    console.log('Created conversation with ID:', conversation.conversation_id);
+    // Extract the conversation ID from the result
+    const conversationId = conversation[0].conversation_id;
+    console.log('Created conversation with ID:', conversationId);
     
     // Send the initial message
-    if (initialMessage.trim() && conversation.conversation_id) {
-      console.log('Sending initial message to conversation:', conversation.conversation_id);
+    if (initialMessage.trim() && conversationId) {
+      console.log('Sending initial message to conversation:', conversationId);
       
       // Import locally to avoid circular dependencies
       const { sendMessage } = await import('../messagesService');
-      const messageResult = await sendMessage(conversation.conversation_id, initialMessage);
+      const messageResult = await sendMessage(conversationId, initialMessage);
       
       if (!messageResult) {
         console.error('Failed to send initial message');
@@ -66,7 +68,7 @@ export const startConversation = async (organizationUserId: string, initialMessa
       }
     }
 
-    return conversation.conversation_id ? { conversationId: conversation.conversation_id } : null;
+    return conversationId ? { conversationId } : null;
   } catch (error) {
     console.error('Error starting conversation:', error);
     throw error; // Re-throw to allow better error handling in the UI
