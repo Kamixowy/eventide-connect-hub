@@ -3,11 +3,12 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { v4 as uuidv4 } from 'uuid';
 
 import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { eventFormSchema, EventFormValues } from '@/components/events/edit/EventEditSchema';
+import { eventFormSchema, EventFormValues, SponsorshipOption } from '@/components/events/edit/EventEditSchema';
 import { useEventImageUpload } from '@/hooks/useEventImageUpload';
 import { fetchEventById, updateEvent } from '@/services/eventService';
 import EventEditForm from '@/components/events/edit/EventEditForm';
@@ -22,6 +23,7 @@ const EditEvent = () => {
   const [loading, setLoading] = useState(true);
   const [event, setEvent] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [sponsorshipOptions, setSponsorshipOptions] = useState<SponsorshipOption[]>([]);
   
   const { 
     uploadedImageUrl, 
@@ -118,6 +120,22 @@ const EditEvent = () => {
 
         setUploadedImageUrl(eventData.image_url || null);
         
+        // Set sponsorship options if available
+        if (eventData.sponsorshipOptions && Array.isArray(eventData.sponsorshipOptions)) {
+          const formattedOptions: SponsorshipOption[] = eventData.sponsorshipOptions.map((option: any) => ({
+            id: option.id || uuidv4(),
+            title: option.title || '',
+            description: option.description || '',
+            priceFrom: option.price ? String(option.price) : '0',
+            priceTo: '0', // Default value, as we don't store priceTo in the DB
+            benefits: Array.isArray(option.benefits) ? option.benefits : [],
+          }));
+          setSponsorshipOptions(formattedOptions);
+        } else {
+          // Add an empty sponsorship option by default if none exists
+          handleAddSponsorshipOption();
+        }
+        
       } catch (error) {
         console.error('Error fetching event details:', error);
         toast({
@@ -134,13 +152,76 @@ const EditEvent = () => {
     loadEventData();
   }, [id, user, toast, navigate, methods, setUploadedImageUrl]);
   
+  // Sponsorship options handlers
+  const handleAddSponsorshipOption = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    
+    setSponsorshipOptions(prev => [
+      ...prev,
+      {
+        id: uuidv4(),
+        title: '',
+        description: '',
+        priceFrom: '',
+        priceTo: '',
+        benefits: []
+      }
+    ]);
+  };
+
+  const handleRemoveSponsorshipOption = (id: string, e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    
+    setSponsorshipOptions(prev => prev.filter(option => option.id !== id));
+  };
+
+  const handleSponsorshipOptionChange = (id: string, field: keyof SponsorshipOption, value: string | string[]) => {
+    setSponsorshipOptions(prev => 
+      prev.map(option => 
+        option.id === id ? { ...option, [field]: value } : option
+      )
+    );
+  };
+
+  const handleAddBenefit = (id: string, benefit: string, e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    
+    if (!benefit.trim()) return;
+    
+    setSponsorshipOptions(prev => 
+      prev.map(option => 
+        option.id === id 
+          ? { ...option, benefits: [...option.benefits, benefit.trim()] } 
+          : option
+      )
+    );
+  };
+
+  const handleRemoveBenefit = (id: string, benefit: string, e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    
+    setSponsorshipOptions(prev => 
+      prev.map(option => 
+        option.id === id 
+          ? { ...option, benefits: option.benefits.filter(b => b !== benefit) } 
+          : option
+      )
+    );
+  };
+
+  const handleSponsorshipNumberChange = (e: React.ChangeEvent<HTMLInputElement>, id: string, field: 'priceFrom' | 'priceTo') => {
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    
+    handleSponsorshipOptionChange(id, field, value);
+  };
+  
   const onSubmit = async (data: EventFormValues) => {
     if (!user || !event || !id) return;
     
     setSubmitting(true);
     
     try {
-      await updateEvent(id, data, uploadedImageUrl);
+      await updateEvent(id, data, uploadedImageUrl, sponsorshipOptions);
       
       toast({
         title: "Sukces!",
@@ -186,6 +267,13 @@ const EditEvent = () => {
           submitting={submitting}
           uploadedImageUrl={uploadedImageUrl}
           handleImageUpload={handleImageUpload}
+          sponsorshipOptions={sponsorshipOptions}
+          handleAddSponsorshipOption={handleAddSponsorshipOption}
+          handleRemoveSponsorshipOption={handleRemoveSponsorshipOption}
+          handleSponsorshipOptionChange={handleSponsorshipOptionChange}
+          handleAddBenefit={handleAddBenefit}
+          handleRemoveBenefit={handleRemoveBenefit}
+          handleSponsorshipNumberChange={handleSponsorshipNumberChange}
         />
       </div>
     </Layout>

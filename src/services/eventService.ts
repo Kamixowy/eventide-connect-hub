@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabase';
 import { EventFormValues, SocialMedia } from '@/components/events/edit/EventEditSchema';
 import { processArrayFields } from '@/utils/eventHelpers';
+import { SponsorshipOption } from '@/components/events/edit/EventEditSchema';
 
 export const fetchEventById = async (id: string) => {
   const { data: eventData, error: eventError } = await supabase
@@ -14,10 +15,26 @@ export const fetchEventById = async (id: string) => {
     throw eventError;
   }
   
-  return eventData;
+  // Fetch sponsorship options for the event
+  const { data: sponsorshipData, error: sponsorshipError } = await supabase
+    .from('sponsorship_options')
+    .select('*')
+    .eq('event_id', id);
+    
+  if (sponsorshipError) {
+    console.error('Error fetching sponsorship options:', sponsorshipError);
+  }
+  
+  // Add sponsorship options to the event data
+  const fullEventData = {
+    ...eventData,
+    sponsorshipOptions: sponsorshipData || []
+  };
+  
+  return fullEventData;
 };
 
-export const updateEvent = async (id: string, data: EventFormValues, imageUrl: string | null) => {
+export const updateEvent = async (id: string, data: EventFormValues, imageUrl: string | null, sponsorshipOptions?: SponsorshipOption[]) => {
   // Process array fields
   const audienceArray = processArrayFields(data.audience || '');
   const tagsArray = processArrayFields(data.tags || '');
@@ -52,6 +69,32 @@ export const updateEvent = async (id: string, data: EventFormValues, imageUrl: s
     .eq('id', id);
     
   if (error) throw error;
+  
+  // Update sponsorship options if provided
+  if (sponsorshipOptions && sponsorshipOptions.length > 0) {
+    // First, delete all existing sponsorship options
+    const { error: deleteError } = await supabase
+      .from('sponsorship_options')
+      .delete()
+      .eq('event_id', id);
+      
+    if (deleteError) throw deleteError;
+    
+    // Then, insert the new ones
+    const sponsorshipData = sponsorshipOptions.map(option => ({
+      event_id: id,
+      title: option.title,
+      description: option.description,
+      price: parseFloat(option.priceFrom) || 0, // Using priceFrom as the price field for now
+      benefits: option.benefits
+    }));
+    
+    const { error: insertError } = await supabase
+      .from('sponsorship_options')
+      .insert(sponsorshipData);
+      
+    if (insertError) throw insertError;
+  }
   
   return true;
 };

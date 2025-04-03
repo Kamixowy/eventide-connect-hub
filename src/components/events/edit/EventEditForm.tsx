@@ -4,11 +4,12 @@ import { UseFormReturn } from 'react-hook-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
-import { Loader2, Save, Calendar, Info, Tag } from 'lucide-react';
-import { EventFormValues } from './EventEditSchema';
+import { Loader2, Save, Calendar, Info, Tag, HandCoins } from 'lucide-react';
+import { EventFormValues, SponsorshipOption } from './EventEditSchema';
 import BasicInfoTab from './BasicInfoTab';
 import DetailsTab from './DetailsTab';
 import MediaTab from './MediaTab';
+import SponsorshipTab from './SponsorshipTab';
 
 interface EventEditFormProps {
   methods: UseFormReturn<EventFormValues>;
@@ -16,6 +17,13 @@ interface EventEditFormProps {
   submitting: boolean;
   uploadedImageUrl: string | null;
   handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  sponsorshipOptions: SponsorshipOption[];
+  handleAddSponsorshipOption: (e?: React.MouseEvent) => void;
+  handleRemoveSponsorshipOption: (id: string, e?: React.MouseEvent) => void;
+  handleSponsorshipOptionChange: (id: string, field: keyof SponsorshipOption, value: string | string[]) => void;
+  handleAddBenefit: (id: string, benefit: string, e?: React.MouseEvent) => void;
+  handleRemoveBenefit: (id: string, benefit: string, e?: React.MouseEvent) => void;
+  handleSponsorshipNumberChange: (e: React.ChangeEvent<HTMLInputElement>, id: string, field: 'priceFrom' | 'priceTo') => void;
 }
 
 const EventEditForm = ({
@@ -24,6 +32,13 @@ const EventEditForm = ({
   submitting,
   uploadedImageUrl,
   handleImageUpload,
+  sponsorshipOptions,
+  handleAddSponsorshipOption,
+  handleRemoveSponsorshipOption,
+  handleSponsorshipOptionChange,
+  handleAddBenefit,
+  handleRemoveBenefit,
+  handleSponsorshipNumberChange,
 }: EventEditFormProps) => {
   return (
     <Form {...methods}>
@@ -42,6 +57,10 @@ const EventEditForm = ({
               <Calendar className="mr-2 h-4 w-4" />
               Media i dodatkowe
             </TabsTrigger>
+            <TabsTrigger value="sponsorship">
+              <HandCoins className="mr-2 h-4 w-4" />
+              Formy współpracy
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="basic" className="space-y-6">
@@ -57,6 +76,19 @@ const EventEditForm = ({
               methods={methods}
               uploadedImageUrl={uploadedImageUrl} 
               handleImageUpload={handleImageUpload} 
+            />
+          </TabsContent>
+
+          <TabsContent value="sponsorship" className="space-y-6">
+            <SponsorshipTab 
+              methods={methods}
+              sponsorshipOptions={sponsorshipOptions}
+              handleAddSponsorshipOption={handleAddSponsorshipOption}
+              handleRemoveSponsorshipOption={handleRemoveSponsorshipOption}
+              handleSponsorshipOptionChange={handleSponsorshipOptionChange}
+              handleAddBenefit={handleAddBenefit}
+              handleRemoveBenefit={handleRemoveBenefit}
+              handleSponsorshipNumberChange={handleSponsorshipNumberChange}
             />
           </TabsContent>
         </Tabs>

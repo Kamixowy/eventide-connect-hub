@@ -29,3 +29,13 @@ export type SocialMedia = {
   linkedin?: string;
   [key: string]: string | undefined;
 };
+
+// Type for sponsorship option
+export type SponsorshipOption = {
+  id: string;
+  title: string;
+  description: string;
+  priceFrom: string;
+  priceTo: string;
+  benefits: string[];
+};
