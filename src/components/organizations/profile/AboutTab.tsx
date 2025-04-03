@@ -1,60 +1,68 @@
 
 import React from 'react';
-import { CalendarIcon } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
+import { Separator } from '@/components/ui/separator';
+import { Check, Clock } from 'lucide-react';
 
 interface AboutTabProps {
   organization: {
     description: string;
-    category: string;
-    foundingYear: number | null;
+    achievements?: string[];
+    gallery?: string[];
+    foundingYear?: number | null;
     foundingDate?: Date | null;
-    achievements: string[];
   };
 }
 
 const AboutTab: React.FC<AboutTabProps> = ({ organization }) => {
-  // Format founding date to show month and year
-  const formattedFoundingDate = organization.foundingDate 
-    ? format(new Date(organization.foundingDate), 'MMMM yyyy', { locale: pl })
-    : organization.foundingYear 
-      ? `${organization.foundingYear}`
-      : 'Nie podano';
-
+  // Remove the founding date section as it's already in the ContactSidebar
+  
   return (
-    <>
-      <h2 className="text-2xl font-bold mb-6">O nas</h2>
-      
-      <p className="text-muted-foreground mb-8 whitespace-pre-line">
-        {organization.description}
-      </p>
-      
-      <div className="mb-8">
-        <h3 className="text-xl font-bold mb-4">Działalność</h3>
-        <div className="flex flex-wrap gap-2 mb-2">
-          <Badge variant="outline" className="text-foreground">
-            {organization.category}
-          </Badge>
-        </div>
-        <div className="flex items-center text-sm text-muted-foreground mt-4">
-          <CalendarIcon size={16} className="mr-2" />
-          Data założenia: {formattedFoundingDate}
+    <div className="space-y-8">
+      <div>
+        <h3 className="text-xl font-semibold mb-4">O nas</h3>
+        <div className="prose max-w-none">
+          {organization.description.split('\n\n').map((paragraph, index) => (
+            <p key={index} className="mb-4 text-muted-foreground">
+              {paragraph}
+            </p>
+          ))}
         </div>
       </div>
-      
+
       {organization.achievements && organization.achievements.length > 0 && (
-        <div className="mb-8">
-          <h3 className="text-xl font-bold mb-4">Osiągnięcia</h3>
-          <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-            {organization.achievements.map((achievement: string, index: number) => (
-              <li key={index}>{achievement}</li>
+        <div>
+          <h3 className="text-xl font-semibold mb-4">Osiągnięcia</h3>
+          <div className="space-y-3">
+            {organization.achievements.map((achievement, index) => (
+              <div key={index} className="flex items-start">
+                <Check className="h-5 w-5 text-ngo mr-2 mt-0.5 flex-shrink-0" />
+                <p className="text-muted-foreground">{achievement}</p>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
-    </>
+
+      {/* Removed the founding date section */}
+      
+      {organization.gallery && organization.gallery.length > 0 && (
+        <div>
+          <h3 className="text-xl font-semibold mb-4">Galeria</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {organization.gallery.map((image, index) => (
+              <img
+                key={index}
+                src={image}
+                alt={`Galeria ${index + 1}`}
+                className="w-full h-40 object-cover rounded-md"
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
