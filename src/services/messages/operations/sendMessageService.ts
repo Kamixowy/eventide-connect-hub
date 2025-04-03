@@ -2,6 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Message } from '../types';
 import { createOrGetConversation } from './createOrGetConversation';
+import { checkConversationParticipation } from './checkConversationParticipation';
 
 /**
  * Wysyła wiadomość do istniejącej konwersacji
@@ -21,6 +22,25 @@ export const sendMessageToConversation = async (
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       throw new Error("Musisz być zalogowany, aby wysyłać wiadomości");
+    }
+    
+    // Sprawdź, czy użytkownik jest uczestnikiem konwersacji
+    const isParticipant = await checkConversationParticipation(conversationId, user.id);
+    if (!isParticipant) {
+      console.log(`Użytkownik ${user.id} nie jest uczestnikiem konwersacji ${conversationId}, próba dodania...`);
+      
+      // Dodaj użytkownika jako uczestnika
+      const { error: participantError } = await supabase
+        .from('conversation_participants')
+        .insert({
+          conversation_id: conversationId,
+          user_id: user.id
+        });
+      
+      if (participantError) {
+        console.error("Błąd podczas dodawania użytkownika jako uczestnika:", participantError);
+        throw new Error("Nie masz uprawnień do wysyłania wiadomości w tej konwersacji");
+      }
     }
     
     // Tworzenie i wysyłanie wiadomości

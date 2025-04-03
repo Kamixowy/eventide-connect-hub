@@ -9,12 +9,12 @@ export const checkConversationParticipation = async (
   try {
     console.log(`Sprawdzanie, czy użytkownik ${userId} jest uczestnikiem konwersacji ${conversationId}`);
     
-    // Bezpośrednie sprawdzenie w tabeli uczestników
+    // Bezpośrednie sprawdzenie w tabeli uczestników z aliasami dla uniknięcia niejasności
     const { data, error } = await supabase
       .from('conversation_participants')
       .select('*')
-      .eq('conversation_id', conversationId)
-      .eq('user_id', userId)
+      .eq('conversation_participants.conversation_id', conversationId)
+      .eq('conversation_participants.user_id', userId)
       .maybeSingle();
     
     if (error) {

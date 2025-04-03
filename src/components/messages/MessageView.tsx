@@ -58,10 +58,20 @@ const MessageView = ({
       setNewMessage('');
     } catch (error: any) {
       console.error('Error in MessageView when sending message:', error);
-      setError(error.message || "Wystąpił problem podczas wysyłania wiadomości");
+      const errorMessage = error.message || "Wystąpił problem podczas wysyłania wiadomości";
+      
+      // Sprawdź czy błąd dotyczy ambiguous column reference
+      if (errorMessage.includes("column reference") && errorMessage.includes("ambiguous")) {
+        setError("Błąd zapytania SQL. Prosimy o kontakt z administratorem.");
+      } else if (errorMessage.includes("uprawnień")) {
+        setError("Nie masz uprawnień do wysyłania wiadomości w tej konwersacji.");
+      } else {
+        setError(errorMessage);
+      }
+      
       toast({
         title: "Błąd wysyłania wiadomości",
-        description: error.message || "Wystąpił problem podczas wysyłania wiadomości. Spróbuj ponownie.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

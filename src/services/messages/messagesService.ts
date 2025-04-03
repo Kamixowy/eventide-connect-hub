@@ -9,6 +9,7 @@ export {
   createTestConversation 
 } from './operations/sendMessageService';
 export { markMessagesAsRead } from './utils/messageUtils';
+export { checkConversationParticipation } from './operations/checkConversationParticipation';
 
 // Nie używamy createOrGetConversation tutaj, aby uniknąć cyklicznych zależności
 
