@@ -25,7 +25,7 @@ export const fetchEventById = async (id: string) => {
   
   // Fetch event posts using the "from" method with the any type to bypass type checking
   const { data: postsData, error: postsError } = await supabase
-    .from('event_posts' as any)
+    .from('event_posts')
     .select('*')
     .eq('event_id', id)
     .order('created_at', { ascending: false });
@@ -125,8 +125,8 @@ export const updateEvent = async (
     .update({
       title: data.title,
       description: data.description,
-      start_date: data.start_date,
-      end_date: data.end_date || null,
+      start_date: data.start_date instanceof Date ? data.start_date.toISOString() : data.start_date,
+      end_date: data.end_date ? (data.end_date instanceof Date ? data.end_date.toISOString() : data.end_date) : null,
       location: data.location,
       detailed_location: data.detailed_location,
       expected_participants: expectedParticipants,
@@ -136,7 +136,7 @@ export const updateEvent = async (
       image_url: imageUrl,
       social_media: socialMedia,
       status: data.status,
-      updated_at: new Date()
+      updated_at: new Date().toISOString()
     })
     .eq('id', eventId);
   

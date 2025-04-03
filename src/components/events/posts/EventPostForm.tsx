@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { addEventPost } from '@/services/eventService';
 
 interface EventPostFormProps {
@@ -29,7 +29,7 @@ const EventPostForm: React.FC<EventPostFormProps> = ({ eventId, onSuccess }) => 
   
   const onSubmit = async (data: PostFormValues) => {
     try {
-      await addEventPost(eventId, data);
+      await addEventPost(eventId, data.title, data.content);
       form.reset();
       toast({
         title: "Post dodany",
