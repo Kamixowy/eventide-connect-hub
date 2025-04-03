@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EventFormValues, SponsorshipOption } from './EventEditSchema';
@@ -31,6 +31,9 @@ const SponsorshipTab: React.FC<SponsorshipTabProps> = ({
   handleRemoveBenefit,
   handleSponsorshipNumberChange,
 }) => {
+  // Add some debugging to check sponsorship options
+  console.log('SponsorshipTab render - Current options:', sponsorshipOptions);
+  
   return (
     <Card>
       <CardHeader>
@@ -52,6 +55,7 @@ const SponsorshipTab: React.FC<SponsorshipTabProps> = ({
                   size="icon"
                   className="absolute top-2 right-2 h-7 w-7"
                   onClick={(e) => handleRemoveSponsorshipOption(option.id, e)}
+                  type="button"
                 >
                   <Trash className="h-4 w-4" />
                 </Button>
@@ -84,6 +88,7 @@ const SponsorshipTab: React.FC<SponsorshipTabProps> = ({
                       onChange={(e) => handleSponsorshipNumberChange(e, option.id, 'priceFrom')}
                       placeholder="0"
                       className="mt-1"
+                      type="number"
                     />
                   </div>
                   <div>
@@ -93,6 +98,7 @@ const SponsorshipTab: React.FC<SponsorshipTabProps> = ({
                       onChange={(e) => handleSponsorshipNumberChange(e, option.id, 'priceTo')}
                       placeholder="0"
                       className="mt-1"
+                      type="number"
                     />
                   </div>
                 </div>

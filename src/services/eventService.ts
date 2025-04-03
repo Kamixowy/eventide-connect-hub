@@ -35,6 +35,10 @@ export const fetchEventById = async (id: string) => {
 };
 
 export const updateEvent = async (id: string, data: EventFormValues, imageUrl: string | null, sponsorshipOptions?: SponsorshipOption[]) => {
+  console.log('Updating event with ID:', id);
+  console.log('Event data:', data);
+  console.log('Sponsorship options:', sponsorshipOptions);
+  
   // Process array fields
   const audienceArray = processArrayFields(data.audience || '');
   const tagsArray = processArrayFields(data.tags || '');
@@ -68,32 +72,54 @@ export const updateEvent = async (id: string, data: EventFormValues, imageUrl: s
     .update(updatedEvent)
     .eq('id', id);
     
-  if (error) throw error;
+  if (error) {
+    console.error('Error updating event:', error);
+    throw error;
+  }
   
   // Update sponsorship options if provided
   if (sponsorshipOptions && sponsorshipOptions.length > 0) {
-    // First, delete all existing sponsorship options
-    const { error: deleteError } = await supabase
-      .from('sponsorship_options')
-      .delete()
-      .eq('event_id', id);
+    try {
+      console.log('Deleting existing sponsorship options for event:', id);
+      // First, delete all existing sponsorship options
+      const { error: deleteError } = await supabase
+        .from('sponsorship_options')
+        .delete()
+        .eq('event_id', id);
+        
+      if (deleteError) {
+        console.error('Error deleting sponsorship options:', deleteError);
+        throw deleteError;
+      }
       
-    if (deleteError) throw deleteError;
-    
-    // Then, insert the new ones
-    const sponsorshipData = sponsorshipOptions.map(option => ({
-      event_id: id,
-      title: option.title,
-      description: option.description,
-      price: parseFloat(option.priceFrom) || 0, // Using priceFrom as the price field for now
-      benefits: option.benefits
-    }));
-    
-    const { error: insertError } = await supabase
-      .from('sponsorship_options')
-      .insert(sponsorshipData);
+      // Prepare the new options for insertion
+      const sponsorshipData = sponsorshipOptions.map(option => ({
+        event_id: id,
+        title: option.title,
+        description: option.description,
+        price: parseFloat(option.priceFrom) || 0, // Using priceFrom as the price field
+        benefits: option.benefits // The benefits column exists in the database schema
+      }));
       
-    if (insertError) throw insertError;
+      console.log('Inserting new sponsorship options:', sponsorshipData);
+      
+      // Then, insert the new ones
+      const { error: insertError } = await supabase
+        .from('sponsorship_options')
+        .insert(sponsorshipData);
+        
+      if (insertError) {
+        console.error('Error inserting sponsorship options:', insertError);
+        throw insertError;
+      }
+      
+      console.log('Successfully updated sponsorship options');
+    } catch (error) {
+      console.error('Error updating sponsorship options:', error);
+      throw error;
+    }
+  } else {
+    console.log('No sponsorship options to update');
   }
   
   return true;
