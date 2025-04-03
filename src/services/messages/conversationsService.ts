@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Conversation, ConversationParticipant } from './types';
 
@@ -133,46 +132,8 @@ export const startConversation = async (organizationUserId: string, initialMessa
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    // Check if conversation already exists
-    const { data: existingParticipants, error: existingError } = await supabase
-      .from('conversation_participants')
-      .select('conversation_id')
-      .eq('user_id', user.id);
-
-    if (existingError) {
-      console.error('Error checking existing conversations:', existingError);
-      throw existingError;
-    }
-
-    // Get all conversations where the organization is a participant
-    if (existingParticipants && existingParticipants.length > 0) {
-      const conversationIds = existingParticipants.map(p => p.conversation_id);
-      
-      const { data: orgParticipants, error: orgError } = await supabase
-        .from('conversation_participants')
-        .select('conversation_id')
-        .eq('user_id', organizationUserId)
-        .in('conversation_id', conversationIds);
-
-      if (orgError) {
-        console.error('Error checking organization participants:', orgError);
-        throw orgError;
-      }
-
-      // If there's an existing conversation between these two users, use it
-      if (orgParticipants && orgParticipants.length > 0) {
-        const existingConversationId = orgParticipants[0].conversation_id;
-        
-        // Send the initial message in the existing conversation
-        if (initialMessage.trim()) {
-          await sendMessage(existingConversationId, initialMessage);
-        }
-        
-        return { conversationId: existingConversationId };
-      }
-    }
-
-    // Create a new conversation
+    // Create a new conversation directly without checking for existing ones
+    // This avoids the RLS policy recursion issue
     const { data: conversation, error: conversationError } = await supabase
       .from('direct_conversations')
       .insert({})
