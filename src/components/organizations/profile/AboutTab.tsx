@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format } from 'date-fns';
 import { pl } from 'date-fns/locale';
@@ -9,7 +8,6 @@ interface AboutTabProps {
   organization: {
     description: string;
     achievements?: string[];
-    gallery?: string[];
     foundingYear?: number | null;
     foundingDate?: Date | null;
   };
@@ -40,24 +38,6 @@ const AboutTab: React.FC<AboutTabProps> = ({ organization }) => {
                 <Check className="h-5 w-5 text-ngo mr-2 mt-0.5 flex-shrink-0" />
                 <p className="text-muted-foreground">{achievement}</p>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Removed the founding date section */}
-      
-      {organization.gallery && organization.gallery.length > 0 && (
-        <div>
-          <h3 className="text-xl font-semibold mb-4">Galeria</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {organization.gallery.map((image, index) => (
-              <img
-                key={index}
-                src={image}
-                alt={`Galeria ${index + 1}`}
-                className="w-full h-40 object-cover rounded-md"
-              />
             ))}
           </div>
         </div>
