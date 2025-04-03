@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Search, ChevronDown, ChevronUp, Plus, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -48,6 +49,9 @@ const ConversationsList = ({
     
     return matchesSearch && matchesType;
   });
+
+  console.log('Total conversations:', conversations.length);
+  console.log('Filtered conversations:', filteredConversations.length);
 
   return (
     <div className="md:col-span-1 border rounded-lg overflow-hidden bg-white">
@@ -114,65 +118,65 @@ const ConversationsList = ({
           </div>
         ) : (
           <div className="divide-y">
-            {filteredConversations.map((conversation) => {
-              const recipient = getRecipient(conversation);
-              if (!recipient) return null;
-              
-              const recipientName = recipient.profile?.name || recipient.organization?.name || 'Użytkownik';
-              const recipientAvatar = recipient.profile?.avatar_url || recipient.organization?.logo_url;
-              const recipientType = recipient.profile?.user_type || 'organization';
-              
-              return (
-                <div 
-                  key={conversation.id}
-                  className={`p-4 hover:bg-gray-50 cursor-pointer ${selectedConversationId === conversation.id ? 'bg-gray-50' : ''}`}
-                  onClick={() => onSelectConversation(conversation.id)}
-                >
-                  <div className="flex items-start space-x-3">
-                    <Avatar className="h-10 w-10 flex-shrink-0">
-                      <AvatarImage src={recipientAvatar || ''} alt={recipientName} />
-                      <AvatarFallback>{recipientName.substring(0, 2)}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-sm font-medium truncate">
-                          {recipientName}
-                        </p>
-                        {conversation.lastMessage && (
-                          <p className="text-xs text-muted-foreground">
-                            {formatDate(conversation.lastMessage.created_at)}
+            {filteredConversations.length > 0 ? (
+              filteredConversations.map((conversation) => {
+                const recipient = getRecipient(conversation);
+                if (!recipient) return null;
+                
+                const recipientName = recipient.profile?.name || recipient.organization?.name || 'Użytkownik';
+                const recipientAvatar = recipient.profile?.avatar_url || recipient.organization?.logo_url;
+                const recipientType = recipient.profile?.user_type || 'organization';
+                
+                return (
+                  <div 
+                    key={conversation.id}
+                    className={`p-4 hover:bg-gray-50 cursor-pointer ${selectedConversationId === conversation.id ? 'bg-gray-50' : ''}`}
+                    onClick={() => onSelectConversation(conversation.id)}
+                  >
+                    <div className="flex items-start space-x-3">
+                      <Avatar className="h-10 w-10 flex-shrink-0">
+                        <AvatarImage src={recipientAvatar || ''} alt={recipientName} />
+                        <AvatarFallback>{recipientName.substring(0, 2)}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-sm font-medium truncate">
+                            {recipientName}
                           </p>
-                        )}
-                      </div>
-                      {conversation.lastMessage && (
-                        <div className="flex items-center">
-                          <p className={`text-xs truncate ${conversation.unreadCount ? 'font-semibold' : 'text-muted-foreground'}`}>
-                            {conversation.lastMessage.content}
-                          </p>
-                          {conversation.unreadCount > 0 && (
-                            <span className="ml-2 h-2 w-2 rounded-full bg-ngo"></span>
+                          {conversation.lastMessage && (
+                            <p className="text-xs text-muted-foreground">
+                              {formatDate(conversation.lastMessage.created_at)}
+                            </p>
                           )}
                         </div>
-                      )}
-                      <div className="mt-1">
-                        <Badge 
-                          variant="outline"
-                          className={`text-xs px-1.5 py-0 ${
-                            recipientType === 'organization' 
-                              ? 'bg-blue-50 text-blue-700 hover:bg-blue-50' 
-                              : 'bg-green-50 text-green-700 hover:bg-green-50'
-                          }`}
-                        >
-                          {recipientType === 'organization' ? 'Organizacja' : 'Sponsor'}
-                        </Badge>
+                        {conversation.lastMessage && (
+                          <div className="flex items-center">
+                            <p className={`text-xs truncate ${conversation.unreadCount ? 'font-semibold' : 'text-muted-foreground'}`}>
+                              {conversation.lastMessage.content}
+                            </p>
+                            {conversation.unreadCount > 0 && (
+                              <span className="ml-2 h-2 w-2 rounded-full bg-ngo"></span>
+                            )}
+                          </div>
+                        )}
+                        <div className="mt-1">
+                          <Badge 
+                            variant="outline"
+                            className={`text-xs px-1.5 py-0 ${
+                              recipientType === 'organization' 
+                                ? 'bg-blue-50 text-blue-700 hover:bg-blue-50' 
+                                : 'bg-green-50 text-green-700 hover:bg-green-50'
+                            }`}
+                          >
+                            {recipientType === 'organization' ? 'Organizacja' : 'Sponsor'}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-            
-            {filteredConversations.length === 0 && (
+                );
+              })
+            ) : (
               <div className="p-8 text-center text-muted-foreground">
                 {conversations.length === 0 
                   ? "Brak konwersacji. Rozpocznij nową konwersację, klikając przycisk 'Nowa wiadomość'." 

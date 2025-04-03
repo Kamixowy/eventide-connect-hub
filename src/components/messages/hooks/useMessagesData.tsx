@@ -45,6 +45,8 @@ export const useMessagesData = (selectedConversationId: string | null) => {
         // Add the message to the local cache
         queryClient.setQueryData(['messages', conversationId], (oldData: any[] | undefined) => {
           if (!oldData) return [result];
+          // Avoid duplicates by checking if message already exists
+          if (oldData.some(m => m.id === result.id)) return oldData;
           return [...oldData, result];
         });
         

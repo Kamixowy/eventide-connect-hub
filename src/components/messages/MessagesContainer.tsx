@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -38,11 +39,21 @@ const MessagesContainer = () => {
     handleConversationUpdate
   );
 
+  // Immediately fetch conversations when the component mounts
+  useEffect(() => {
+    if (user) {
+      console.log('Initial conversations fetch');
+      refetchConversations();
+    }
+  }, [user, refetchConversations]);
+
   // Handler for new messages from subscription
   function handleNewMessage(newMessage: Message) {
     // Update messages cache
     queryClient.setQueryData(['messages', selectedConversationId], (oldData: Message[] | undefined) => {
       if (!oldData) return [newMessage];
+      // Avoid duplicates by checking if message already exists
+      if (oldData.some(m => m.id === newMessage.id)) return oldData;
       return [...oldData, newMessage];
     });
     
@@ -59,6 +70,7 @@ const MessagesContainer = () => {
   // Set default selected conversation
   useEffect(() => {
     if (conversations.length > 0 && !selectedConversationId) {
+      console.log('Setting default selected conversation:', conversations[0].id);
       setSelectedConversationId(conversations[0].id);
     }
   }, [conversations, selectedConversationId]);
@@ -106,6 +118,7 @@ const MessagesContainer = () => {
   };
 
   const handleConversationSelect = (conversationId: string) => {
+    console.log('Selecting conversation:', conversationId);
     setSelectedConversationId(conversationId);
     // Refetch messages for the selected conversation
     queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
