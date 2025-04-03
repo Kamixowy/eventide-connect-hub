@@ -78,21 +78,13 @@ const MessagesContainer = () => {
     }
   }, [selectedId, user, refetchConversations]);
 
-  // Log debugging information
+  // Force refetch on mount and when user changes
   useEffect(() => {
-    console.log("Current user ID:", user?.id);
-    console.log("Selected conversation ID:", selectedId);
-    console.log("Conversation count:", conversations.length);
-    console.log("Available conversations:", conversations.map(c => ({
-      id: c.id,
-      participants: c.participants?.map(p => p.user_id)
-    })));
-    
-    // Force a refetch of conversations when the component mounts
-    if (user && !isLoadingConversations) {
+    if (user) {
+      console.log("User logged in, fetching conversations:", user.id);
       refetchConversations();
     }
-  }, [user, selectedId, conversations.length, isLoadingConversations, refetchConversations]);
+  }, [user, refetchConversations]);
 
   return (
     <div className="container py-8">
@@ -128,6 +120,7 @@ const MessagesContainer = () => {
               conversationsCount={conversations.length}
               onNewMessageClick={() => setIsNewMessageDialogOpen(true)}
               isError={isConversationsError}
+              onRefetch={refetchConversations}
             />
           )}
         </div>

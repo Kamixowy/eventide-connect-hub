@@ -103,3 +103,102 @@ export const sendMessage = async (conversationId: string, content: string): Prom
     throw error;
   }
 };
+
+/**
+ * Create test conversation with messages for a specified user
+ * This function creates a conversation with test messages
+ */
+export const createTestConversation = async (targetEmail: string): Promise<{ conversationId: string, participantId: string } | null> => {
+  try {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error('User not authenticated');
+      throw new Error('User not authenticated');
+    }
+    
+    console.log('Creating test conversation with user email:', targetEmail);
+    
+    // First, find the user by email
+    const { data: targetUser, error: userError } = await supabase
+      .from('profiles')
+      .select('id, name')
+      .eq('email', targetEmail)
+      .maybeSingle();
+    
+    if (userError || !targetUser) {
+      console.error('Target user not found:', userError || 'No user with that email');
+      throw new Error('Target user not found');
+    }
+    
+    console.log('Found target user:', targetUser);
+    
+    // Create a new conversation
+    const { data: conversation, error: conversationError } = await supabase
+      .from('direct_conversations')
+      .insert({})
+      .select('id')
+      .single();
+    
+    if (conversationError) {
+      console.error('Failed to create conversation:', conversationError);
+      throw new Error('Failed to create conversation');
+    }
+    
+    console.log('Created new conversation:', conversation.id);
+    
+    // Add both users as participants
+    const { data: participants, error: participantError } = await supabase
+      .from('conversation_participants')
+      .insert([
+        {
+          conversation_id: conversation.id,
+          user_id: user.id
+        },
+        {
+          conversation_id: conversation.id,
+          user_id: targetUser.id
+        }
+      ])
+      .select('id, user_id')
+      .order('created_at', { ascending: true });
+    
+    if (participantError) {
+      console.error('Failed to add participants:', participantError);
+      throw new Error('Failed to add participants');
+    }
+    
+    console.log('Added participants to conversation:', participants);
+    
+    // Add some initial messages
+    const { error: messagesError } = await supabase
+      .from('direct_messages')
+      .insert([
+        {
+          conversation_id: conversation.id,
+          sender_id: user.id,
+          content: `Hello ${targetUser.name || 'there'}! This is a test message.`
+        },
+        {
+          conversation_id: conversation.id,
+          sender_id: targetUser.id,
+          content: 'Hi! This is an automated test response.'
+        }
+      ]);
+    
+    if (messagesError) {
+      console.error('Failed to add test messages:', messagesError);
+      throw new Error('Failed to add test messages');
+    }
+    
+    console.log('Added test messages to conversation');
+    
+    return {
+      conversationId: conversation.id,
+      participantId: targetUser.id
+    };
+  } catch (error) {
+    console.error('Error creating test conversation:', error);
+    return null;
+  }
+};

@@ -17,6 +17,7 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     }
   }, [initialSelectedConversationId]);
 
+  // Fetch conversations
   const { 
     data: conversations = [], 
     isLoading: isLoadingConversations,
@@ -38,6 +39,7 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     }
   });
 
+  // Fetch messages for selected conversation
   const { 
     data: messages = [], 
     isLoading: isLoadingMessages,
@@ -58,6 +60,7 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     }
   });
 
+  // Improved send message function with enhanced error logging
   const sendMessageMutation = async (conversationId: string, content: string) => {
     try {
       console.log("Starting sending message to conversation:", conversationId);
@@ -77,6 +80,7 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
         // Optimistically update UI
         queryClient.setQueryData(['messages', conversationId], (oldData: any[] | undefined) => {
           if (!oldData) return [result];
+          // Check for duplicates before adding
           if (oldData.some(m => m.id === result.id)) return oldData;
           return [...oldData, result];
         });
