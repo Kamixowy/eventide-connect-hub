@@ -84,6 +84,11 @@ const MessagesContainer = () => {
   const handleSendMessage = async (newMessage: string) => {
     if (!selectedConversationId || !newMessage.trim() || !user) {
       console.error("Cannot send message - missing conversation ID, message content, or user");
+      toast({
+        title: "Błąd",
+        description: "Nie można wysłać pustej wiadomości lub brak konwersacji",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -100,13 +105,20 @@ const MessagesContainer = () => {
         return;
       }
       
-      await sendMessageMutation(selectedConversationId, newMessage);
+      // Send the message and handle the response
+      const result = await sendMessageMutation(selectedConversationId, newMessage);
       
-      // Force refresh messages
-      queryClient.invalidateQueries({ queryKey: ['messages', selectedConversationId] });
-      
-      // Refetch conversations to update last message
-      refetchConversations();
+      if (result) {
+        console.log("Message sent successfully:", result);
+        
+        // Force refresh messages
+        queryClient.invalidateQueries({ queryKey: ['messages', selectedConversationId] });
+        
+        // Refetch conversations to update last message
+        refetchConversations();
+      } else {
+        throw new Error("Failed to send message");
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       toast({

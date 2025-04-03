@@ -59,14 +59,14 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       console.log('User is already a participant in the conversation');
     }
     
-    // Now create the message
+    // Now create the message with explicit table name 'direct_messages'
     console.log('Creating message with content:', content);
     const { data: message, error: messageError } = await supabase
       .from('direct_messages')
       .insert({
         conversation_id: conversationId,
         sender_id: user.id,
-        content,
+        content
       })
       .select('*')
       .single();
@@ -76,7 +76,7 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       throw new Error('Failed to send message: ' + messageError.message);
     }
     
-    console.log('Message sent successfully:', message.id);
+    console.log('Message sent successfully, inserted into direct_messages:', message);
     return message;
   } catch (error) {
     console.error('Error in sendMessage:', error);

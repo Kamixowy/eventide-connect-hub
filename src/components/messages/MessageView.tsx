@@ -44,6 +44,7 @@ const MessageView = ({
     
     setIsSending(true);
     try {
+      console.log("Attempting to send message:", newMessage);
       await onSendMessage(newMessage);
       setNewMessage('');
     } catch (error) {
