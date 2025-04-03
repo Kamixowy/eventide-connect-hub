@@ -1,4 +1,3 @@
-
 import { useRef, useEffect, useState } from 'react';
 import { Loader2, Send } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -35,13 +34,11 @@ const MessageView = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    // Scroll to bottom when messages change
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
 
-  // Resetuj błąd po zmianie konwersacji
   useEffect(() => {
     setError(null);
   }, [conversation?.id]);
@@ -60,7 +57,6 @@ const MessageView = ({
       console.error('Error in MessageView when sending message:', error);
       const errorMessage = error.message || "Wystąpił problem podczas wysyłania wiadomości";
       
-      // Sprawdź czy błąd dotyczy ambiguous column reference
       if (errorMessage.includes("column reference") && errorMessage.includes("ambiguous")) {
         setError("Błąd zapytania SQL. Prosimy o kontakt z administratorem.");
       } else if (errorMessage.includes("uprawnień")) {
