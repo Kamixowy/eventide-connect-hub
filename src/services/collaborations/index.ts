@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import type { CollaborationType } from '@/types/collaboration';
 
 export interface NewCollaboration {
@@ -154,6 +154,8 @@ export const createCollaboration = async (
   }
   
   try {
+    console.log("Tworzenie współpracy z danymi:", collaboration);
+    
     // 1. Dodaj współpracę
     const { data: collabData, error: collabError } = await supabase
       .from('collaborations')
@@ -172,6 +174,7 @@ export const createCollaboration = async (
     }
     
     const collaborationId = collabData.id;
+    console.log("Utworzono współpracę z ID:", collaborationId);
     
     // 2. Dodaj opcje współpracy
     if (collaborationOptions.length > 0) {
@@ -183,6 +186,8 @@ export const createCollaboration = async (
         is_custom: option.is_custom,
         sponsorship_option_id: option.sponsorship_option_id
       }));
+      
+      console.log("Dodawanie opcji współpracy:", optionsToInsert);
       
       const { error: optionsError } = await supabase
         .from('collaboration_options')
@@ -199,6 +204,8 @@ export const createCollaboration = async (
         collaboration_id: collaborationId,
         event_id: eventId
       }));
+      
+      console.log("Dodawanie powiązań z wydarzeniami:", eventsToInsert);
       
       const { error: eventsError } = await supabase
         .from('collaboration_events')

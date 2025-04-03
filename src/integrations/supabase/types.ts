@@ -51,6 +51,7 @@ export type Database = {
           event_id: string
           id: string
           message: string | null
+          organization_id: string
           sponsor_id: string
           status: string
           total_amount: number
@@ -61,6 +62,7 @@ export type Database = {
           event_id: string
           id?: string
           message?: string | null
+          organization_id: string
           sponsor_id: string
           status: string
           total_amount: number
@@ -71,6 +73,7 @@ export type Database = {
           event_id?: string
           id?: string
           message?: string | null
+          organization_id?: string
           sponsor_id?: string
           status?: string
           total_amount?: number
@@ -82,6 +85,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, MinusCircle } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { 
   createCollaboration, 
   CollaborationOption 
@@ -61,7 +61,7 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
   // Ładowanie opcji sponsoringu dla wybranego wydarzenia
   useEffect(() => {
     const loadSponsorshipOptions = async () => {
-      if (!eventId) {
+      if (selectedEventIds.length === 0) {
         setSponsorshipOptions([]);
         return;
       }
@@ -70,12 +70,13 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
         const { data, error } = await supabase
           .from('sponsorship_options')
           .select('*')
-          .eq('event_id', eventId);
+          .in('event_id', selectedEventIds);
           
         if (error) {
           throw error;
         }
         
+        console.log("Załadowane opcje sponsoringu:", data);
         setSponsorshipOptions(data || []);
       } catch (error: any) {
         console.error('Błąd podczas ładowania opcji sponsoringu:', error);
@@ -88,7 +89,7 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
     };
     
     loadSponsorshipOptions();
-  }, [eventId, toast]);
+  }, [selectedEventIds, toast]);
   
   // Ładowanie organizacji
   useEffect(() => {
@@ -340,46 +341,48 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
             <div>
               <h3 className="text-lg font-semibold mb-3">Opcje sponsoringu</h3>
               
-              {selectedEventIds.length > 0 && sponsorshipOptions.length > 0 ? (
-                <div className="space-y-3">
-                  {sponsorshipOptions.map((option) => (
-                    <div 
-                      key={option.id} 
-                      className={`
-                        border rounded-lg p-3 cursor-pointer transition
-                        ${selectedOptions.some(o => o.sponsorship_option_id === option.id) 
-                          ? 'border-blue-400 bg-blue-50' 
-                          : 'border-gray-200 hover:border-gray-300'
-                        }
-                      `}
-                      onClick={() => toggleOption(option)}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-medium">{option.title}</h4>
-                          <p className="text-sm text-gray-500 mt-1">
-                            {option.description || 'Brak opisu'}
-                          </p>
-                          
-                          {option.benefits && option.benefits.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              {option.benefits.map((benefit, i) => (
-                                <Badge key={i} variant="secondary" className="text-xs">
-                                  {benefit}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
+              {selectedEventIds.length > 0 ? (
+                sponsorshipOptions.length > 0 ? (
+                  <div className="space-y-3">
+                    {sponsorshipOptions.map((option) => (
+                      <div 
+                        key={option.id} 
+                        className={`
+                          border rounded-lg p-3 cursor-pointer transition
+                          ${selectedOptions.some(o => o.sponsorship_option_id === option.id) 
+                            ? 'border-blue-400 bg-blue-50' 
+                            : 'border-gray-200 hover:border-gray-300'
+                          }
+                        `}
+                        onClick={() => toggleOption(option)}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-medium">{option.title}</h4>
+                            <p className="text-sm text-gray-500 mt-1">
+                              {option.description || 'Brak opisu'}
+                            </p>
+                            
+                            {option.benefits && option.benefits.length > 0 && (
+                              <div className="mt-2 flex flex-wrap gap-1">
+                                {option.benefits.map((benefit, i) => (
+                                  <Badge key={i} variant="secondary" className="text-xs">
+                                    {benefit}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <p className="font-bold">{option.price} PLN</p>
                         </div>
-                        <p className="font-bold">{option.price} PLN</p>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : selectedEventIds.length > 0 ? (
-                <p className="text-muted-foreground mb-4">
-                  Wybrane wydarzenia nie mają zdefiniowanych opcji sponsoringu
-                </p>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground mb-4">
+                    Wybrane wydarzenia nie mają zdefiniowanych opcji sponsoringu
+                  </p>
+                )
               ) : (
                 <p className="text-muted-foreground mb-4">
                   Najpierw wybierz wydarzenie
