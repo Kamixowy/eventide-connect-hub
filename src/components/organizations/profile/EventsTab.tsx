@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Plus } from 'lucide-react';
+import { Calendar, Plus, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { format, isPast } from 'date-fns';
 import { pl } from 'date-fns/locale';
@@ -15,6 +15,7 @@ interface Event {
   date: string;
   image: string;
   raw_date?: string;
+  post_count?: number;
 }
 
 interface EventsTabProps {
@@ -70,13 +71,25 @@ const EventsTab: React.FC<EventsTabProps> = ({ organization, isOwner }) => {
         const past: Event[] = [];
         const upcoming: Event[] = [];
 
-        eventsData.forEach((event) => {
+        // Pobierz liczby postów dla każdego wydarzenia
+        for (const event of eventsData) {
+          // Pobierz liczbę postów dla wydarzenia
+          const { count: postCount, error: countError } = await supabase
+            .from('event_posts')
+            .select('id', { count: 'exact', head: true })
+            .eq('event_id', event.id);
+            
+          if (countError) {
+            console.error('Error fetching post count:', countError);
+          }
+
           const formattedEvent = {
             id: event.id,
             title: event.title,
             date: formatEventDate(event.start_date),
             image: event.image_url || '/placeholder.svg',
             raw_date: event.start_date,
+            post_count: postCount || 0
           };
 
           // Sprawdzenie czy wydarzenie jest przeszłe czy przyszłe
@@ -85,7 +98,7 @@ const EventsTab: React.FC<EventsTabProps> = ({ organization, isOwner }) => {
           } else {
             upcoming.push(formattedEvent);
           }
-        });
+        }
 
         setUpcomingEvents(upcoming);
         setPastEvents(past);
@@ -130,6 +143,14 @@ const EventsTab: React.FC<EventsTabProps> = ({ organization, isOwner }) => {
                       <span>{event.date}</span>
                     </div>
                   </CardContent>
+                  {typeof event.post_count !== 'undefined' && (
+                    <CardFooter className="p-4 pt-0">
+                      <div className="flex items-center text-sm text-gray-500">
+                        <MessageSquare size={16} className="mr-1" />
+                        <span>{event.post_count} {event.post_count === 1 ? 'post' : 'posty'}</span>
+                      </div>
+                    </CardFooter>
+                  )}
                 </Card>
               </Link>
             ))}
@@ -185,6 +206,14 @@ const EventsTab: React.FC<EventsTabProps> = ({ organization, isOwner }) => {
                       <span>{event.date}</span>
                     </div>
                   </CardContent>
+                  {typeof event.post_count !== 'undefined' && (
+                    <CardFooter className="p-4 pt-0">
+                      <div className="flex items-center text-sm text-gray-500">
+                        <MessageSquare size={16} className="mr-1" />
+                        <span>{event.post_count} {event.post_count === 1 ? 'post' : 'posty'}</span>
+                      </div>
+                    </CardFooter>
+                  )}
                 </Card>
               </Link>
             ))}

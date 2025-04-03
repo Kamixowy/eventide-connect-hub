@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -11,6 +12,7 @@ import {
   Tag,
   MessageSquare,
   Edit,
+  Plus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -29,6 +31,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { updateEventStatus } from '@/services/eventService';
+import EventPostForm from '@/components/events/posts/EventPostForm';
+import EventPostsList from '@/components/events/posts/EventPostsList';
 
 const demoEventData = {
   id: 1,
@@ -104,116 +108,129 @@ const EventDetails = () => {
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
+  const [showPostForm, setShowPostForm] = useState(false);
   
-  useEffect(() => {
-    const fetchEventDetails = async () => {
-      setLoading(true);
-      
-      if ((user && user.id.startsWith('demo-')) || (id && id.startsWith('evt-'))) {
-        setEvent(demoEventData);
-        setLoading(false);
-        return;
-      }
-      
-      if (!id) {
+  const fetchEventDetails = async () => {
+    setLoading(true);
+    
+    if ((user && user.id.startsWith('demo-')) || (id && id.startsWith('evt-'))) {
+      setEvent(demoEventData);
+      setLoading(false);
+      return;
+    }
+    
+    if (!id) {
+      toast({
+        title: "Błąd",
+        description: "Nie znaleziono identyfikatora wydarzenia.",
+        variant: "destructive"
+      });
+      navigate('/wydarzenia');
+      return;
+    }
+    
+    try {
+      const { data: eventData, error: eventError } = await supabase
+        .from('events')
+        .select(`
+          *,
+          organizations(id, name, logo_url, user_id)
+        `)
+        .eq('id', id)
+        .maybeSingle();
+        
+      if (eventError) {
+        console.error('Error fetching event details:', eventError);
         toast({
           title: "Błąd",
-          description: "Nie znaleziono identyfikatora wydarzenia.",
+          description: "Nie udało się pobrać szczegółów wydarzenia.",
           variant: "destructive"
         });
         navigate('/wydarzenia');
         return;
       }
       
-      try {
-        const { data: eventData, error: eventError } = await supabase
-          .from('events')
-          .select(`
-            *,
-            organizations(id, name, logo_url, user_id)
-          `)
-          .eq('id', id)
-          .maybeSingle();
-          
-        if (eventError) {
-          console.error('Error fetching event details:', eventError);
-          toast({
-            title: "Błąd",
-            description: "Nie udało się pobrać szczegółów wydarzenia.",
-            variant: "destructive"
-          });
-          navigate('/wydarzenia');
-          return;
-        }
-        
-        if (!eventData) {
-          toast({
-            title: "Nie znaleziono",
-            description: "Wydarzenie o podanym ID nie istnieje.",
-            variant: "destructive"
-          });
-          navigate('/wydarzenia');
-          return;
-        }
-        
-        console.log('Event data:', eventData);
-        
-        if (user && eventData.organizations?.user_id === user.id) {
-          setIsOwner(true);
-        }
-        
-        const { data: sponsorshipData, error: sponsorshipError } = await supabase
-          .from('sponsorship_options')
-          .select('*')
-          .eq('event_id', id);
-          
-        if (sponsorshipError) {
-          console.error('Error fetching sponsorship options:', sponsorshipError);
-        }
-        
-        const formattedEvent = {
-          id: eventData.id,
-          title: eventData.title,
-          organization: {
-            id: eventData.organizations?.id || 'unknown',
-            name: eventData.organizations?.name || 'Nieznana organizacja',
-            avatar: eventData.organizations?.logo_url || null,
-            userId: eventData.organizations?.user_id
-          },
-          date: new Date(eventData.start_date).toLocaleDateString('pl-PL'),
-          location: eventData.location || 'Lokalizacja nieznana',
-          detailed_location: eventData.detailed_location,
-          attendees: eventData.expected_participants || 0,
-          category: eventData.category || 'Inne',
-          status: eventData.status || 'Planowane',
-          description: eventData.description,
-          banner: eventData.image_url,
-          audience: eventData.audience || [],
-          tags: eventData.tags || [],
-          socialMedia: eventData.social_media || {},
-          sponsorshipOptions: sponsorshipData ? sponsorshipData.map((option: any) => ({
-            id: option.id,
-            title: option.title,
-            description: option.description,
-            price: option.price ? { from: option.price, to: option.price * 1.5 } : null
-          })) : demoEventData.sponsorshipOptions,
-          updates: []
-        };
-        
-        setEvent(formattedEvent);
-      } catch (error) {
-        console.error('Error in fetching event details:', error);
+      if (!eventData) {
         toast({
-          title: "Błąd",
-          description: "Wystąpił problem z pobieraniem danych wydarzenia.",
+          title: "Nie znaleziono",
+          description: "Wydarzenie o podanym ID nie istnieje.",
           variant: "destructive"
         });
-        setEvent(demoEventData);
-      } finally {
-        setLoading(false);
+        navigate('/wydarzenia');
+        return;
       }
-    };
-    
+      
+      console.log('Event data:', eventData);
+      
+      if (user && eventData.organizations?.user_id === user.id) {
+        setIsOwner(true);
+      }
+      
+      const { data: sponsorshipData, error: sponsorshipError } = await supabase
+        .from('sponsorship_options')
+        .select('*')
+        .eq('event_id', id);
+        
+      if (sponsorshipError) {
+        console.error('Error fetching sponsorship options:', sponsorshipError);
+      }
+      
+      // Fetch posts
+      const { data: postsData, error: postsError } = await supabase
+        .from('event_posts')
+        .select('*')
+        .eq('event_id', id)
+        .order('created_at', { ascending: false });
+        
+      if (postsError) {
+        console.error('Error fetching event posts:', postsError);
+      }
+      
+      const formattedEvent = {
+        id: eventData.id,
+        title: eventData.title,
+        organization: {
+          id: eventData.organizations?.id || 'unknown',
+          name: eventData.organizations?.name || 'Nieznana organizacja',
+          avatar: eventData.organizations?.logo_url || null,
+          userId: eventData.organizations?.user_id
+        },
+        date: new Date(eventData.start_date).toLocaleDateString('pl-PL'),
+        location: eventData.location || 'Lokalizacja nieznana',
+        detailed_location: eventData.detailed_location,
+        attendees: eventData.expected_participants || 0,
+        category: eventData.category || 'Inne',
+        status: eventData.status || 'Planowane',
+        description: eventData.description,
+        banner: eventData.image_url,
+        audience: eventData.audience || [],
+        tags: eventData.tags || [],
+        socialMedia: eventData.social_media || {},
+        sponsorshipOptions: sponsorshipData ? sponsorshipData.map((option: any) => ({
+          id: option.id,
+          title: option.title,
+          description: option.description,
+          price: option.price ? { from: option.price, to: option.price * 1.5 } : null
+        })) : demoEventData.sponsorshipOptions,
+        posts: postsData || [],
+        updates: []
+      };
+      
+      setEvent(formattedEvent);
+    } catch (error) {
+      console.error('Error in fetching event details:', error);
+      toast({
+        title: "Błąd",
+        description: "Wystąpił problem z pobieraniem danych wydarzenia.",
+        variant: "destructive"
+      });
+      setEvent(demoEventData);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  useEffect(() => {
     fetchEventDetails();
   }, [id, user, toast, navigate]);
   
@@ -247,6 +264,11 @@ const EventDetails = () => {
     } finally {
       setStatusUpdating(false);
     }
+  };
+  
+  const handlePostSuccess = () => {
+    setShowPostForm(false);
+    fetchEventDetails();
   };
   
   if (loading) {
@@ -408,6 +430,12 @@ const EventDetails = () => {
                   Szczegóły
                 </TabsTrigger>
                 <TabsTrigger 
+                  value="posts" 
+                  className="rounded-none border-b-2 data-[state=active]:border-ngo data-[state=active]:text-foreground px-4 py-2"
+                >
+                  Posty
+                </TabsTrigger>
+                <TabsTrigger 
                   value="updates" 
                   className="rounded-none border-b-2 data-[state=active]:border-ngo data-[state=active]:text-foreground px-4 py-2"
                 >
@@ -485,6 +513,46 @@ const EventDetails = () => {
                     </div>
                   </div>
                 )}
+              </TabsContent>
+              
+              <TabsContent value="posts" className="mt-0">
+                <div className="mb-6 flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Posty</h2>
+                  
+                  {isOwner && !showPostForm && (
+                    <Button onClick={() => setShowPostForm(true)}>
+                      <Plus size={16} className="mr-2" /> Dodaj post
+                    </Button>
+                  )}
+                </div>
+                
+                {isOwner && showPostForm && (
+                  <Card className="mb-6">
+                    <CardHeader>
+                      <CardTitle>Dodaj nowy post</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <EventPostForm 
+                        eventId={id || ''} 
+                        onSuccess={handlePostSuccess} 
+                      />
+                      <div className="flex justify-end mt-4">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setShowPostForm(false)}
+                        >
+                          Anuluj
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+                
+                <EventPostsList 
+                  posts={event.posts || []} 
+                  isOwner={isOwner}
+                  onPostDeleted={fetchEventDetails}
+                />
               </TabsContent>
               
               <TabsContent value="updates" className="mt-0">

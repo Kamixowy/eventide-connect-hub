@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { EventFormValues, SocialMedia } from '@/components/events/edit/EventEditSchema';
 import { processArrayFields } from '@/utils/eventHelpers';
@@ -25,10 +24,22 @@ export const fetchEventById = async (id: string) => {
     console.error('Error fetching sponsorship options:', sponsorshipError);
   }
   
-  // Add sponsorship options to the event data
+  // Fetch event posts
+  const { data: postsData, error: postsError } = await supabase
+    .from('event_posts')
+    .select('*')
+    .eq('event_id', id)
+    .order('created_at', { ascending: false });
+    
+  if (postsError) {
+    console.error('Error fetching event posts:', postsError);
+  }
+  
+  // Add sponsorship options and posts to the event data
   const fullEventData = {
     ...eventData,
-    sponsorshipOptions: sponsorshipData || []
+    sponsorshipOptions: sponsorshipData || [],
+    posts: postsData || []
   };
   
   return fullEventData;
@@ -141,4 +152,55 @@ export const updateEventStatus = async (id: string, status: string) => {
   if (error) throw error;
   
   return true;
+};
+
+export const addEventPost = async (eventId: string, postData: { title: string; content: string }) => {
+  const { data, error } = await supabase
+    .from('event_posts')
+    .insert({
+      event_id: eventId,
+      title: postData.title,
+      content: postData.content,
+    })
+    .select();
+    
+  if (error) {
+    console.error('Error adding event post:', error);
+    throw error;
+  }
+  
+  return data[0];
+};
+
+export const deleteEventPost = async (postId: string) => {
+  const { error } = await supabase
+    .from('event_posts')
+    .delete()
+    .eq('id', postId);
+    
+  if (error) {
+    console.error('Error deleting event post:', error);
+    throw error;
+  }
+  
+  return true;
+};
+
+export const updateEventPost = async (postId: string, postData: { title: string; content: string }) => {
+  const { data, error } = await supabase
+    .from('event_posts')
+    .update({
+      title: postData.title,
+      content: postData.content,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', postId)
+    .select();
+    
+  if (error) {
+    console.error('Error updating event post:', error);
+    throw error;
+  }
+  
+  return data[0];
 };
