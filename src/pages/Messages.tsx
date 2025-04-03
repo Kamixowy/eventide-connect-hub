@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -16,7 +15,7 @@ import {
   useMessageSubscription,
   useConversationsSubscription,
   Message
-} from '@/services/messageService';
+} from '@/services/messages';
 
 const Messages = () => {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);

@@ -1,4 +1,3 @@
-
 import { useRef, useEffect, useState } from 'react';
 import { Loader2, Send } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -6,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Message, ConversationParticipant, Conversation } from '@/services/messageService';
+import { Message, ConversationParticipant, Conversation } from '@/services/messages';
 
 interface MessageViewProps {
   conversation: Conversation | undefined;
@@ -31,7 +30,6 @@ const MessageView = ({
   const [isSending, setIsSending] = useState(false);
   const messageEndRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: 'smooth' });

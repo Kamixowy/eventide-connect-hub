@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Search, ChevronDown, ChevronUp, Plus, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -6,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Conversation } from '@/services/messageService';
+import { Conversation } from '@/services/messages';
 
 interface ConversationsListProps {
   conversations: Conversation[];
@@ -31,13 +30,11 @@ const ConversationsList = ({
   const [expandedFilters, setExpandedFilters] = useState(false);
   const [typeFilter, setTypeFilter] = useState<'all' | 'organization' | 'sponsor'>('all');
 
-  // Helper function to get recipient from conversation
   const getRecipient = (conversation: Conversation) => {
     if (!userId) return undefined;
     return conversation.participants?.find(p => p.user_id !== userId);
   };
 
-  // Filter conversations
   const filteredConversations = conversations.filter((conversation) => {
     const recipient = getRecipient(conversation);
     if (!recipient) return false;

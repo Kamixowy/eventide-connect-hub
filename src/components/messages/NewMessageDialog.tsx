@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { startConversation, fetchOrganizations } from "@/services/messageService";
+import { startConversation, fetchOrganizations } from "@/services/messages";
 import { useQuery } from "@tanstack/react-query";
 
 interface NewMessageDialogProps {
