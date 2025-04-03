@@ -1,15 +1,15 @@
 
 export interface CollaborationType {
-  id: number;
+  id: string;
   event: {
-    id: number;
+    id: number | string;
     title: string;
     organization: string;
     date: string;
     image: string;
   };
   sponsor: {
-    id: number;
+    id: number | string;
     name: string;
     avatar: string;
   };
@@ -24,9 +24,16 @@ export interface CollaborationType {
   totalAmount: number;
   message: string;
   conversation: {
-    id: number;
+    id: number | string;
     sender: string;
     text: string;
     date: string;
   }[];
+}
+
+export interface CollaborationListProps {
+  collaborations: CollaborationType[];
+  viewMode: 'grid' | 'list';
+  userType: 'organization' | 'sponsor';
+  isLoading?: boolean;
 }

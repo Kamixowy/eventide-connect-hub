@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { CollaborationDialog } from './CollaborationDialog';
 import { CollaborationType } from '@/types/collaboration';
+import { Link } from 'react-router-dom';
 
 interface CollaborationCardGridProps {
   collaboration: CollaborationType;
@@ -49,11 +50,19 @@ export const CollaborationCardGrid = ({ collaboration, userType }: Collaboration
           </div>
         </div>
         
-        <CollaborationDialog collaboration={collaboration} userType={userType}>
-          <Button variant="outline" className="w-full">
-            <MessageSquare size={16} className="mr-2" /> Konwersacja
-          </Button>
-        </CollaborationDialog>
+        <div className="space-y-2">
+          <CollaborationDialog collaboration={collaboration} userType={userType}>
+            <Button variant="outline" className="w-full">
+              <MessageSquare size={16} className="mr-2" /> Konwersacja
+            </Button>
+          </CollaborationDialog>
+          
+          <Link to={`/wspolprace/${collaboration.id}`} className="block w-full">
+            <Button variant="default" className="w-full">
+              Szczegóły
+            </Button>
+          </Link>
+        </div>
       </CardContent>
     </Card>
   );

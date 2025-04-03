@@ -14,6 +14,7 @@ import EventDetails from "./pages/EventDetails";
 import AddEvent from "./pages/AddEvent";
 import EditEvent from "./pages/EditEvent";
 import Collaborations from "./pages/Collaborations";
+import CollaborationDetails from "./pages/CollaborationDetails";
 import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 import About from "./pages/About";
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/dodaj-wydarzenie" element={<AddEvent />} />
             <Route path="/edytuj-wydarzenie/:id" element={<EditEvent />} />
             <Route path="/wspolprace" element={<Collaborations />} />
+            <Route path="/wspolprace/:id" element={<CollaborationDetails />} />
             <Route path="/wiadomosci" element={<Messages />} />
             <Route path="/o-nas" element={<About />} />
             <Route path="/kontakt" element={<Contact />} />
