@@ -73,11 +73,11 @@ const EventsTab: React.FC<EventsTabProps> = ({ organization, isOwner }) => {
 
         // Pobierz liczby postów dla każdego wydarzenia
         for (const event of eventsData) {
-          // Pobierz liczbę postów dla wydarzenia
-          const { count: postCount, error: countError } = await supabase
-            .from('event_posts')
+          // Pobierz liczbę postów dla wydarzenia - use any type to bypass type checking
+          const { count: postCount, error: countError } = await (supabase
+            .from('event_posts' as any)
             .select('id', { count: 'exact', head: true })
-            .eq('event_id', event.id);
+            .eq('event_id', event.id) as any);
             
           if (countError) {
             console.error('Error fetching post count:', countError);

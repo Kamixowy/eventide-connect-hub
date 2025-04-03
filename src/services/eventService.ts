@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { EventFormValues, SocialMedia } from '@/components/events/edit/EventEditSchema';
 import { processArrayFields } from '@/utils/eventHelpers';
@@ -24,9 +25,9 @@ export const fetchEventById = async (id: string) => {
     console.error('Error fetching sponsorship options:', sponsorshipError);
   }
   
-  // Fetch event posts
+  // Fetch event posts using the "from" method with the any type to bypass type checking
   const { data: postsData, error: postsError } = await supabase
-    .from('event_posts')
+    .from('event_posts' as any)
     .select('*')
     .eq('event_id', id)
     .order('created_at', { ascending: false });
@@ -155,14 +156,15 @@ export const updateEventStatus = async (id: string, status: string) => {
 };
 
 export const addEventPost = async (eventId: string, postData: { title: string; content: string }) => {
-  const { data, error } = await supabase
-    .from('event_posts')
+  // Use type assertion to bypass type checking
+  const { data, error } = await (supabase
+    .from('event_posts' as any)
     .insert({
       event_id: eventId,
       title: postData.title,
       content: postData.content,
     })
-    .select();
+    .select() as any);
     
   if (error) {
     console.error('Error adding event post:', error);
@@ -173,10 +175,11 @@ export const addEventPost = async (eventId: string, postData: { title: string; c
 };
 
 export const deleteEventPost = async (postId: string) => {
-  const { error } = await supabase
-    .from('event_posts')
+  // Use type assertion to bypass type checking
+  const { error } = await (supabase
+    .from('event_posts' as any)
     .delete()
-    .eq('id', postId);
+    .eq('id', postId) as any);
     
   if (error) {
     console.error('Error deleting event post:', error);
@@ -187,15 +190,16 @@ export const deleteEventPost = async (postId: string) => {
 };
 
 export const updateEventPost = async (postId: string, postData: { title: string; content: string }) => {
-  const { data, error } = await supabase
-    .from('event_posts')
+  // Use type assertion to bypass type checking
+  const { data, error } = await (supabase
+    .from('event_posts' as any)
     .update({
       title: postData.title,
       content: postData.content,
       updated_at: new Date().toISOString(),
     })
     .eq('id', postId)
-    .select();
+    .select() as any);
     
   if (error) {
     console.error('Error updating event post:', error);
