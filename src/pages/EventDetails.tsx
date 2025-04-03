@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -32,6 +33,15 @@ import {
 import { updateEventStatus } from '@/services/eventService';
 import EventPostForm from '@/components/events/posts/EventPostForm';
 import EventPostsList from '@/components/events/posts/EventPostsList';
+
+// Define status options array
+const statusOptions = [
+  "Planowane",
+  "W przygotowaniu",
+  "W trakcie",
+  "Zakończone",
+  "Anulowane"
+];
 
 const demoEventData = {
   id: 1,
