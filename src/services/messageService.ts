@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { RealtimeChannel } from '@supabase/supabase-js';
@@ -350,6 +349,7 @@ export const fetchOrganizations = async (): Promise<any[]> => {
         name,
         avatar_url,
         email,
+        user_type,
         organization:organizations(
           id,
           name,
@@ -365,6 +365,8 @@ export const fetchOrganizations = async (): Promise<any[]> => {
       throw error;
     }
 
+    console.log("Fetched organizations:", organizations);
+    
     // Filter out the current user if they are an organization
     return organizations.filter(org => org.id !== user.id) || [];
   } catch (error) {

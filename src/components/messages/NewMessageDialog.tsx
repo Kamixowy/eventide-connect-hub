@@ -1,11 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -32,12 +32,31 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
     enabled: open
   });
 
+  // Reset state when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setSearchQuery("");
+      setSelectedOrganization(null);
+      setMessage("");
+    }
+  }, [open]);
+
   // Filter organizations based on search query
-  const filteredOrganizations = organizations.filter(org => 
-    org.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    org.organization?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    org.organization?.category?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredOrganizations = organizations.filter(org => {
+    const orgName = org.name?.toLowerCase() || "";
+    const orgOrgName = org.organization?.name?.toLowerCase() || "";
+    const orgCategory = org.organization?.category?.toLowerCase() || "";
+    const query = searchQuery.toLowerCase().trim();
+    
+    return query === "" || 
+      orgName.includes(query) || 
+      orgOrgName.includes(query) || 
+      orgCategory.includes(query);
+  });
+
+  console.log("Search query:", searchQuery);
+  console.log("Filtered organizations:", filteredOrganizations);
+  console.log("All organizations:", organizations);
 
   const handleStartConversation = async () => {
     if (!selectedOrganization) {
@@ -143,7 +162,8 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
           ) : (
             <ScrollArea className="flex-grow border rounded-md h-[200px] mb-4">
               {isLoading ? (
-                <div className="p-4 text-center text-muted-foreground">
+                <div className="p-4 text-center text-muted-foreground flex items-center justify-center">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   Ładowanie organizacji...
                 </div>
               ) : filteredOrganizations.length === 0 ? (
