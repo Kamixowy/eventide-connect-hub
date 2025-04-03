@@ -1,25 +1,21 @@
 
-import { useState, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import NewMessageDialog from '@/components/messages/NewMessageDialog';
 import ConversationsList from '@/components/messages/ConversationsList';
 import MessageView from '@/components/messages/MessageView';
 import EmptyMessageView from '@/components/messages/EmptyMessageView';
 import MessageHeader from '@/components/messages/MessageHeader';
-import { Message } from '@/services/messages/types';
+import { getRecipient } from '@/services/messages';
 import { useMessagesData } from '@/components/messages/hooks/useMessagesData';
 import { useMessagesSubscriptions } from '@/components/messages/hooks/useMessagesSubscriptions';
-import { getRecipient } from '@/services/messages';
-import { checkConversationParticipation } from '@/services/messages';
+import { useConversationSelection } from '@/components/messages/hooks/useConversationSelection';
+import { useMessageHandlers } from '@/components/messages/hooks/useMessageHandlers';
+import { formatDate, formatMessageTime } from '@/components/messages/utils/dateUtils';
 
 const MessagesContainer = () => {
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [isNewMessageDialogOpen, setIsNewMessageDialogOpen] = useState(false);
   const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   // Fetch conversations and messages data
   const {
@@ -30,7 +26,25 @@ const MessagesContainer = () => {
     refetchConversations,
     refetchMessages,
     sendMessageMutation
-  } = useMessagesData(selectedConversationId);
+  } = useMessagesData(null);  // We'll set the selected ID in useEffect
+
+  // Message handling functionality
+  const { handleNewMessage, handleConversationUpdate } = useMessageHandlers(
+    null,  // We'll update this with selectedConversationId
+    refetchConversations
+  );
+
+  // Conversation selection functionality
+  const {
+    selectedConversationId,
+    handleConversationSelect,
+    handleNewConversationCreated,
+    handleSendMessage
+  } = useConversationSelection(
+    conversations,
+    refetchConversations,
+    sendMessageMutation
+  );
 
   // Setup realtime subscriptions
   useMessagesSubscriptions(
@@ -39,114 +53,11 @@ const MessagesContainer = () => {
     handleConversationUpdate
   );
 
-  // Immediately fetch conversations when the component mounts
-  useEffect(() => {
-    if (user) {
-      console.log('Initial conversations fetch');
-      refetchConversations();
-    }
-  }, [user, refetchConversations]);
-
-  // Handler for new messages from subscription
-  function handleNewMessage(newMessage: Message) {
-    // Update messages cache
-    queryClient.setQueryData(['messages', selectedConversationId], (oldData: Message[] | undefined) => {
-      if (!oldData) return [newMessage];
-      // Avoid duplicates by checking if message already exists
-      if (oldData.some(m => m.id === newMessage.id)) return oldData;
-      return [...oldData, newMessage];
-    });
-    
-    // Refetch conversations to update last message and unread count
-    refetchConversations();
-  }
-
-  // Handler for conversation updates from subscription
-  function handleConversationUpdate() {
-    console.log("Conversation update detected, refetching conversations");
-    refetchConversations();
-  }
-
-  // Set default selected conversation
-  useEffect(() => {
-    if (conversations.length > 0 && !selectedConversationId) {
-      console.log('Setting default selected conversation:', conversations[0].id);
-      setSelectedConversationId(conversations[0].id);
-    }
-  }, [conversations, selectedConversationId]);
-
   // Get selected conversation and recipient
   const selectedConversation = conversations.find(c => c.id === selectedConversationId);
   const selectedRecipient = selectedConversation && user 
     ? getRecipient(selectedConversation, user.id)
     : undefined;
-
-  const handleSendMessage = async (newMessage: string) => {
-    if (!selectedConversationId || !newMessage.trim() || !user) {
-      console.error("Cannot send message - missing conversation ID, message content, or user");
-      toast({
-        title: "Błąd",
-        description: "Nie można wysłać pustej wiadomości lub brak konwersacji",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      console.log("Sending message to conversation:", selectedConversationId);
-      // First check participation
-      const canSend = await checkConversationParticipation(selectedConversationId, user.id);
-      if (!canSend) {
-        toast({
-          title: "Błąd",
-          description: "Nie masz uprawnień do wysyłania wiadomości w tej konwersacji.",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      // Send the message and handle the response
-      const result = await sendMessageMutation(selectedConversationId, newMessage);
-      
-      if (result) {
-        console.log("Message sent successfully:", result);
-        
-        // Force refresh messages
-        queryClient.invalidateQueries({ queryKey: ['messages', selectedConversationId] });
-        
-        // Refetch conversations to update last message
-        refetchConversations();
-      } else {
-        throw new Error("Failed to send message");
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast({
-        title: "Błąd",
-        description: "Wystąpił błąd podczas wysyłania wiadomości",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleConversationSelect = (conversationId: string) => {
-    console.log('Selecting conversation:', conversationId);
-    setSelectedConversationId(conversationId);
-    // Refetch messages for the selected conversation
-    queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
-  };
-
-  const handleNewConversationCreated = (conversationId: string) => {
-    console.log("New conversation created with ID:", conversationId);
-    // Directly refetch conversations to make sure the new conversation appears
-    refetchConversations().then(() => {
-      // Set the newly created conversation as selected
-      setSelectedConversationId(conversationId);
-      
-      // Invalidate messages query to force a fresh fetch
-      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
-    });
-  };
 
   return (
     <div className="container py-8">
@@ -193,20 +104,6 @@ const MessagesContainer = () => {
       />
     </div>
   );
-};
-
-// Format date to display only the date part
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('pl-PL');
-};
-
-// Format time to display in messages
-const formatMessageTime = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }) + 
-         ' • ' + 
-         date.toLocaleDateString('pl-PL');
 };
 
 export default MessagesContainer;

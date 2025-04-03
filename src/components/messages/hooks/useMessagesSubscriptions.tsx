@@ -4,6 +4,13 @@ import { Message } from '@/services/messages/types';
 import { useMessageSubscription } from '@/services/messages/hooks/useMessageSubscription';
 import { useConversationsSubscription } from '@/services/messages/hooks/useConversationsSubscription';
 
+/**
+ * A hook that manages all message-related subscriptions
+ * @param selectedConversationId The ID of the currently selected conversation
+ * @param onNewMessage Callback function for handling new messages
+ * @param onConversationUpdate Callback function for handling conversation updates
+ * @returns Object containing active subscriptions
+ */
 export const useMessagesSubscriptions = (
   selectedConversationId: string | null,
   onNewMessage: (message: Message) => void,

@@ -1,12 +1,21 @@
+
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchConversations } from '@/services/messages';
 import { fetchMessages } from '@/services/messages';
 import { sendMessage } from '@/services/messages';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useState } from 'react';
 
-export const useMessagesData = (selectedConversationId: string | null) => {
+export const useMessagesData = (initialSelectedConversationId: string | null) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(initialSelectedConversationId);
+
+  useEffect(() => {
+    if (initialSelectedConversationId !== selectedConversationId) {
+      setSelectedConversationId(initialSelectedConversationId);
+    }
+  }, [initialSelectedConversationId]);
 
   const { 
     data: conversations = [], 
@@ -73,6 +82,8 @@ export const useMessagesData = (selectedConversationId: string | null) => {
     isLoadingMessages,
     refetchConversations,
     refetchMessages,
-    sendMessageMutation
+    sendMessageMutation,
+    selectedConversationId,
+    setSelectedConversationId
   };
 };
