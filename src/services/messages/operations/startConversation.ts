@@ -30,67 +30,27 @@ export const startConversation = async (organizationUserId: string, initialMessa
       throw new Error('One or both users do not exist');
     }
 
-    let conversationId;
+    // Use the create_conversation_and_participants database function to create the conversation
+    // This handles finding an existing conversation or creating a new one with participants
+    const { data, error } = await supabase.rpc('create_conversation_and_participants', {
+      user_one: user.id,
+      user_two: organizationUserId
+    });
     
-    // Try to find an existing conversation first
-    try {
-      const { data, error } = await supabase.rpc('find_conversation_between_users', {
-        user_one: user.id,
-        user_two: organizationUserId
-      });
-      
-      if (!error && data && data.length > 0) {
-        console.log('Found existing conversation:', data[0].conversation_id);
-        conversationId = data[0].conversation_id;
-      } else {
-        console.log('No existing conversation found or error:', error);
-      }
-    } catch (err) {
-      console.error('Error checking for existing conversation:', err);
-      // Continue with creating a new conversation
+    if (error) {
+      console.error('Error creating conversation:', error);
+      throw new Error('Failed to create conversation: ' + error.message);
     }
     
-    // If no conversation was found, create a new one
-    if (!conversationId) {
-      console.log('Creating new conversation');
-      
-      // Create a new conversation
-      const { data: newConversation, error: conversationError } = await supabase
-        .from('direct_conversations')
-        .insert({})
-        .select()
-        .single();
-
-      if (conversationError || !newConversation) {
-        console.error('Error creating conversation:', conversationError);
-        throw new Error('Failed to create conversation');
-      }
-      
-      conversationId = newConversation.id;
-      console.log('Created conversation with ID:', conversationId);
-      
-      // Add both users as participants
-      try {
-        const { error: participantsError } = await supabase
-          .from('conversation_participants')
-          .insert([
-            { conversation_id: conversationId, user_id: user.id },
-            { conversation_id: conversationId, user_id: organizationUserId }
-          ]);
-          
-        if (participantsError) {
-          console.error('Error adding conversation participants:', participantsError);
-          throw new Error('Failed to add participants to conversation');
-        }
-        
-        console.log('Added participants to conversation');
-      } catch (participantErr) {
-        console.error('Exception adding participants:', participantErr);
-        throw new Error('Failed to add participants to conversation');
-      }
+    if (!data || data.length === 0) {
+      console.error('No conversation ID returned');
+      throw new Error('Failed to create conversation: No ID returned');
     }
     
-    // Send the initial message
+    const conversationId = data[0].conversation_id;
+    console.log('Created or found conversation with ID:', conversationId);
+    
+    // Send the initial message if provided
     if (initialMessage.trim() && conversationId) {
       console.log('Sending initial message to conversation:', conversationId);
       

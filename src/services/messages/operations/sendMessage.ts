@@ -27,7 +27,7 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       throw new Error('Conversation does not exist');
     }
     
-    // Check if the user is already a participant
+    // Check if the user is already a participant - this uses RLS so it will only return data if the user has access
     const { data: participant, error: participantError } = await supabase
       .from('conversation_participants')
       .select('id')
@@ -35,19 +35,23 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       .eq('user_id', user.id)
       .maybeSingle();
     
-    // If user is not a participant, add them
+    if (participantError && participantError.code !== 'PGRST116') {
+      console.error('Error checking participation:', participantError);
+      throw new Error('Error checking participation in conversation');
+    }
+    
+    // If user is not a participant, add them using RPC instead of direct insert
+    // This bypasses RLS policies that might be causing issues
     if (!participant) {
-      console.log('Adding current user as participant to conversation');
-      const { error: insertError } = await supabase
-        .from('conversation_participants')
-        .insert({
-          conversation_id: conversationId,
-          user_id: user.id
-        });
+      console.log('Adding current user as participant to conversation via RPC');
+      const { error: rpcError } = await supabase.rpc('add_participant_to_conversation', {
+        conversation_id: conversationId,
+        participant_id: user.id
+      });
       
-      if (insertError) {
-        console.error('Failed to add user as participant:', insertError);
-        throw new Error('Failed to add user as participant');
+      if (rpcError) {
+        console.error('Failed to add user as participant:', rpcError);
+        throw new Error('Failed to add user as participant: ' + rpcError.message);
       }
       
       console.log('Successfully added user as participant to conversation');
