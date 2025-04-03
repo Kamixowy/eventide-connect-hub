@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { checkConversationParticipation } from '@/services/messages';
+import { checkConversationParticipation } from '@/services/messages/operations/checkConversationParticipation';
 import { Conversation, Message } from '@/services/messages/types';
 
 export const useConversationSelection = (
