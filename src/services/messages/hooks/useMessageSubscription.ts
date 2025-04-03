@@ -3,7 +3,7 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Message } from '../types';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 // Hook for subscribing to new messages in a conversation
 export const useMessageSubscription = (
@@ -11,15 +11,27 @@ export const useMessageSubscription = (
   onNewMessage: (message: Message) => void
 ): { subscription: RealtimeChannel | null } => {
   const { user } = useAuth();
-  const [subscription, setSubscription] = useState<RealtimeChannel | null>(null);
+  const subscriptionRef = useRef<RealtimeChannel | null>(null);
   
   useEffect(() => {
     if (!conversationId || !user) {
       console.log('No conversation ID or user, skipping subscription');
-      return () => {};
+      return () => {
+        if (subscriptionRef.current) {
+          subscriptionRef.current.unsubscribe();
+          subscriptionRef.current = null;
+        }
+      };
     }
 
     console.log(`Setting up subscription for messages in conversation: ${conversationId}`);
+    
+    // Unsubscribe from previous subscription if it exists
+    if (subscriptionRef.current) {
+      console.log('Cleaning up previous subscription');
+      subscriptionRef.current.unsubscribe();
+      subscriptionRef.current = null;
+    }
     
     // Subscribe to new messages
     const channel = supabase
@@ -84,14 +96,17 @@ export const useMessageSubscription = (
       });
 
     console.log('Message subscription set up successfully');
-    setSubscription(channel);
+    subscriptionRef.current = channel;
 
     // Clean up subscription on unmount
     return () => {
       console.log('Cleaning up message subscription');
-      channel.unsubscribe();
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+        subscriptionRef.current = null;
+      }
     };
   }, [conversationId, user, onNewMessage]);
 
-  return { subscription };
+  return { subscription: subscriptionRef.current };
 };

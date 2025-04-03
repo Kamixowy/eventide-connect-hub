@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
   const [selectedOrganization, setSelectedOrganization] = useState<any | null>(null);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const { data: organizations = [], isLoading } = useQuery({
     queryKey: ["organizations"],
@@ -34,6 +36,7 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
       setSearchQuery("");
       setSelectedOrganization(null);
       setMessage("");
+      setError(null);
     }
   }, [open]);
 
@@ -56,10 +59,6 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
     return nameA.localeCompare(nameB);
   });
 
-  console.log("Search query:", searchQuery);
-  console.log("Filtered organizations:", filteredOrganizations);
-  console.log("All organizations:", organizations);
-
   const handleStartConversation = async () => {
     if (!selectedOrganization) {
       toast({
@@ -80,6 +79,7 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
     }
 
     setIsSubmitting(true);
+    setError(null);
 
     try {
       const result = await startConversation(selectedOrganization.id, message);
@@ -104,9 +104,14 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
       }
     } catch (error) {
       console.error("Error starting conversation:", error);
+      let errorMessage = "Wystąpił błąd podczas wysyłania wiadomości";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      setError(errorMessage);
       toast({
         title: "Błąd",
-        description: "Wystąpił błąd podczas wysyłania wiadomości",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -155,6 +160,12 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
             message={message} 
             onChange={setMessage} 
           />
+          
+          {error && (
+            <div className="mt-2 text-sm text-red-500">
+              {error}
+            </div>
+          )}
         </div>
         
         <DialogFooter>

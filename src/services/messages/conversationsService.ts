@@ -148,6 +148,64 @@ export const startConversation = async (organizationUserId: string, initialMessa
 
     console.log('Current user ID:', user.id);
 
+    // Check if both users exist
+    const { data: users, error: usersError } = await supabase
+      .from('profiles')
+      .select('id')
+      .in('id', [user.id, organizationUserId]);
+      
+    if (usersError) {
+      console.error('Error checking users:', usersError);
+      throw usersError;
+    }
+    
+    if (!users || users.length !== 2) {
+      console.error('One or both users do not exist');
+      throw new Error('One or both users do not exist');
+    }
+
+    // Check if a conversation already exists between these users
+    const { data: existingParticipants, error: existingError } = await supabase
+      .from('conversation_participants')
+      .select('conversation_id')
+      .eq('user_id', user.id);
+      
+    if (existingError) {
+      console.error('Error checking existing conversations:', existingError);
+      throw existingError;
+    }
+    
+    if (existingParticipants && existingParticipants.length > 0) {
+      const conversationIds = existingParticipants.map(p => p.conversation_id);
+      
+      const { data: otherParticipants, error: otherError } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', organizationUserId)
+        .in('conversation_id', conversationIds);
+        
+      if (otherError) {
+        console.error('Error checking other participants:', otherError);
+        throw otherError;
+      }
+      
+      if (otherParticipants && otherParticipants.length > 0) {
+        // A conversation already exists between these users
+        const existingConversationId = otherParticipants[0].conversation_id;
+        console.log('Found existing conversation:', existingConversationId);
+        
+        // Send the initial message to the existing conversation
+        if (initialMessage.trim()) {
+          // Import locally to avoid circular dependencies
+          const { sendMessage } = await import('./messagesService');
+          await sendMessage(existingConversationId, initialMessage);
+          console.log('Sent message to existing conversation');
+        }
+        
+        return { conversationId: existingConversationId };
+      }
+    }
+
     // Create a new conversation
     const { data: conversation, error: conversationError } = await supabase
       .from('direct_conversations')
@@ -210,7 +268,7 @@ export const startConversation = async (organizationUserId: string, initialMessa
     return { conversationId: conversation.id };
   } catch (error) {
     console.error('Error starting conversation:', error);
-    return null;
+    throw error; // Re-throw to allow better error handling in the UI
   }
 };
 

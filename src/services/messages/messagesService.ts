@@ -49,6 +49,28 @@ export const fetchMessages = async (conversationId: string): Promise<Message[]> 
   }
 };
 
+// Function to check if user is a participant in the conversation
+export const checkConversationParticipant = async (conversationId: string, userId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('conversation_participants')
+      .select('id')
+      .eq('conversation_id', conversationId)
+      .eq('user_id', userId)
+      .maybeSingle();
+      
+    if (error) {
+      console.error('Error checking conversation participant:', error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (error) {
+    console.error('Error checking conversation participant:', error);
+    return false;
+  }
+};
+
 // Function to send a new message
 export const sendMessage = async (conversationId: string, content: string): Promise<Message | null> => {
   try {
@@ -63,19 +85,10 @@ export const sendMessage = async (conversationId: string, content: string): Prom
     console.log('Sender ID:', user.id);
     
     // Check if conversation exists and user is a participant
-    const { data: participantCheck, error: participantError } = await supabase
-      .from('conversation_participants')
-      .select('id')
-      .eq('conversation_id', conversationId)
-      .eq('user_id', user.id)
-      .single();
-      
-    if (participantError) {
-      console.error('Error checking conversation participant:', participantError);
-      if (participantError.code === 'PGRST116') {
-        throw new Error('You are not a participant in this conversation');
-      }
-      throw participantError;
+    const isParticipant = await checkConversationParticipant(conversationId, user.id);
+    if (!isParticipant) {
+      console.error('You are not a participant in this conversation');
+      throw new Error('You are not a participant in this conversation');
     }
 
     // Insert the new message
@@ -112,6 +125,6 @@ export const sendMessage = async (conversationId: string, content: string): Prom
     return formattedMessage;
   } catch (error) {
     console.error('Error sending message:', error);
-    return null;
+    throw error; // Re-throw to allow better error handling in UI components
   }
 };
