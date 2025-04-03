@@ -30,27 +30,29 @@ export const startConversation = async (organizationUserId: string, initialMessa
       throw new Error('One or both users do not exist');
     }
 
-    // Check if a conversation already exists between these users using our new function
-    console.log('Checking if conversation already exists between users');
-    const { data: existingConversation, error: existingConvError } = await supabase
-      .rpc('find_conversation_between_users', { 
-        user_one: user.id, 
-        user_two: organizationUserId 
-      });
-    
     let conversationId;
     
-    if (existingConvError) {
-      console.error('Error checking existing conversation:', existingConvError);
-      throw existingConvError;
-    } 
+    // Try to find an existing conversation first
+    try {
+      const { data, error } = await supabase.rpc('find_conversation_between_users', {
+        user_one: user.id,
+        user_two: organizationUserId
+      });
+      
+      if (!error && data && data.length > 0) {
+        console.log('Found existing conversation:', data[0].conversation_id);
+        conversationId = data[0].conversation_id;
+      } else {
+        console.log('No existing conversation found or error:', error);
+      }
+    } catch (err) {
+      console.error('Error checking for existing conversation:', err);
+      // Continue with creating a new conversation
+    }
     
-    if (existingConversation && existingConversation.length > 0) {
-      // If conversation exists, use that
-      console.log('Found existing conversation:', existingConversation[0].conversation_id);
-      conversationId = existingConversation[0].conversation_id;
-    } else {
-      console.log('No existing conversation found, creating new one');
+    // If no conversation was found, create a new one
+    if (!conversationId) {
+      console.log('Creating new conversation');
       
       // Create a new conversation
       const { data: newConversation, error: conversationError } = await supabase
@@ -68,33 +70,43 @@ export const startConversation = async (organizationUserId: string, initialMessa
       console.log('Created conversation with ID:', conversationId);
       
       // Add both users as participants
-      const { error: participantsError } = await supabase
-        .from('conversation_participants')
-        .insert([
-          { conversation_id: conversationId, user_id: user.id },
-          { conversation_id: conversationId, user_id: organizationUserId }
-        ]);
+      try {
+        const { error: participantsError } = await supabase
+          .from('conversation_participants')
+          .insert([
+            { conversation_id: conversationId, user_id: user.id },
+            { conversation_id: conversationId, user_id: organizationUserId }
+          ]);
+          
+        if (participantsError) {
+          console.error('Error adding conversation participants:', participantsError);
+          throw new Error('Failed to add participants to conversation');
+        }
         
-      if (participantsError) {
-        console.error('Error adding conversation participants:', participantsError);
+        console.log('Added participants to conversation');
+      } catch (participantErr) {
+        console.error('Exception adding participants:', participantErr);
         throw new Error('Failed to add participants to conversation');
       }
-      
-      console.log('Added participants to conversation');
     }
     
     // Send the initial message
     if (initialMessage.trim() && conversationId) {
       console.log('Sending initial message to conversation:', conversationId);
       
-      // Import locally to avoid circular dependencies
-      const { sendMessage } = await import('../messagesService');
-      const messageResult = await sendMessage(conversationId, initialMessage);
-      
-      if (!messageResult) {
-        console.error('Failed to send initial message');
-      } else {
-        console.log('Initial message sent successfully');
+      try {
+        // Import locally to avoid circular dependencies
+        const { sendMessage } = await import('../messagesService');
+        const messageResult = await sendMessage(conversationId, initialMessage);
+        
+        if (!messageResult) {
+          console.error('Failed to send initial message');
+        } else {
+          console.log('Initial message sent successfully');
+        }
+      } catch (msgErr) {
+        console.error('Error sending initial message:', msgErr);
+        // Don't throw here, we want to return the conversation even if message fails
       }
     }
 

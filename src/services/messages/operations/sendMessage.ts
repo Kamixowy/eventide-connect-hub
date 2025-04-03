@@ -15,30 +15,28 @@ export const sendMessage = async (conversationId: string, content: string): Prom
     
     console.log('Sending message to conversation:', conversationId);
     
-    // Verify that the current user is a participant in this conversation
+    // First check if the conversation exists
+    const { data: conversation, error: conversationError } = await supabase
+      .from('direct_conversations')
+      .select('id')
+      .eq('id', conversationId)
+      .single();
+    
+    if (conversationError) {
+      console.error('Conversation does not exist:', conversationError);
+      throw new Error('Conversation does not exist');
+    }
+    
+    // Check if the user is already a participant
     const { data: participant, error: participantError } = await supabase
       .from('conversation_participants')
       .select('id')
       .eq('conversation_id', conversationId)
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
     
-    if (participantError) {
-      console.error('Error checking conversation participation:', participantError);
-      
-      // Check if the conversation exists at all
-      const { data: conversation, error: conversationError } = await supabase
-        .from('direct_conversations')
-        .select('id')
-        .eq('id', conversationId)
-        .single();
-      
-      if (conversationError) {
-        console.error('Conversation does not exist:', conversationError);
-        throw new Error('Conversation does not exist');
-      }
-      
-      // If the conversation exists but user is not a participant, add them
+    // If user is not a participant, add them
+    if (!participant) {
       console.log('Adding current user as participant to conversation');
       const { error: insertError } = await supabase
         .from('conversation_participants')
