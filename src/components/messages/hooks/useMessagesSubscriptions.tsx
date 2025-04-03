@@ -2,8 +2,9 @@
 import { useEffect } from 'react';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { useAuth } from '@/contexts/AuthContext';
-import { Message } from '@/services/messages';
+import { Message } from '@/services/messages/types';
 import { useMessageSubscription, useConversationsSubscription } from '@/services/messages';
+import { checkConversationParticipation } from '@/services/messages/utils/messageUtils';
 
 export const useMessagesSubscriptions = (
   selectedConversationId: string | null,
@@ -11,6 +12,28 @@ export const useMessagesSubscriptions = (
   onConversationUpdate: () => void
 ) => {
   const { user } = useAuth();
+
+  // Verify participation when conversation changes
+  useEffect(() => {
+    const verifyParticipation = async () => {
+      if (!selectedConversationId || !user) return;
+      
+      try {
+        const isParticipant = await checkConversationParticipation(
+          selectedConversationId, 
+          user.id
+        );
+        
+        if (!isParticipant) {
+          console.warn('User is not a participant in this conversation');
+        }
+      } catch (err) {
+        console.error('Error verifying conversation participation:', err);
+      }
+    };
+    
+    verifyParticipation();
+  }, [selectedConversationId, user]);
 
   // Setup message subscription
   const { subscription: messageSubscription } = useMessageSubscription(

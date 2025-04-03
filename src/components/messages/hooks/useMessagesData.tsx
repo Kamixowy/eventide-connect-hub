@@ -1,6 +1,8 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchConversations, fetchMessages, sendMessage } from '@/services/messages';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchConversations } from '@/services/messages/operations/fetchConversations';
+import { fetchMessages } from '@/services/messages/operations/fetchMessages';
+import { sendMessage } from '@/services/messages/operations/sendMessage';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useMessagesData = (selectedConversationId: string | null) => {

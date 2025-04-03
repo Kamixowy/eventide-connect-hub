@@ -8,9 +8,11 @@ import ConversationsList from '@/components/messages/ConversationsList';
 import MessageView from '@/components/messages/MessageView';
 import EmptyMessageView from '@/components/messages/EmptyMessageView';
 import MessageHeader from '@/components/messages/MessageHeader';
-import { Message } from '@/services/messages';
+import { Message } from '@/services/messages/types';
 import { useMessagesData } from '@/components/messages/hooks/useMessagesData';
 import { useMessagesSubscriptions } from '@/components/messages/hooks/useMessagesSubscriptions';
+import { getRecipient } from '@/services/messages/utils/conversationUtils';
+import { checkConversationParticipation } from '@/services/messages/utils/messageUtils';
 
 const MessagesContainer = () => {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
@@ -33,20 +35,26 @@ const MessagesContainer = () => {
   // Setup realtime subscriptions
   useMessagesSubscriptions(
     selectedConversationId,
-    (newMessage: Message) => {
-      // Update messages cache
-      queryClient.setQueryData(['messages', selectedConversationId], (oldData: Message[] | undefined) => {
-        if (!oldData) return [newMessage];
-        return [...oldData, newMessage];
-      });
-      
-      // Refetch conversations to update last message and unread count
-      refetchConversations();
-    },
-    () => {
-      refetchConversations();
-    }
+    handleNewMessage,
+    handleConversationUpdate
   );
+
+  // Handler for new messages from subscription
+  function handleNewMessage(newMessage: Message) {
+    // Update messages cache
+    queryClient.setQueryData(['messages', selectedConversationId], (oldData: Message[] | undefined) => {
+      if (!oldData) return [newMessage];
+      return [...oldData, newMessage];
+    });
+    
+    // Refetch conversations to update last message and unread count
+    refetchConversations();
+  }
+
+  // Handler for conversation updates from subscription
+  function handleConversationUpdate() {
+    refetchConversations();
+  }
 
   // Set default selected conversation
   useEffect(() => {
@@ -58,13 +66,24 @@ const MessagesContainer = () => {
   // Get selected conversation and recipient
   const selectedConversation = conversations.find(c => c.id === selectedConversationId);
   const selectedRecipient = selectedConversation && user 
-    ? selectedConversation.participants?.find(p => p.user_id !== user.id)
+    ? getRecipient(selectedConversation, user.id)
     : undefined;
 
   const handleSendMessage = async (newMessage: string) => {
     if (!selectedConversationId || !newMessage.trim() || !user) return;
     
     try {
+      // First check participation
+      const canSend = await checkConversationParticipation(selectedConversationId, user.id);
+      if (!canSend) {
+        toast({
+          title: "Błąd",
+          description: "Nie masz uprawnień do wysyłania wiadomości w tej konwersacji.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       const result = await sendMessageMutation(selectedConversationId, newMessage);
       if (result) {
         // Message added to cache in mutation
@@ -96,20 +115,6 @@ const MessagesContainer = () => {
   const handleNewConversationCreated = (conversationId: string) => {
     setSelectedConversationId(conversationId);
     refetchConversations();
-  };
-
-  // Format date to display only the date part
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pl-PL');
-  };
-
-  // Format time to display in messages
-  const formatMessageTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }) + 
-           ' • ' + 
-           date.toLocaleDateString('pl-PL');
   };
 
   return (
@@ -157,6 +162,20 @@ const MessagesContainer = () => {
       />
     </div>
   );
+};
+
+// Format date to display only the date part
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('pl-PL');
+};
+
+// Format time to display in messages
+const formatMessageTime = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }) + 
+         ' • ' + 
+         date.toLocaleDateString('pl-PL');
 };
 
 export default MessagesContainer;
