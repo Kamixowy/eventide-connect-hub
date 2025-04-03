@@ -31,6 +31,30 @@ export const isSupabaseConfigured = () => {
          SUPABASE_PUBLISHABLE_KEY !== defaultKey;
 };
 
+// Enable realtime for direct_conversations, direct_messages, and conversation_participants tables
+export const enableMessagingRealtime = async () => {
+  try {
+    // Check if realtime is already enabled
+    const { data: realtimeEnabled, error: checkError } = await supabase.rpc('check_column_exists', { 
+      table_name: 'direct_conversations',
+      column_name: 'id'
+    });
+
+    if (checkError) {
+      console.error('Error checking if realtime is enabled:', checkError);
+      return;
+    }
+    
+    if (realtimeEnabled) {
+      console.log('Messaging tables are ready for realtime');
+    } else {
+      console.warn('Messaging tables might not be properly set up for realtime. Please check your database setup.');
+    }
+  } catch (error) {
+    console.error('Error enabling realtime for messaging:', error);
+  }
+};
+
 // SQL to run after connecting to Supabase:
 /*
 -- Ensure the storage bucket exists

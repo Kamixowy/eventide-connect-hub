@@ -63,8 +63,12 @@ export const fetchConversations = async (): Promise<Conversation[]> => {
       .select('conversation_id')
       .eq('user_id', user.id);
 
-    if (participantsError) throw participantsError;
-    if (!participantsData.length) return [];
+    if (participantsError) {
+      console.error('Error fetching participants:', participantsError);
+      throw participantsError;
+    }
+    
+    if (!participantsData || !participantsData.length) return [];
 
     const conversationIds = participantsData.map(p => p.conversation_id);
 
@@ -94,11 +98,15 @@ export const fetchConversations = async (): Promise<Conversation[]> => {
       .in('id', conversationIds)
       .order('updated_at', { ascending: false });
 
-    if (conversationsError) throw conversationsError;
+    if (conversationsError) {
+      console.error('Error fetching conversations:', conversationsError);
+      throw conversationsError;
+    }
 
     // For each conversation, get the last message
     const conversationsWithLastMessage = await Promise.all(
       conversations.map(async (conversation) => {
+        // Get the last message for this conversation
         const { data: messages, error: messagesError } = await supabase
           .from('direct_messages')
           .select('*')
@@ -106,23 +114,29 @@ export const fetchConversations = async (): Promise<Conversation[]> => {
           .order('created_at', { ascending: false })
           .limit(1);
 
-        if (messagesError) throw messagesError;
+        if (messagesError) {
+          console.error('Error fetching last message:', messagesError);
+          throw messagesError;
+        }
 
         // Get unread count
-        const { data: unreadCount, error: unreadError } = await supabase
+        const { data: unreadMessages, error: unreadError } = await supabase
           .from('direct_messages')
           .select('id', { count: 'exact' })
           .eq('conversation_id', conversation.id)
           .eq('read_at', null)
           .neq('sender_id', user.id);
 
-        if (unreadError) throw unreadError;
+        if (unreadError) {
+          console.error('Error fetching unread count:', unreadError);
+          throw unreadError;
+        }
 
         return {
           ...conversation,
-          lastMessage: messages[0] || null,
-          unreadCount: unreadCount.length || 0,
-        };
+          lastMessage: messages && messages.length > 0 ? messages[0] : null,
+          unreadCount: unreadMessages ? unreadMessages.length : 0,
+        } as Conversation;
       })
     );
 
@@ -143,7 +157,7 @@ export const fetchMessages = async (conversationId: string): Promise<Message[]> 
       .from('direct_messages')
       .select(`
         *,
-        sender:profiles!direct_messages_sender_id_fkey(
+        sender:profiles(
           id,
           name,
           avatar_url
@@ -152,7 +166,11 @@ export const fetchMessages = async (conversationId: string): Promise<Message[]> 
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching messages:', error);
+      throw error;
+    }
+    
     return data || [];
   } catch (error) {
     console.error('Error fetching messages:', error);
@@ -176,7 +194,11 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error sending message:', error);
+      throw error;
+    }
+    
     return data;
   } catch (error) {
     console.error('Error sending message:', error);
@@ -196,10 +218,13 @@ export const startConversation = async (organizationUserId: string, initialMessa
       .select('conversation_id')
       .eq('user_id', user.id);
 
-    if (existingError) throw existingError;
+    if (existingError) {
+      console.error('Error checking existing conversations:', existingError);
+      throw existingError;
+    }
 
     // Get all conversations where the organization is a participant
-    if (existingParticipants.length > 0) {
+    if (existingParticipants && existingParticipants.length > 0) {
       const conversationIds = existingParticipants.map(p => p.conversation_id);
       
       const { data: orgParticipants, error: orgError } = await supabase
@@ -208,10 +233,13 @@ export const startConversation = async (organizationUserId: string, initialMessa
         .eq('user_id', organizationUserId)
         .in('conversation_id', conversationIds);
 
-      if (orgError) throw orgError;
+      if (orgError) {
+        console.error('Error checking organization participants:', orgError);
+        throw orgError;
+      }
 
       // If there's an existing conversation between these two users, use it
-      if (orgParticipants.length > 0) {
+      if (orgParticipants && orgParticipants.length > 0) {
         const existingConversationId = orgParticipants[0].conversation_id;
         
         // Send the initial message in the existing conversation
@@ -230,7 +258,10 @@ export const startConversation = async (organizationUserId: string, initialMessa
       .select()
       .single();
 
-    if (conversationError) throw conversationError;
+    if (conversationError) {
+      console.error('Error creating conversation:', conversationError);
+      throw conversationError;
+    }
 
     // Add current user as participant
     const { error: userParticipantError } = await supabase
@@ -240,7 +271,10 @@ export const startConversation = async (organizationUserId: string, initialMessa
         user_id: user.id,
       });
 
-    if (userParticipantError) throw userParticipantError;
+    if (userParticipantError) {
+      console.error('Error adding user as participant:', userParticipantError);
+      throw userParticipantError;
+    }
 
     // Add organization as participant
     const { error: orgParticipantError } = await supabase
@@ -250,7 +284,10 @@ export const startConversation = async (organizationUserId: string, initialMessa
         user_id: organizationUserId,
       });
 
-    if (orgParticipantError) throw orgParticipantError;
+    if (orgParticipantError) {
+      console.error('Error adding organization as participant:', orgParticipantError);
+      throw orgParticipantError;
+    }
 
     // Send the initial message
     if (initialMessage.trim()) {
@@ -287,7 +324,10 @@ export const fetchOrganizations = async (): Promise<any[]> => {
       `)
       .eq('user_type', 'organization');
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching organizations:', error);
+      throw error;
+    }
 
     // Filter out the current user if they are an organization
     return organizations.filter(org => org.id !== user.id) || [];
