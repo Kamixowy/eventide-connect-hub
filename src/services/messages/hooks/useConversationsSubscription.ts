@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
 
-// Hook to subscribe to conversation updates (new conversations, new messages)
+// Hook do subskrypcji aktualizacji konwersacji (nowe konwersacje, nowe wiadomości)
 export const useConversationsSubscription = (
   onUpdate: () => void
 ): { subscription: RealtimeChannel | null } => {
@@ -14,13 +14,13 @@ export const useConversationsSubscription = (
   
   useEffect(() => {
     if (!user) {
-      console.log('No user, skipping conversation subscription');
+      console.log('Brak użytkownika, pomijanie subskrypcji konwersacji');
       return () => {};
     }
 
-    console.log('Setting up subscription for conversation updates');
+    console.log('Konfigurowanie subskrypcji dla aktualizacji konwersacji');
     
-    // Subscribe to direct_conversations and direct_messages tables
+    // Subskrybuj tabele direct_conversations i direct_messages
     const channel = supabase
       .channel('conversation_updates')
       .on(
@@ -31,7 +31,7 @@ export const useConversationsSubscription = (
           table: 'direct_conversations'
         },
         (payload) => {
-          console.log('Conversation table change detected:', payload);
+          console.log('Wykryto zmianę tabeli konwersacji:', payload);
           onUpdate();
         }
       )
@@ -43,10 +43,10 @@ export const useConversationsSubscription = (
           table: 'direct_messages'
         },
         (payload) => {
-          console.log('New message detected:', payload);
+          console.log('Wykryto nową wiadomość:', payload);
           
           if (payload.new && payload.new.sender_id !== user.id) {
-            // Show a toast notification for new messages
+            // Pokaż powiadomienie toast dla nowych wiadomości
             toast({
               title: "Nowa wiadomość",
               description: "Otrzymałeś nową wiadomość",
@@ -67,17 +67,17 @@ export const useConversationsSubscription = (
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          console.log('Added to new conversation:', payload);
+          console.log('Dodano do nowej konwersacji:', payload);
           onUpdate();
         }
       )
       .subscribe();
 
-    console.log('Conversation subscription set up successfully');
+    console.log('Subskrypcja konwersacji skonfigurowana pomyślnie');
 
-    // Clean up subscription on unmount
+    // Wyczyść subskrypcję przy odmontowaniu
     return () => {
-      console.log('Cleaning up conversation subscription');
+      console.log('Czyszczenie subskrypcji konwersacji');
       channel.unsubscribe();
     };
   }, [user, onUpdate, toast]);

@@ -1,61 +1,61 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-// Function to start a new conversation with an organization
+// Funkcja do rozpoczęcia nowej konwersacji z organizacją
 export const startConversation = async (organizationUserId: string, initialMessage: string): Promise<{ conversationId: string } | null> => {
   try {
-    console.log('Starting new conversation with organization:', organizationUserId);
+    console.log('Rozpoczynanie nowej konwersacji z organizacją:', organizationUserId);
     
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.error('User not authenticated');
-      throw new Error('User not authenticated');
+      console.error('Użytkownik nie zalogowany');
+      throw new Error('Użytkownik nie zalogowany');
     }
 
-    console.log('Current user ID:', user.id);
+    console.log('ID bieżącego użytkownika:', user.id);
 
-    // Check if both users exist
+    // Sprawdź, czy obaj użytkownicy istnieją
     const { data: users, error: usersError } = await supabase
       .from('profiles')
       .select('id')
       .in('id', [user.id, organizationUserId]);
       
     if (usersError) {
-      console.error('Error checking users:', usersError);
+      console.error('Błąd podczas sprawdzania użytkowników:', usersError);
       throw usersError;
     }
     
     if (!users || users.length !== 2) {
-      console.error('One or both users do not exist');
-      throw new Error('One or both users do not exist');
+      console.error('Jeden lub obaj użytkownicy nie istnieją');
+      throw new Error('Jeden lub obaj użytkownicy nie istnieją');
     }
 
-    // Use the create_conversation_and_participants database function to create the conversation
-    // This handles finding an existing conversation or creating a new one with participants
+    // Użyj funkcji create_conversation_and_participants w bazie danych, aby utworzyć konwersację
+    // Obsługuje ona znalezienie istniejącej konwersacji lub utworzenie nowej z uczestnikami
     const { data, error } = await supabase.rpc('create_conversation_and_participants', {
       user_one: user.id,
       user_two: organizationUserId
     });
     
     if (error) {
-      console.error('Error creating conversation:', error);
-      throw new Error('Failed to create conversation: ' + error.message);
+      console.error('Błąd podczas tworzenia konwersacji:', error);
+      throw new Error('Nie udało się utworzyć konwersacji: ' + error.message);
     }
     
     if (!data || data.length === 0) {
-      console.error('No conversation ID returned');
-      throw new Error('Failed to create conversation: No ID returned');
+      console.error('Nie zwrócono ID konwersacji');
+      throw new Error('Nie udało się utworzyć konwersacji: Nie zwrócono ID');
     }
     
     const conversationId = data[0].conversation_id;
-    console.log('Created or found conversation with ID:', conversationId);
+    console.log('Utworzono lub znaleziono konwersację z ID:', conversationId);
     
-    // Send the initial message if provided
+    // Wyślij początkową wiadomość, jeśli została podana
     if (initialMessage.trim() && conversationId) {
-      console.log('Sending initial message to conversation:', conversationId);
+      console.log('Wysyłanie początkowej wiadomości do konwersacji:', conversationId);
       
-      // Send the message directly instead of importing sendMessage function
-      // This avoids potential circular dependency issues
+      // Wyślij wiadomość bezpośrednio zamiast importowania funkcji sendMessage
+      // Zapobiega to potencjalnym problemom z cyklicznymi zależnościami
       const { data: message, error: messageError } = await supabase
         .from('direct_messages')
         .insert({
@@ -67,13 +67,13 @@ export const startConversation = async (organizationUserId: string, initialMessa
         .single();
       
       if (messageError) {
-        console.error('Error sending initial message:', messageError);
-        // Don't throw here, we still want to return the conversation ID
+        console.error('Błąd podczas wysyłania początkowej wiadomości:', messageError);
+        // Nie rzucaj tutaj, nadal chcemy zwrócić ID konwersacji
       } else {
-        console.log('Initial message sent successfully:', message);
+        console.log('Początkowa wiadomość wysłana pomyślnie:', message);
       }
       
-      // Update the conversation timestamp
+      // Aktualizuj znacznik czasu konwersacji
       await supabase
         .from('direct_conversations')
         .update({ updated_at: new Date().toISOString() })
@@ -82,7 +82,7 @@ export const startConversation = async (organizationUserId: string, initialMessa
 
     return conversationId ? { conversationId } : null;
   } catch (error) {
-    console.error('Error starting conversation:', error);
-    throw error; // Re-throw to allow better error handling in the UI
+    console.error('Błąd podczas rozpoczynania konwersacji:', error);
+    throw error; // Rzuć ponownie, aby umożliwić lepszą obsługę błędów w UI
   }
 };

@@ -1,5 +1,5 @@
 
-// Re-export messaging types and functions for easier imports
+// Reeksportuje typy i funkcje wiadomości dla łatwiejszego importowania
 export * from './types';
 export * from './conversationsService';
 export * from './messagesService';

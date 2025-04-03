@@ -12,23 +12,23 @@ export const useMessagesSubscriptions = (
 ) => {
   const { user } = useAuth();
 
-  // Log subscription status for debugging
+  // Rejestruj status subskrypcji do debugowania
   useEffect(() => {
     if (user) {
-      console.log('Message subscription setup for user:', user.id);
-      console.log('Selected conversation ID:', selectedConversationId);
+      console.log('Konfiguracja subskrypcji wiadomości dla użytkownika:', user.id);
+      console.log('Wybrane ID konwersacji:', selectedConversationId);
     } else {
-      console.log('No user logged in, subscriptions will not work');
+      console.log('Brak zalogowanego użytkownika, subskrypcje nie będą działać');
     }
   }, [user, selectedConversationId]);
 
-  // Subscribe to messages in the selected conversation
+  // Subskrybuj wiadomości w wybranej konwersacji
   const { subscription: messageSubscription } = useMessageSubscription(
     selectedConversationId,
     onNewMessage
   );
   
-  // Subscribe to conversation updates
+  // Subskrybuj aktualizacje konwersacji
   const { subscription: conversationSubscription } = useConversationsSubscription(
     onConversationUpdate
   );

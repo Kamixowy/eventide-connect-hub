@@ -1,10 +1,10 @@
 
-// This file is maintained for backward compatibility
-// It re-exports functions from the new modular structure
+// Ten plik jest utrzymywany dla wstecznej kompatybilności
+// Reeksportuje funkcje z nowej modułowej struktury
 
 export { getRecipient } from './utils/conversationUtils';
 export { fetchConversations } from './operations/fetchConversations';
 export { startConversation } from './operations/startConversation';
 
-// We should import from the operations directly to avoid circular dependencies
+// Powinniśmy importować bezpośrednio z operacji, aby uniknąć cyklicznych zależności
 export { sendMessageToConversation as sendMessage } from './operations/sendMessageService';

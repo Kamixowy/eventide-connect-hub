@@ -141,7 +141,6 @@ export type Database = {
           id: string
           read_at: string | null
           sender_id: string
-          updated_at: string
         }
         Insert: {
           content: string
@@ -150,7 +149,6 @@ export type Database = {
           id?: string
           read_at?: string | null
           sender_id: string
-          updated_at?: string
         }
         Update: {
           content?: string
@@ -159,7 +157,6 @@ export type Database = {
           id?: string
           read_at?: string | null
           sender_id?: string
-          updated_at?: string
         }
         Relationships: [
           {

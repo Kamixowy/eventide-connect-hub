@@ -2,23 +2,23 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Find or create a conversation between two users
- * Returns the conversation ID
+ * Znajduje lub tworzy konwersację między dwoma użytkownikami
+ * Zwraca ID konwersacji
  */
 export const createOrGetConversation = async (
   otherUserId: string
 ): Promise<string | null> => {
   try {
-    console.log("Finding or creating conversation with user:", otherUserId);
+    console.log("Szukanie lub tworzenie konwersacji z użytkownikiem:", otherUserId);
     
-    // Get current user
+    // Pobierz aktualnego użytkownika
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.error("User not authenticated");
-      throw new Error("You must be logged in to create a conversation");
+      console.error("Użytkownik nie zalogowany");
+      throw new Error("Musisz być zalogowany, aby utworzyć konwersację");
     }
     
-    // Use the database function to find or create a conversation
+    // Użyj funkcji bazodanowej do znalezienia lub utworzenia konwersacji
     const { data, error } = await supabase.rpc(
       'create_conversation_and_participants',
       {
@@ -28,20 +28,20 @@ export const createOrGetConversation = async (
     );
     
     if (error) {
-      console.error("Error creating or finding conversation:", error);
+      console.error("Błąd podczas tworzenia/wyszukiwania konwersacji:", error);
       throw error;
     }
     
     if (!data || data.length === 0) {
-      console.error("No conversation ID returned");
+      console.error("Nie zwrócono ID konwersacji");
       return null;
     }
     
     const conversationId = data[0].conversation_id;
-    console.log("Found or created conversation:", conversationId);
+    console.log("Znaleziono lub utworzono konwersację:", conversationId);
     return conversationId;
   } catch (error) {
-    console.error("Error in createOrGetConversation:", error);
+    console.error("Błąd w createOrGetConversation:", error);
     throw error;
   }
 };

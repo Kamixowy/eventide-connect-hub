@@ -1,13 +1,13 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-// Function to check if a user is a participant in a conversation
+// Funkcja do sprawdzenia, czy użytkownik jest uczestnikiem konwersacji
 export const checkConversationParticipation = async (
   conversationId: string, 
   userId: string
 ): Promise<boolean> => {
   try {
-    console.log(`Checking if user ${userId} is a participant in conversation ${conversationId}`);
+    console.log(`Sprawdzanie, czy użytkownik ${userId} jest uczestnikiem konwersacji ${conversationId}`);
     
     const { data, error } = await supabase
       .from('conversation_participants')
@@ -17,22 +17,22 @@ export const checkConversationParticipation = async (
       .maybeSingle();
     
     if (error) {
-      console.error('Error checking conversation participation:', error);
-      // If we get an infinite recursion error, let's try a different approach
+      console.error('Błąd podczas sprawdzania uczestnictwa w konwersacji:', error);
+      // Jeśli otrzymamy błąd nieskończonej rekursji, spróbujmy innego podejścia
       if (error.message.includes('infinite recursion')) {
-        // Fall back to assuming the user is a participant to prevent blocking functionality
-        console.log('Working around RLS recursion issue - allowing access');
+        // Awaryjnie załóż, że użytkownik jest uczestnikiem, aby zapobiec blokowaniu funkcjonalności
+        console.log('Obejście problemu rekursji RLS - zezwolenie na dostęp');
         return true;
       }
       return false;
     }
     
     const isParticipant = !!data;
-    console.log(`User ${userId} is${isParticipant ? '' : ' not'} a participant in conversation ${conversationId}`);
+    console.log(`Użytkownik ${userId} ${isParticipant ? 'jest' : 'nie jest'} uczestnikiem konwersacji ${conversationId}`);
     
     return isParticipant;
   } catch (error) {
-    console.error('Exception checking conversation participation:', error);
+    console.error('Wyjątek podczas sprawdzania uczestnictwa w konwersacji:', error);
     return false;
   }
 };

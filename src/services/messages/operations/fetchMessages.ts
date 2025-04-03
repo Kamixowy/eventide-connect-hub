@@ -3,25 +3,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { Message } from '../types';
 
 /**
- * Fetch messages for a specific conversation
+ * Pobiera wiadomości dla określonej konwersacji
  */
 export const fetchMessages = async (conversationId: string): Promise<Message[]> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
+    if (!user) throw new Error('Użytkownik nie zalogowany');
 
-    console.log('Fetching messages for conversation:', conversationId);
+    console.log('Pobieranie wiadomości dla konwersacji:', conversationId);
 
-    // First mark any unread messages as read
+    // Najpierw oznacz nieprzeczytane wiadomości jako przeczytane
     try {
       await supabase.rpc('mark_messages_as_read', { conversation_id: conversationId });
-      console.log('Marked messages as read');
+      console.log('Oznaczono wiadomości jako przeczytane');
     } catch (error) {
-      console.error('Error marking messages as read:', error);
-      // Continue execution even if marking messages fails
+      console.error('Błąd podczas oznaczania wiadomości jako przeczytane:', error);
+      // Kontynuuj wykonanie nawet jeśli oznaczanie wiadomości nie powiodło się
     }
 
-    // Fetch messages without trying to join with profiles
+    // Pobierz wiadomości bez próby łączenia z profilami
     const { data: messages, error } = await supabase
       .from('direct_messages')
       .select('*')
@@ -29,14 +29,14 @@ export const fetchMessages = async (conversationId: string): Promise<Message[]> 
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.error('Error fetching messages:', error);
+      console.error('Błąd podczas pobierania wiadomości:', error);
       throw error;
     }
 
-    console.log(`Fetched ${messages?.length || 0} messages`);
+    console.log(`Pobrano ${messages?.length || 0} wiadomości`);
     return messages || [];
   } catch (error) {
-    console.error('Error in fetchMessages:', error);
+    console.error('Błąd w fetchMessages:', error);
     throw error;
   }
 };

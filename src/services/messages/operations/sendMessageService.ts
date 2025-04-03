@@ -4,26 +4,26 @@ import { Message } from '../types';
 import { createOrGetConversation } from './createOrGetConversation';
 
 /**
- * Sends a message to an existing conversation
+ * Wysyła wiadomość do istniejącej konwersacji
  */
 export const sendMessageToConversation = async (
   conversationId: string,
   content: string
 ): Promise<Message | null> => {
   try {
-    // Validate inputs
-    if (!conversationId) throw new Error("Conversation ID is required");
-    if (!content.trim()) throw new Error("Message content cannot be empty");
+    // Walidacja danych wejściowych
+    if (!conversationId) throw new Error("ID konwersacji jest wymagane");
+    if (!content.trim()) throw new Error("Treść wiadomości nie może być pusta");
     
-    console.log(`Sending message to conversation ${conversationId}: ${content}`);
+    console.log(`Wysyłanie wiadomości do konwersacji ${conversationId}: ${content}`);
     
-    // Get current user
+    // Pobierz aktualnego użytkownika
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      throw new Error("You must be logged in to send messages");
+      throw new Error("Musisz być zalogowany, aby wysyłać wiadomości");
     }
     
-    // Create and send the message
+    // Tworzenie i wysyłanie wiadomości
     const { data: message, error } = await supabase
       .from('direct_messages')
       .insert({
@@ -35,13 +35,13 @@ export const sendMessageToConversation = async (
       .single();
     
     if (error) {
-      console.error("Error sending message:", error);
+      console.error("Błąd podczas wysyłania wiadomości:", error);
       throw error;
     }
     
-    console.log("Message sent successfully:", message);
+    console.log("Wiadomość wysłana pomyślnie:", message);
     
-    // Update the conversation timestamp
+    // Aktualizacja znacznika czasu konwersacji
     await supabase
       .from('direct_conversations')
       .update({ updated_at: new Date().toISOString() })
@@ -49,33 +49,33 @@ export const sendMessageToConversation = async (
     
     return message;
   } catch (error) {
-    console.error("Error in sendMessageToConversation:", error);
+    console.error("Błąd w sendMessageToConversation:", error);
     throw error;
   }
 };
 
 /**
- * Starts a new conversation with a user and sends the first message
+ * Rozpoczyna nową konwersację z użytkownikiem i wysyła pierwszą wiadomość
  */
 export const startConversationWithMessage = async (
   recipientUserId: string,
   initialMessage: string
 ): Promise<{ conversationId: string, message: Message | null }> => {
   try {
-    // Validate inputs
-    if (!recipientUserId) throw new Error("Recipient user ID is required");
-    if (!initialMessage.trim()) throw new Error("Message content cannot be empty");
+    // Walidacja danych wejściowych
+    if (!recipientUserId) throw new Error("ID odbiorcy jest wymagane");
+    if (!initialMessage.trim()) throw new Error("Treść wiadomości nie może być pusta");
     
-    console.log(`Starting conversation with user ${recipientUserId}: ${initialMessage}`);
+    console.log(`Rozpoczynanie konwersacji z użytkownikiem ${recipientUserId}: ${initialMessage}`);
     
-    // First, create or get the conversation
+    // Najpierw utwórz lub pobierz konwersację
     const conversationId = await createOrGetConversation(recipientUserId);
     
     if (!conversationId) {
-      throw new Error("Failed to create conversation");
+      throw new Error("Nie udało się utworzyć konwersacji");
     }
     
-    // Then send the initial message
+    // Następnie wyślij początkową wiadomość
     const message = await sendMessageToConversation(conversationId, initialMessage);
     
     return {
@@ -83,25 +83,25 @@ export const startConversationWithMessage = async (
       message
     };
   } catch (error) {
-    console.error("Error in startConversationWithMessage:", error);
+    console.error("Błąd w startConversationWithMessage:", error);
     throw error;
   }
 };
 
 /**
- * Create a test conversation with sample messages
+ * Tworzy testową konwersację z przykładowymi wiadomościami
  */
 export const createTestConversation = async (
   targetEmail: string
 ): Promise<{ conversationId: string } | null> => {
   try {
-    // Get current user
+    // Pobierz aktualnego użytkownika
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      throw new Error("You must be logged in to create a test conversation");
+      throw new Error("Musisz być zalogowany, aby utworzyć testową konwersację");
     }
     
-    // Find the target user by email
+    // Znajdź użytkownika docelowego po adresie e-mail
     const { data: targetUser, error: userError } = await supabase
       .from('profiles')
       .select('id, name')
@@ -109,41 +109,41 @@ export const createTestConversation = async (
       .maybeSingle();
     
     if (userError || !targetUser) {
-      console.error("Target user not found:", userError || "No user with that email");
-      throw new Error("Target user not found");
+      console.error("Nie znaleziono użytkownika docelowego:", userError || "Brak użytkownika o podanym adresie e-mail");
+      throw new Error("Nie znaleziono użytkownika docelowego");
     }
     
-    // Create or get conversation
+    // Utwórz lub pobierz konwersację
     const conversationId = await createOrGetConversation(targetUser.id);
     
     if (!conversationId) {
-      throw new Error("Failed to create conversation");
+      throw new Error("Nie udało się utworzyć konwersacji");
     }
     
-    // Add some test messages
+    // Dodaj kilka testowych wiadomości
     await supabase
       .from('direct_messages')
       .insert([
         {
           conversation_id: conversationId,
           sender_id: user.id,
-          content: `Hello ${targetUser.name || 'there'}! This is a test message.`
+          content: `Witaj ${targetUser.name || 'tam'}! To jest testowa wiadomość.`
         },
         {
           conversation_id: conversationId,
           sender_id: targetUser.id,
-          content: 'Hi! This is an automated test response.'
+          content: 'Cześć! To jest automatyczna odpowiedź testowa.'
         },
         {
           conversation_id: conversationId,
           sender_id: user.id,
-          content: 'How are you today?'
+          content: 'Jak się dziś masz?'
         }
       ]);
     
     return { conversationId };
   } catch (error) {
-    console.error("Error creating test conversation:", error);
+    console.error("Błąd podczas tworzenia testowej konwersacji:", error);
     return null;
   }
 };

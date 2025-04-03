@@ -23,7 +23,7 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     }
   }, [initialSelectedConversationId]);
 
-  // Fetch conversations
+  // Pobierz konwersacje
   const { 
     data: conversations = [], 
     isLoading: isLoadingConversations,
@@ -36,7 +36,7 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     retry: 2,
     staleTime: 30000,
     onError: (error: any) => {
-      console.error('Error fetching conversations:', error);
+      console.error('Błąd podczas pobierania konwersacji:', error);
       toast({
         title: 'Błąd',
         description: 'Nie udało się pobrać konwersacji. Spróbuj ponownie.',
@@ -45,7 +45,7 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     }
   });
 
-  // Fetch messages for selected conversation
+  // Pobierz wiadomości dla wybranej konwersacji
   const { 
     data: messages = [], 
     isLoading: isLoadingMessages,
@@ -56,9 +56,9 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     queryFn: () => selectedConversationId ? fetchMessages(selectedConversationId) : Promise.resolve([]),
     enabled: !!selectedConversationId,
     retry: 2,
-    refetchInterval: 5000, // Poll every 5 seconds for new messages
+    refetchInterval: 5000, // Odpytuj co 5 sekund o nowe wiadomości
     onError: (error: any) => {
-      console.error('Error fetching messages:', error);
+      console.error('Błąd podczas pobierania wiadomości:', error);
       toast({
         title: 'Błąd',
         description: 'Nie udało się pobrać wiadomości. Spróbuj ponownie.',
@@ -67,36 +67,36 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     }
   });
 
-  // Simplified send message function
+  // Uproszczona funkcja wysyłania wiadomości
   const sendMessageMutation = async (conversationId: string, content: string) => {
     try {
-      console.log("Sending message to conversation:", conversationId);
+      console.log("Wysyłanie wiadomości do konwersacji:", conversationId);
       
       if (!conversationId || !content.trim()) {
-        throw new Error("Missing required data for sending message");
+        throw new Error("Brakuje wymaganych danych do wysłania wiadomości");
       }
       
-      // Send message
+      // Wyślij wiadomość
       const message = await sendMessageToConversation(conversationId, content);
       
       if (message) {
-        // Update UI optimistically
+        // Zaktualizuj UI optymistycznie
         queryClient.setQueryData(['messages', conversationId], (oldData: any[] | undefined) => {
           if (!oldData) return [message];
           if (oldData.some(m => m.id === message.id)) return oldData;
           return [...oldData, message];
         });
         
-        // Invalidate queries to refresh data
+        // Unieważnij zapytania, aby odświeżyć dane
         await queryClient.invalidateQueries({ queryKey: ['conversations'] });
         await queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
         
         return message;
       } else {
-        throw new Error("Failed to send message");
+        throw new Error("Nie udało się wysłać wiadomości");
       }
     } catch (error) {
-      console.error('Error in send message mutation:', error);
+      console.error('Błąd w mutacji wysyłania wiadomości:', error);
       toast({
         title: 'Błąd',
         description: 'Nie udało się wysłać wiadomości. Spróbuj ponownie.',
@@ -106,19 +106,19 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     }
   };
 
-  // Start a new conversation and send the first message
+  // Rozpocznij nową konwersację i wyślij pierwszą wiadomość
   const startNewConversation = async (recipientId: string, initialMessage: string) => {
     try {
-      console.log("Starting new conversation with recipient:", recipientId);
+      console.log("Rozpoczynanie nowej konwersacji z odbiorcą:", recipientId);
       
       const result = await startConversationWithMessage(recipientId, initialMessage);
       
-      // Invalidate queries to refresh data
+      // Unieważnij zapytania, aby odświeżyć dane
       await queryClient.invalidateQueries({ queryKey: ['conversations'] });
       
       return result;
     } catch (error) {
-      console.error('Error starting new conversation:', error);
+      console.error('Błąd podczas rozpoczynania nowej konwersacji:', error);
       toast({
         title: 'Błąd',
         description: 'Nie udało się rozpocząć konwersacji. Spróbuj ponownie.',
@@ -128,7 +128,7 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     }
   };
 
-  // Create test conversation for development
+  // Utwórz testową konwersację dla celów rozwojowych
   const createTestConversationWithEmail = async (email: string) => {
     try {
       const result = await import('@/services/messages/operations/sendMessageService')
@@ -140,15 +140,15 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
           description: 'Utworzono testową konwersację',
         });
         
-        // Refresh conversations
+        // Odśwież konwersacje
         await queryClient.invalidateQueries({ queryKey: ['conversations'] });
         
         return result.conversationId;
       } else {
-        throw new Error("Failed to create test conversation");
+        throw new Error("Nie udało się utworzyć testowej konwersacji");
       }
     } catch (error) {
-      console.error('Error creating test conversation:', error);
+      console.error('Błąd podczas tworzenia testowej konwersacji:', error);
       toast({
         title: 'Błąd',
         description: 'Nie udało się utworzyć testowej konwersacji',
@@ -158,21 +158,21 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     }
   };
 
-  // Mark messages as read when conversation is selected
+  // Oznacz wiadomości jako przeczytane po wybraniu konwersacji
   useEffect(() => {
     if (selectedConversationId && user) {
       markMessagesAsRead(selectedConversationId)
         .then(() => {
-          // Refresh conversations to update unread count
+          // Odśwież konwersacje, aby zaktualizować liczbę nieprzeczytanych
           refetchConversations();
         })
         .catch(err => {
-          console.error('Error marking messages as read:', err);
+          console.error('Błąd podczas oznaczania wiadomości jako przeczytane:', err);
         });
     }
   }, [selectedConversationId, user, refetchConversations]);
 
-  // Initial load 
+  // Początkowe ładowanie 
   useEffect(() => {
     if (user) {
       refetchConversations();

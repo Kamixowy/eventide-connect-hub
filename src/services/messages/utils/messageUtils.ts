@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Mark messages in a conversation as read
+ * Oznacza wiadomości w konwersacji jako przeczytane
  */
 export const markMessagesAsRead = async (conversationId: string): Promise<boolean> => {
   try {
@@ -12,7 +12,7 @@ export const markMessagesAsRead = async (conversationId: string): Promise<boolea
     await supabase.rpc('mark_messages_as_read', { conversation_id: conversationId });
     return true;
   } catch (error) {
-    console.error('Error marking messages as read:', error);
+    console.error('Błąd podczas oznaczania wiadomości jako przeczytane:', error);
     return false;
   }
 };

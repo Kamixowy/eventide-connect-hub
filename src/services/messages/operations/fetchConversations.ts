@@ -3,36 +3,36 @@ import { supabase } from '@/integrations/supabase/client';
 import { Conversation } from '../types';
 import { enhanceParticipantsWithProfiles, getLastMessage, getUnreadCount } from '../utils/conversationUtils';
 
-// Function to fetch all conversations for the current user
+// Funkcja do pobierania wszystkich konwersacji dla bieżącego użytkownika
 export const fetchConversations = async (): Promise<Conversation[]> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
+    if (!user) throw new Error('Użytkownik nie zalogowany');
 
-    console.log('Fetching conversations for user:', user.id);
+    console.log('Pobieranie konwersacji dla użytkownika:', user.id);
 
-    // Direct approach using direct_conversations and conversation_participants
+    // Bezpośrednie podejście z użyciem direct_conversations i conversation_participants
     try {
-      // Get all conversations where the user is a participant
+      // Pobierz wszystkie konwersacje, w których użytkownik jest uczestnikiem
       const { data: participantsData, error: participantsError } = await supabase
         .from('conversation_participants')
         .select('conversation_id')
         .eq('user_id', user.id);
 
       if (participantsError) {
-        console.error('Error fetching conversation participants:', participantsError);
+        console.error('Błąd podczas pobierania uczestników konwersacji:', participantsError);
         throw participantsError;
       }
 
       if (!participantsData || participantsData.length === 0) {
-        console.log('No conversations found via participants');
+        console.log('Nie znaleziono konwersacji przez uczestników');
         return [];
       }
 
       const conversationIds = participantsData.map(p => p.conversation_id);
-      console.log('Found conversation IDs via participants:', conversationIds);
+      console.log('Znaleziono ID konwersacji przez uczestników:', conversationIds);
 
-      // Get conversations with their participants
+      // Pobierz konwersacje z uczestnikami
       const { data: conversations, error: conversationsError } = await supabase
         .from('direct_conversations')
         .select(`
@@ -46,30 +46,30 @@ export const fetchConversations = async (): Promise<Conversation[]> => {
         .order('updated_at', { ascending: false });
 
       if (conversationsError) {
-        console.error('Error fetching conversations:', conversationsError);
+        console.error('Błąd podczas pobierania konwersacji:', conversationsError);
         throw conversationsError;
       }
 
-      console.log('Fetched conversations from participants:', conversations?.length || 0);
+      console.log('Pobrano konwersacje z uczestnikami:', conversations?.length || 0);
 
       if (!conversations || conversations.length === 0) return [];
 
-      // Enhance conversations with profiles and messages
+      // Wzbogać konwersacje o profile i wiadomości
       return await enhanceConversations(conversations, user.id);
     } catch (participantsError) {
-      // If there was an error with the participants approach, try the messages approach
-      console.log('Falling back to messages approach due to error:', participantsError.message);
+      // Jeśli wystąpił błąd z podejściem uczestników, spróbuj podejścia z wiadomościami
+      console.log('Przełączenie na podejście z wiadomościami z powodu błędu:', participantsError.message);
       
-      // Alternative approach: Get conversations from messages
+      // Alternatywne podejście: Pobierz konwersacje z wiadomości
       return await fetchConversationsFromMessages(user.id);
     }
   } catch (error) {
-    console.error('Error in fetchConversations:', error);
+    console.error('Błąd w fetchConversations:', error);
     return [];
   }
 };
 
-// Helper function to enhance conversations with profiles and other data
+// Funkcja pomocnicza do wzbogacania konwersacji o profile i inne dane
 const enhanceConversations = async (conversations: any[], userId: string): Promise<Conversation[]> => {
   return await Promise.all(
     conversations.map(async (conversation) => {
@@ -91,10 +91,10 @@ const enhanceConversations = async (conversations: any[], userId: string): Promi
   );
 };
 
-// Fallback method to fetch conversations through messages
+// Zapasowa metoda pobierania konwersacji przez wiadomości
 const fetchConversationsFromMessages = async (userId: string): Promise<Conversation[]> => {
   try {
-    // First get all sent messages to find conversations
+    // Najpierw pobierz wszystkie wysłane wiadomości, aby znaleźć konwersacje
     const { data: sentMessages, error: sentError } = await supabase
       .from('direct_messages')
       .select('conversation_id')
@@ -102,11 +102,11 @@ const fetchConversationsFromMessages = async (userId: string): Promise<Conversat
       .order('created_at', { ascending: false });
 
     if (sentError) {
-      console.error('Error fetching sent messages:', sentError);
+      console.error('Błąd podczas pobierania wysłanych wiadomości:', sentError);
       throw sentError;
     }
 
-    // Then get all received messages to find conversations
+    // Następnie pobierz wszystkie otrzymane wiadomości, aby znaleźć konwersacje
     const { data: receivedMessages, error: receivedError } = await supabase
       .from('direct_messages')
       .select('conversation_id, sender_id')
@@ -114,21 +114,21 @@ const fetchConversationsFromMessages = async (userId: string): Promise<Conversat
       .order('created_at', { ascending: false });
 
     if (receivedError) {
-      console.error('Error fetching received messages:', receivedError);
+      console.error('Błąd podczas pobierania otrzymanych wiadomości:', receivedError);
       throw receivedError;
     }
 
-    // Combine and get unique conversation IDs
+    // Połącz i pobierz unikalne ID konwersacji
     const allMessages = [...(sentMessages || []), ...(receivedMessages || [])];
     if (allMessages.length === 0) {
-      console.log('No messages found for user');
+      console.log('Nie znaleziono wiadomości dla użytkownika');
       return [];
     }
 
     const conversationIds = [...new Set(allMessages.map(m => m.conversation_id))];
-    console.log('Found conversation IDs from messages:', conversationIds);
+    console.log('Znaleziono ID konwersacji z wiadomości:', conversationIds);
 
-    // Get conversations with these IDs
+    // Pobierz konwersacje z tymi ID
     const { data: conversations, error: conversationsError } = await supabase
       .from('direct_conversations')
       .select('*')
@@ -136,32 +136,32 @@ const fetchConversationsFromMessages = async (userId: string): Promise<Conversat
       .order('updated_at', { ascending: false });
 
     if (conversationsError) {
-      console.error('Error fetching conversations:', conversationsError);
+      console.error('Błąd podczas pobierania konwersacji:', conversationsError);
       throw conversationsError;
     }
 
-    console.log('Fetched conversations using messages method:', conversations?.length || 0);
+    console.log('Pobrano konwersacje metodą wiadomości:', conversations?.length || 0);
     
     if (!conversations || conversations.length === 0) return [];
 
-    // For each conversation, manually fetch participants since the join might be causing RLS issues
+    // Dla każdej konwersacji ręcznie pobierz uczestników, ponieważ złączenie może powodować problemy z RLS
     const enhancedConversations = await Promise.all(
       conversations.map(async (conversation) => {
-        // Get participants for this conversation
+        // Pobierz uczestników tej konwersacji
         const { data: participants, error: participantsError } = await supabase
           .from('conversation_participants')
           .select('id, user_id')
           .eq('conversation_id', conversation.id);
 
         if (participantsError) {
-          console.error(`Error fetching participants for conversation ${conversation.id}:`, participantsError);
-          // Continue with empty participants rather than failing
+          console.error(`Błąd podczas pobierania uczestników konwersacji ${conversation.id}:`, participantsError);
+          // Kontynuuj z pustymi uczestnikami zamiast niepowodzenia
           conversation.participants = [];
         } else {
           conversation.participants = participants || [];
         }
 
-        // Enhance with profiles, etc.
+        // Wzbogać o profile, itp.
         const enhancedParticipants = await enhanceParticipantsWithProfiles(
           conversation.participants, 
           supabase
@@ -181,7 +181,7 @@ const fetchConversationsFromMessages = async (userId: string): Promise<Conversat
 
     return enhancedConversations;
   } catch (error) {
-    console.error('Error in fetchConversationsFromMessages:', error);
+    console.error('Błąd w fetchConversationsFromMessages:', error);
     return [];
   }
 };

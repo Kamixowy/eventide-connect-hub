@@ -10,43 +10,43 @@ export const useMessageHandlers = (
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  // Handler for new messages from subscription
+  // Obsługa nowych wiadomości z subskrypcji
   const handleNewMessage = (newMessage: Message) => {
-    console.log("Received new message from subscription:", newMessage);
+    console.log("Otrzymano nową wiadomość z subskrypcji:", newMessage);
     
-    // Update messages cache only if we're currently viewing this conversation
+    // Aktualizuj pamięć podręczną wiadomości tylko jeśli aktualnie przeglądamy tę konwersację
     if (selectedConversationId && newMessage.conversation_id === selectedConversationId) {
       queryClient.setQueryData(['messages', selectedConversationId], (oldData: Message[] | undefined) => {
         if (!oldData) {
-          console.log("No existing messages, creating new array with the message");
+          console.log("Brak istniejących wiadomości, tworzenie nowej tablicy z wiadomością");
           return [newMessage];
         }
         
-        // Avoid duplicates by checking if message already exists
+        // Unikaj duplikatów, sprawdzając, czy wiadomość już istnieje
         if (oldData.some(m => m.id === newMessage.id)) {
-          console.log("Message already exists in cache, skipping addition");
+          console.log("Wiadomość już istnieje w pamięci podręcznej, pomijanie dodawania");
           return oldData;
         }
         
-        console.log("Adding new message to cache:", newMessage);
+        console.log("Dodawanie nowej wiadomości do pamięci podręcznej:", newMessage);
         return [...oldData, newMessage];
       });
     } else {
-      console.log("Message is for a different conversation than the selected one");
+      console.log("Wiadomość jest dla innej konwersacji niż wybrana");
     }
     
-    // Refetch conversations to update last message and unread count
-    console.log("Refetching conversations after new message");
+    // Odśwież konwersacje, aby zaktualizować ostatnią wiadomość i liczbę nieprzeczytanych
+    console.log("Odświeżanie konwersacji po nowej wiadomości");
     refetchConversations().catch(err => {
-      console.error("Error refetching conversations:", err);
+      console.error("Błąd podczas odświeżania konwersacji:", err);
     });
   };
 
-  // Handler for conversation updates from subscription
+  // Obsługa aktualizacji konwersacji z subskrypcji
   const handleConversationUpdate = () => {
-    console.log("Conversation update detected, refetching conversations");
+    console.log("Wykryto aktualizację konwersacji, odświeżanie konwersacji");
     refetchConversations().catch(err => {
-      console.error("Error refetching conversations after update:", err);
+      console.error("Błąd odświeżania konwersacji po aktualizacji:", err);
     });
   };
 

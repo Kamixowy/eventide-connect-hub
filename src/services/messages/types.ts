@@ -1,7 +1,7 @@
 
 import { RealtimeChannel } from '@supabase/supabase-js';
 
-// Types for our messaging system
+// Typy dla naszego systemu wiadomości
 export interface Conversation {
   id: string;
   created_at: string;

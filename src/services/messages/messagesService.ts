@@ -1,6 +1,6 @@
 
-// This file is maintained for backward compatibility
-// It re-exports functions from the new modular structure
+// Ten plik jest utrzymywany dla wstecznej kompatybilności
+// Reeksportuje funkcje z nowej modułowej struktury
 
 export { fetchMessages } from './operations/fetchMessages';
 export { 
@@ -10,5 +10,5 @@ export {
 } from './operations/sendMessageService';
 export { markMessagesAsRead } from './utils/messageUtils';
 
-// Export the alias for backward compatibility
+// Eksportuj alias dla wstecznej kompatybilności
 export { sendMessageToConversation as sendMessage } from './operations/sendMessageService';
