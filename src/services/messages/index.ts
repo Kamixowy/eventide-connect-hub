@@ -11,4 +11,3 @@ export * from './operations/sendMessageService';
 export * from './operations/createOrGetConversation';
 export * from './utils/messageUtils';
 export * from './utils/conversationUtils';
-
