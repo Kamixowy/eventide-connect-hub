@@ -8,7 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 import { markMessagesAsRead } from '@/services/messages/utils/messageUtils';
 import { 
   sendMessageToConversation, 
-  startConversationWithMessage 
+  startConversationWithMessage,
+  createTestConversation
 } from '@/services/messages/operations/sendMessageService';
 
 export const useMessagesData = (initialSelectedConversationId: string | null) => {
@@ -95,14 +96,9 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
       } else {
         throw new Error("Nie udało się wysłać wiadomości");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Błąd w mutacji wysyłania wiadomości:', error);
-      toast({
-        title: 'Błąd',
-        description: 'Nie udało się wysłać wiadomości. Spróbuj ponownie.',
-        variant: 'destructive',
-      });
-      throw error;
+      throw error; // Przekaż błąd dalej, aby komponent mógł go obsłużyć
     }
   };
 
@@ -117,7 +113,7 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
       await queryClient.invalidateQueries({ queryKey: ['conversations'] });
       
       return result;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Błąd podczas rozpoczynania nowej konwersacji:', error);
       toast({
         title: 'Błąd',
@@ -131,8 +127,7 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
   // Utwórz testową konwersację dla celów rozwojowych
   const createTestConversationWithEmail = async (email: string) => {
     try {
-      const result = await import('@/services/messages/operations/sendMessageService')
-        .then(module => module.createTestConversation(email));
+      const result = await createTestConversation(email);
       
       if (result) {
         toast({
@@ -147,11 +142,11 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
       } else {
         throw new Error("Nie udało się utworzyć testowej konwersacji");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Błąd podczas tworzenia testowej konwersacji:', error);
       toast({
         title: 'Błąd',
-        description: 'Nie udało się utworzyć testowej konwersacji',
+        description: error.message || 'Nie udało się utworzyć testowej konwersacji',
         variant: 'destructive',
       });
       return null;

@@ -30,6 +30,7 @@ const MessageView = ({
 }: MessageViewProps) => {
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -40,19 +41,27 @@ const MessageView = ({
     }
   }, [messages]);
 
+  // Resetuj błąd po zmianie konwersacji
+  useEffect(() => {
+    setError(null);
+  }, [conversation?.id]);
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() || isSending) return;
     
     setIsSending(true);
+    setError(null);
+    
     try {
       console.log("Attempting to send message:", newMessage);
       await onSendMessage(newMessage);
       setNewMessage('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in MessageView when sending message:', error);
+      setError(error.message || "Wystąpił problem podczas wysyłania wiadomości");
       toast({
         title: "Błąd wysyłania wiadomości",
-        description: "Wystąpił problem podczas wysyłania wiadomości. Spróbuj ponownie.",
+        description: error.message || "Wystąpił problem podczas wysyłania wiadomości. Spróbuj ponownie.",
         variant: "destructive"
       });
     } finally {
@@ -120,6 +129,12 @@ const MessageView = ({
           </div>
         ) : (
           <div className="space-y-4">
+            {messages.length === 0 && (
+              <div className="flex justify-center p-4 text-muted-foreground">
+                <p>Brak wiadomości. Rozpocznij konwersację!</p>
+              </div>
+            )}
+            
             {messages.map((message) => (
               <div 
                 key={message.id} 
@@ -147,6 +162,11 @@ const MessageView = ({
       </ScrollArea>
       
       <div className="p-4 border-t">
+        {error && (
+          <div className="mb-2 p-2 text-sm bg-red-50 text-red-600 rounded border border-red-200">
+            {error}
+          </div>
+        )}
         <div className="flex items-end space-x-2">
           <Textarea
             placeholder="Napisz wiadomość..."

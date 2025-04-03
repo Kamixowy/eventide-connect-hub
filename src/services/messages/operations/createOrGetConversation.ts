@@ -31,6 +31,30 @@ export const createOrGetConversation = async (recipientUserId: string): Promise<
     }
 
     console.log('Znaleziono lub utworzono konwersację:', data[0].conversation_id);
+    
+    // Dodajmy dodatkowe sprawdzenie czy jesteśmy uczestnikiem
+    const { count, error: countError } = await supabase
+      .from('conversation_participants')
+      .select('*', { count: 'exact', head: true })
+      .eq('conversation_id', data[0].conversation_id)
+      .eq('user_id', user.id);
+    
+    if (countError) {
+      console.error('Błąd podczas sprawdzania uczestnictwa:', countError);
+    } else if (count === 0) {
+      console.log('Nie jesteśmy jeszcze uczestnikiem, dodawanie...');
+      const { error: insertError } = await supabase
+        .from('conversation_participants')
+        .insert({
+          conversation_id: data[0].conversation_id,
+          user_id: user.id
+        });
+      
+      if (insertError) {
+        console.error('Błąd podczas dodawania uczestnika:', insertError);
+      }
+    }
+
     return data[0].conversation_id;
   } catch (error) {
     console.error('Błąd w createOrGetConversation:', error);

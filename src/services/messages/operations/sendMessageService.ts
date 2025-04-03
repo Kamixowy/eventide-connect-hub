@@ -23,17 +23,7 @@ export const sendMessageToConversation = async (
       throw new Error("Musisz być zalogowany, aby wysyłać wiadomości");
     }
     
-    // Sprawdzenie, czy użytkownik jest uczestnikiem konwersacji
-    const { data: isParticipant } = await supabase.rpc(
-      'is_conversation_participant', 
-      { conversation_id: conversationId }
-    );
-    
-    if (!isParticipant) {
-      throw new Error("Nie masz uprawnień do wysyłania wiadomości w tej konwersacji");
-    }
-    
-    // Tworzenie i wysyłanie wiadomości z kwalifikowanymi nazwami kolumn
+    // Tworzenie i wysyłanie wiadomości
     const { data: message, error } = await supabase
       .from('direct_messages')
       .insert({
@@ -46,7 +36,7 @@ export const sendMessageToConversation = async (
     
     if (error) {
       console.error("Błąd podczas wysyłania wiadomości:", error);
-      throw error;
+      throw new Error(`Nie udało się wysłać wiadomości: ${error.message}`);
     }
     
     console.log("Wiadomość wysłana pomyślnie:", message);
@@ -136,21 +126,23 @@ export const createTestConversation = async (
       throw new Error("Nie udało się utworzyć konwersacji");
     }
     
-    // Dodaj kilka testowych wiadomości
-    await Promise.all([
-      sendMessageToConversation(
-        conversationId,
-        `Witaj ${targetUser.name || 'tam'}! To jest testowa wiadomość.`
-      ),
-      supabase.from('direct_messages').insert({
+    // Dodaj testowe wiadomości bezpośrednio jako wpisy w tabeli
+    await supabase.from('direct_messages').insert([
+      {
+        conversation_id: conversationId,
+        sender_id: user.id,
+        content: `Witaj ${targetUser.name || 'tam'}! To jest testowa wiadomość.`
+      },
+      {
         conversation_id: conversationId,
         sender_id: targetUser.id,
         content: 'Cześć! To jest automatyczna odpowiedź testowa.'
-      }),
-      sendMessageToConversation(
-        conversationId,
-        'Jak się dziś masz?'
-      )
+      },
+      {
+        conversation_id: conversationId,
+        sender_id: user.id,
+        content: 'Jak się dziś masz?'
+      }
     ]);
     
     return { conversationId };

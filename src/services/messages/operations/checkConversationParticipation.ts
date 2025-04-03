@@ -9,21 +9,16 @@ export const checkConversationParticipation = async (
   try {
     console.log(`Sprawdzanie, czy użytkownik ${userId} jest uczestnikiem konwersacji ${conversationId}`);
     
+    // Bezpośrednie sprawdzenie w tabeli uczestników
     const { data, error } = await supabase
       .from('conversation_participants')
-      .select()
+      .select('*')
       .eq('conversation_id', conversationId)
       .eq('user_id', userId)
       .maybeSingle();
     
     if (error) {
       console.error('Błąd podczas sprawdzania uczestnictwa w konwersacji:', error);
-      // Jeśli otrzymamy błąd nieskończonej rekursji, spróbujmy innego podejścia
-      if (error.message.includes('infinite recursion')) {
-        // Awaryjnie załóż, że użytkownik jest uczestnikiem, aby zapobiec blokowaniu funkcjonalności
-        console.log('Obejście problemu rekursji RLS - zezwolenie na dostęp');
-        return true;
-      }
       return false;
     }
     

@@ -10,5 +10,7 @@ export {
 } from './operations/sendMessageService';
 export { markMessagesAsRead } from './utils/messageUtils';
 
-// Eksportuj alias dla wstecznej kompatybilności
+// Nie używamy createOrGetConversation tutaj, aby uniknąć cyklicznych zależności
+
+// Alias dla wstecznej kompatybilności
 export { sendMessageToConversation as sendMessage } from './operations/sendMessageService';
