@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { startConversation, fetchOrganizations } from "@/services/messages";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import OrganizationSearchInput from "./OrganizationSearchInput";
 import SelectedOrganization from "./SelectedOrganization";
@@ -24,6 +23,7 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const { data: organizations = [], isLoading } = useQuery({
     queryKey: ["organizations"],
@@ -92,6 +92,9 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
         });
         
         console.log("Conversation created with ID:", result.conversationId);
+        
+        await queryClient.invalidateQueries({ queryKey: ['conversations'] });
+        
         onConversationCreated(result.conversationId);
         onOpenChange(false);
         setMessage("");

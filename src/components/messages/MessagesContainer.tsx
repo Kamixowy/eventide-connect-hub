@@ -53,6 +53,7 @@ const MessagesContainer = () => {
 
   // Handler for conversation updates from subscription
   function handleConversationUpdate() {
+    console.log("Conversation update detected, refetching conversations");
     refetchConversations();
   }
 
@@ -113,8 +114,12 @@ const MessagesContainer = () => {
   };
 
   const handleNewConversationCreated = (conversationId: string) => {
-    setSelectedConversationId(conversationId);
-    refetchConversations();
+    console.log("New conversation created with ID:", conversationId);
+    // Directly refetch conversations to make sure the new conversation appears
+    refetchConversations().then(() => {
+      // Set the newly created conversation as selected
+      setSelectedConversationId(conversationId);
+    });
   };
 
   return (

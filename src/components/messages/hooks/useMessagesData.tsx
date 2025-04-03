@@ -19,6 +19,7 @@ export const useMessagesData = (selectedConversationId: string | null) => {
     queryFn: fetchConversations,
     enabled: !!user,
     retry: 1, // Only retry once to avoid excessive requests on error
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
   // Fetch messages for selected conversation
