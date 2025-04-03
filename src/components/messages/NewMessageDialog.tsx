@@ -43,13 +43,11 @@ const NewMessageDialog = ({ open, onOpenChange, onConversationCreated }: NewMess
     const query = searchQuery.toLowerCase().trim();
     const orgName = (org.name || "").toLowerCase();
     const orgOrgName = (org.organization?.name || "").toLowerCase();
-    const orgCategory = (org.organization?.category || "").toLowerCase();
-    const orgEmail = (org.email || "").toLowerCase();
+    const userType = (org.user_type || "").toLowerCase();
     
     return orgName.includes(query) || 
            orgOrgName.includes(query) || 
-           orgCategory.includes(query) ||
-           orgEmail.includes(query);
+           userType.includes(query);
   });
 
   const sortedOrganizations = [...filteredOrganizations].sort((a, b) => {

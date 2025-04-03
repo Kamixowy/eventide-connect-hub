@@ -1,13 +1,29 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-// Function to fetch all organizations (for the new message dialog)
+// Function to fetch all organizations and sponsors (for the new message dialog)
 export const fetchOrganizations = async (): Promise<any[]> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    // First, fetch all organizations
+    // Fetch profiles for both organizations and sponsors
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select(`
+        id,
+        name,
+        avatar_url,
+        email,
+        user_type
+      `);
+
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError);
+      throw profilesError;
+    }
+
+    // Fetch organizations to link with organization profiles
     const { data: organizations, error: orgsError } = await supabase
       .from('organizations')
       .select(`
@@ -24,48 +40,41 @@ export const fetchOrganizations = async (): Promise<any[]> => {
       throw orgsError;
     }
 
-    // Then, fetch the profile data for each organization user
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select(`
-        id,
-        name,
-        avatar_url,
-        email,
-        user_type
-      `)
-      .in('id', organizations.map(org => org.user_id));
-
-    if (profilesError) {
-      console.error('Error fetching organization profiles:', profilesError);
-      throw profilesError;
-    }
-
     // Combine the data
-    const orgData = organizations.map(org => {
-      const profile = profiles.find(p => p.id === org.user_id);
+    const usersData = profiles.map(profile => {
+      // For organization users, find and attach their organization data
+      if (profile.user_type === 'organization') {
+        const org = organizations.find(o => o.user_id === profile.id);
+        return {
+          id: profile.id,
+          name: profile.name,
+          avatar_url: profile.avatar_url,
+          user_type: profile.user_type,
+          organization: org ? {
+            id: org.id,
+            name: org.name,
+            logo_url: org.logo_url,
+            category: org.category,
+            description: org.description
+          } : null
+        };
+      }
+      
+      // For sponsor users or other user types
       return {
-        id: profile?.id, // Use the user_id as the main ID for messaging
-        name: profile?.name,
-        avatar_url: profile?.avatar_url,
-        email: profile?.email,
-        user_type: profile?.user_type,
-        organization: {
-          id: org.id,
-          name: org.name,
-          logo_url: org.logo_url,
-          category: org.category,
-          description: org.description
-        }
+        id: profile.id,
+        name: profile.name,
+        avatar_url: profile.avatar_url,
+        user_type: profile.user_type
       };
     });
 
-    console.log("Fetched organizations:", orgData);
+    console.log("Fetched users data:", usersData);
     
-    // Filter out the current user if they are an organization
-    return orgData.filter(org => org.id !== user.id) || [];
+    // Filter out the current user
+    return usersData.filter(user_data => user_data.id !== user.id) || [];
   } catch (error) {
-    console.error('Error fetching organizations:', error);
+    console.error('Error fetching organizations and sponsors:', error);
     return [];
   }
 };

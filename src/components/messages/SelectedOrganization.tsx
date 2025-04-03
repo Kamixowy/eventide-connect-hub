@@ -1,6 +1,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface SelectedOrganizationProps {
   organization: any;
@@ -25,7 +26,18 @@ const SelectedOrganization = ({ organization, onChangeOrganization }: SelectedOr
           </Avatar>
           <div>
             <h3 className="font-medium">{organization.organization?.name || organization.name}</h3>
-            <p className="text-sm text-muted-foreground">{organization.organization?.category || 'Organizacja'}</p>
+            {organization.user_type && (
+              <Badge 
+                variant="outline"
+                className={`text-xs px-1.5 py-0 ${
+                  organization.user_type === 'organization' 
+                    ? 'bg-blue-50 text-blue-700 hover:bg-blue-50' 
+                    : 'bg-green-50 text-green-700 hover:bg-green-50'
+                }`}
+              >
+                {organization.user_type === 'organization' ? 'Organizacja' : 'Sponsor'}
+              </Badge>
+            )}
           </div>
         </div>
         <Button 

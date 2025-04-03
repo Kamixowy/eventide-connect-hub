@@ -49,16 +49,17 @@ const OrganizationsList = ({
                   <p className="text-sm font-medium">
                     {org.organization?.name || org.name}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {org.email}
-                  </p>
                   <div className="mt-1">
-                    {org.organization?.category && (
+                    {org.user_type && (
                       <Badge 
                         variant="outline"
-                        className="text-xs px-1.5 py-0 bg-blue-50 text-blue-700 hover:bg-blue-50"
+                        className={`text-xs px-1.5 py-0 ${
+                          org.user_type === 'organization' 
+                            ? 'bg-blue-50 text-blue-700 hover:bg-blue-50' 
+                            : 'bg-green-50 text-green-700 hover:bg-green-50'
+                        }`}
                       >
-                        {org.organization.category}
+                        {org.user_type === 'organization' ? 'Organizacja' : 'Sponsor'}
                       </Badge>
                     )}
                   </div>
