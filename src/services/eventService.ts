@@ -97,8 +97,8 @@ export const updateEvent = async (id: string, data: EventFormValues, imageUrl: s
         event_id: id,
         title: option.title,
         description: option.description,
-        price: parseFloat(option.priceFrom) || 0, // Using priceFrom as the price field
-        benefits: option.benefits // The benefits column exists in the database schema
+        price: parseFloat(option.priceFrom) || 0,
+        benefits: option.benefits.length > 0 ? option.benefits : []
       }));
       
       console.log('Inserting new sponsorship options:', sponsorshipData);

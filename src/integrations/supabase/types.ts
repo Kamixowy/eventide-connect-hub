@@ -316,6 +316,7 @@ export type Database = {
       }
       sponsorship_options: {
         Row: {
+          benefits: string[] | null
           created_at: string
           description: string | null
           event_id: string
@@ -325,6 +326,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          benefits?: string[] | null
           created_at?: string
           description?: string | null
           event_id: string
@@ -334,6 +336,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          benefits?: string[] | null
           created_at?: string
           description?: string | null
           event_id?: string
