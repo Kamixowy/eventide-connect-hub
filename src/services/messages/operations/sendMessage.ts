@@ -27,7 +27,7 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       throw new Error('Conversation does not exist');
     }
     
-    // Check if the user is already a participant - this uses RLS so it will only return data if the user has access
+    // Check if the user is already a participant
     const { data: participant, error: participantError } = await supabase
       .from('conversation_participants')
       .select('id')
@@ -35,15 +35,15 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       .eq('user_id', user.id)
       .maybeSingle();
     
+    // If there's an error other than "no rows returned", throw it
     if (participantError && participantError.code !== 'PGRST116') {
       console.error('Error checking participation:', participantError);
       throw new Error('Error checking participation in conversation');
     }
     
-    // If user is not a participant, add them using RPC instead of direct insert
-    // This bypasses RLS policies that might be causing issues
+    // If user is not a participant, add them
     if (!participant) {
-      console.log('Adding current user as participant to conversation via RPC');
+      console.log('Adding current user as participant to conversation');
       const { error: rpcError } = await supabase.rpc('add_participant_to_conversation', {
         conversation_id: conversationId,
         participant_id: user.id
@@ -59,20 +59,21 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       console.log('User is already a participant in the conversation');
     }
     
-    // Create the message
-    const { data: message, error } = await supabase
+    // Now create the message
+    console.log('Creating message with content:', content);
+    const { data: message, error: messageError } = await supabase
       .from('direct_messages')
       .insert({
         conversation_id: conversationId,
         sender_id: user.id,
         content,
       })
-      .select()
+      .select('*')
       .single();
     
-    if (error) {
-      console.error('Error sending message:', error);
-      throw error;
+    if (messageError) {
+      console.error('Error sending message:', messageError);
+      throw new Error('Failed to send message: ' + messageError.message);
     }
     
     console.log('Message sent successfully:', message.id);
