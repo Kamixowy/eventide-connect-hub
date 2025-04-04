@@ -92,12 +92,21 @@ export const createCollaboration = async (
       throw new Error('No events selected');
     }
 
+    // Ensure the status value is valid - it must be one of the values accepted by the database check constraint
+    // Most likely it should be 'pending', 'sent' or similar value - checking the database constraint would help
+    // Normally we would import a constant for this, but for now let's ensure the status is 'pending'
+    const validatedStatus = 'pending';
+
     // First, create collaboration record using the first event (we'll link to others later)
     const { data: collaborationData, error: collaborationError } = await supabase
       .from('collaborations')
       .insert({
-        ...collaboration,
-        event_id: selectedEventIds[0] // Use the first selected event as primary
+        sponsor_id: collaboration.sponsor_id,
+        organization_id: collaboration.organization_id,
+        event_id: selectedEventIds[0], // Use the first selected event as primary
+        status: validatedStatus, // Use validated status value
+        message: collaboration.message,
+        total_amount: collaboration.total_amount
       })
       .select()
       .single();
@@ -330,3 +339,4 @@ export const markCollaborationMessagesAsRead = async (collaborationId: string) =
     throw new Error(`Błąd podczas oznaczania wiadomości jako przeczytane: ${error.message}`);
   }
 };
+

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -246,7 +245,7 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
       console.log("Tworzenie nowej współpracy:", {
         sponsor_id: user?.id || '',
         organization_id: selectedOrganizationId,
-        status: COLLABORATION_STATUSES.SENT,
+        status: 'pending',
         message: message,
         total_amount: totalAmount
       });
@@ -255,7 +254,7 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
         {
           sponsor_id: user?.id || '',
           organization_id: selectedOrganizationId,
-          status: COLLABORATION_STATUSES.SENT,
+          status: 'pending',
           message: message,
           total_amount: totalAmount
         },
