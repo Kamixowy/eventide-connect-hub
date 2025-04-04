@@ -35,7 +35,7 @@ export interface CollaborationDetailsResponse {
   events: {
     id: string;
     title: string;
-    date: string;
+    start_date: string; // This is what comes from the database
     [key: string]: any;
   };
   sponsor: {

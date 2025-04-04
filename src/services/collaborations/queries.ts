@@ -100,7 +100,17 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
       throw error;
     }
 
-    return data as CollaborationDetailsResponse;
+    // Transform the data to match the expected interface
+    // The database returns start_date but our component expects date
+    const transformedData = {
+      ...data,
+      events: {
+        ...data.events,
+        date: data.events.start_date // Add the date property expected by components
+      }
+    } as CollaborationDetailsResponse;
+
+    return transformedData;
   } catch (error) {
     console.error('Failed to fetch collaboration:', error);
     throw error;
