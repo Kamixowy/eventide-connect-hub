@@ -23,6 +23,12 @@ const EmptyMessageView = ({
   const [isCreatingTest, setIsCreatingTest] = useState(false);
   const [testCreated, setTestCreated] = useState(false);
 
+  const handleRefetch = () => {
+    if (onRefetch) {
+      onRefetch();
+    }
+  };
+
   return (
     <div className="flex items-center justify-center h-full p-8 text-center text-muted-foreground">
       {isLoading ? (
@@ -45,7 +51,7 @@ const EmptyMessageView = ({
             {onRefetch && (
               <Button 
                 variant="default"
-                onClick={onRefetch}
+                onClick={handleRefetch}
               >
                 <RefreshCcw size={16} className="mr-1" /> Ponów próbę
               </Button>

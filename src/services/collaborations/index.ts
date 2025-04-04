@@ -1,6 +1,16 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CollaborationType } from '@/types/collaboration';
+
+// Interface for collaboration option
+export interface CollaborationOption {
+  id: string;
+  title: string;
+  description?: string;
+  price: number;
+  event_id: string;
+}
 
 // Interface for creating collaboration option
 interface CollaborationOptionCreate {
@@ -29,6 +39,7 @@ interface CustomOptionCreate {
 // Function to fetch all collaborations for authenticated user
 export const fetchCollaborations = async (userType?: string) => {
   try {
+    console.log('Fetching collaborations for user type:', userType);
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
@@ -269,7 +280,7 @@ export const sendCollaborationMessage = async (
     const { data: message, error: messageError } = await supabase
       .from('direct_messages')
       .insert({
-        conversation_id: 'your-conversation-id', // You need to implement a way to get or create conversation ID for collaborations
+        conversation_id: collaborationId, // Using collaboration ID as conversation ID for now
         sender_id: user.id,
         content
       })
@@ -291,14 +302,11 @@ export const sendCollaborationMessage = async (
 // Get messages for a collaboration
 export const getCollaborationMessages = async (collaborationId: string) => {
   try {
-    // First, get the conversation ID for this collaboration
-    // You need to implement a way to get conversation ID for collaborations
-
-    // Then fetch messages
+    // Fetch messages directly using collaboration ID as conversation ID
     const { data: messages, error: messagesError } = await supabase
       .from('direct_messages')
       .select('*')
-      .eq('conversation_id', 'your-conversation-id') // Replace with actual conversation ID
+      .eq('conversation_id', collaborationId)
       .order('created_at', { ascending: true });
 
     if (messagesError) {
@@ -316,12 +324,9 @@ export const getCollaborationMessages = async (collaborationId: string) => {
 // Mark all messages in a collaboration as read
 export const markCollaborationMessagesAsRead = async (collaborationId: string) => {
   try {
-    // First, get the conversation ID for this collaboration
-    // You need to implement a way to get conversation ID for collaborations
-
     // Call the RPC function to mark messages as read
     const { data, error } = await supabase.rpc('mark_messages_as_read', {
-      conversation_id: 'your-conversation-id' // Replace with actual conversation ID
+      conversation_id: collaborationId
     });
 
     if (error) {

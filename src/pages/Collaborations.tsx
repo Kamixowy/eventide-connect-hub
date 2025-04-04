@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Plus } from 'lucide-react';
 import NewCollaborationDialog from '@/components/collaborations/NewCollaborationDialog';
-import { fetchUserCollaborations } from '@/services/collaborations';
+import { fetchCollaborations } from '@/services/collaborations';
 import { COLLABORATION_STATUS_NAMES } from '@/services/collaborations/utils';
 
 const Collaborations = () => {
@@ -32,7 +32,7 @@ const Collaborations = () => {
       
       try {
         setIsLoading(true);
-        const data = await fetchUserCollaborations();
+        const data = await fetchCollaborations(userType);
         setCollaborations(data);
       } catch (error: any) {
         console.error('Błąd podczas pobierania współprac:', error);
@@ -47,14 +47,14 @@ const Collaborations = () => {
     };
     
     getCollaborations();
-  }, [user, toast]);
+  }, [user, toast, userType]);
   
   // Filtering collaborations
   const filteredCollaborations = collaborations.filter((collaboration) => {
     const matchesSearch = searchQuery === '' || 
-      collaboration.event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      collaboration.event.organization.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      collaboration.sponsor.name.toLowerCase().includes(searchQuery.toLowerCase());
+      collaboration.event?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      collaboration.organization?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      collaboration.sponsor?.profiles?.name?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === '' || 
       COLLABORATION_STATUS_NAMES[collaboration.status] === statusFilter;

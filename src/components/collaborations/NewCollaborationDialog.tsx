@@ -51,13 +51,11 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
   const [selectedOrganizationId, setSelectedOrganizationId] = useState<string>(organizationId || '');
   const [message, setMessage] = useState('');
   
-  // Oblicz łączną kwotę
   const totalAmount = selectedOptions.reduce(
     (sum, option) => sum + (parseFloat(option.amount.toString()) || 0), 
     0
   );
   
-  // Ładowanie opcji sponsoringu dla wybranego wydarzenia
   useEffect(() => {
     const loadSponsorshipOptions = async () => {
       if (selectedEventIds.length === 0) {
@@ -93,7 +91,6 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
     loadSponsorshipOptions();
   }, [selectedEventIds, toast]);
   
-  // Ładowanie organizacji
   useEffect(() => {
     const loadOrganizations = async () => {
       try {
@@ -109,7 +106,6 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
         console.log("Załadowane organizacje:", data);
         setOrganizations(data || []);
         
-        // Ustaw domyślną organizację, jeśli nie jest wybrana
         if (!selectedOrganizationId && data && data.length > 0 && !organizationId) {
           setSelectedOrganizationId(data[0].id);
         }
@@ -121,7 +117,6 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
     loadOrganizations();
   }, [organizationId, selectedOrganizationId]);
   
-  // Ładowanie wydarzeń
   useEffect(() => {
     const loadEvents = async () => {
       if (!selectedOrganizationId) {
@@ -152,7 +147,6 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
     loadEvents();
   }, [selectedOrganizationId]);
   
-  // Obsługa dodawania/usuwania opcji sponsoringu
   const toggleOption = (option: SponsorshipOption) => {
     const exists = selectedOptions.some(
       (o) => o.sponsorship_option_id === option.id
@@ -176,7 +170,6 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
     }
   };
   
-  // Dodawanie własnej opcji
   const addCustomOption = () => {
     setSelectedOptions([
       ...selectedOptions,
@@ -189,7 +182,6 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
     ]);
   };
   
-  // Usuwanie własnej opcji
   const removeCustomOption = (index: number) => {
     setSelectedOptions([
       ...selectedOptions.slice(0, index),
@@ -197,7 +189,6 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
     ]);
   };
   
-  // Aktualizacja własnej opcji
   const updateCustomOption = (index: number, field: keyof CollaborationOption, value: any) => {
     const updatedOptions = [...selectedOptions];
     updatedOptions[index] = {
@@ -207,7 +198,6 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
     setSelectedOptions(updatedOptions);
   };
   
-  // Obsługa dodawania/usuwania wydarzeń
   const toggleEvent = (eventId: string) => {
     if (selectedEventIds.includes(eventId)) {
       setSelectedEventIds(selectedEventIds.filter(id => id !== eventId));
@@ -216,13 +206,11 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
     }
   };
   
-  // Obsługa zmiany organizacji
   const handleOrganizationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedOrganizationId(e.target.value);
     setSelectedEventIds([]);
   };
   
-  // Wysłanie współpracy
   const handleSubmit = async () => {
     if (!selectedOrganizationId) {
       toast({
@@ -272,7 +260,6 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
       
       setOpen(false);
       
-      // Przekieruj do szczegółów współpracy
       navigate(`/wspolprace/${collaborationId}`);
     } catch (error: any) {
       console.error('Błąd podczas tworzenia współpracy:', error);
@@ -297,9 +284,7 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
         </DialogHeader>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-          {/* Kolumna lewa */}
           <div className="md:col-span-2 space-y-6">
-            {/* Sekcja organizacji */}
             <div>
               <h3 className="text-lg font-semibold mb-3">Wybierz organizację</h3>
               
@@ -320,7 +305,6 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
               </div>
             </div>
             
-            {/* Sekcja wydarzeń */}
             <div>
               <h3 className="text-lg font-semibold mb-3">Wybierz wydarzenia</h3>
               
@@ -353,7 +337,6 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
               )}
             </div>
             
-            {/* Sekcja opcji sponsoringu */}
             <div>
               <h3 className="text-lg font-semibold mb-3">Opcje sponsoringu</h3>
               
@@ -416,7 +399,6 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
               </Button>
             </div>
             
-            {/* Własne opcje */}
             {selectedOptions.filter(o => o.is_custom).length > 0 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Własne opcje</h3>
@@ -469,7 +451,6 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
               </div>
             )}
             
-            {/* Wiadomość */}
             <div>
               <h3 className="text-lg font-semibold mb-3">Wiadomość</h3>
               <Textarea 
@@ -481,7 +462,6 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
             </div>
           </div>
           
-          {/* Kolumna prawa */}
           <div className="space-y-6">
             <Card className="p-4">
               <h3 className="text-lg font-semibold mb-3">Podsumowanie</h3>

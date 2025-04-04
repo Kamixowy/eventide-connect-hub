@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Calendar, Clock, Building, User, MessageSquare } from 'lucide-react';
 import { 
-  fetchCollaborationById, 
+  getCollaborationById, 
   updateCollaborationStatus 
 } from '@/services/collaborations';
 import { 
@@ -36,7 +35,7 @@ const CollaborationDetails = () => {
       
       try {
         setIsLoading(true);
-        const data = await fetchCollaborationById(id);
+        const data = await getCollaborationById(id);
         
         setCollaboration(data);
         
