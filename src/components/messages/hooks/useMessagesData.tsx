@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { markMessagesAsRead } from '@/services/messages/utils/messageUtils';
 import { 
-  sendMessageToConversation, 
+  sendMessageToConversation,
   startConversationWithMessage,
   createTestConversation
 } from '@/services/messages/operations/sendMessageService';
@@ -36,13 +36,15 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     enabled: !!user,
     retry: 2,
     staleTime: 30000,
-    onError: (error: any) => {
-      console.error('Błąd podczas pobierania konwersacji:', error);
-      toast({
-        title: 'Błąd',
-        description: 'Nie udało się pobrać konwersacji. Spróbuj ponownie.',
-        variant: 'destructive',
-      });
+    meta: {
+      onError: (error: any) => {
+        console.error('Błąd podczas pobierania konwersacji:', error);
+        toast({
+          title: 'Błąd',
+          description: 'Nie udało się pobrać konwersacji. Spróbuj ponownie.',
+          variant: 'destructive',
+        });
+      }
     }
   });
 
@@ -58,13 +60,15 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     enabled: !!selectedConversationId,
     retry: 2,
     refetchInterval: 5000, // Odpytuj co 5 sekund o nowe wiadomości
-    onError: (error: any) => {
-      console.error('Błąd podczas pobierania wiadomości:', error);
-      toast({
-        title: 'Błąd',
-        description: 'Nie udało się pobrać wiadomości. Spróbuj ponownie.',
-        variant: 'destructive',
-      });
+    meta: {
+      onError: (error: any) => {
+        console.error('Błąd podczas pobierania wiadomości:', error);
+        toast({
+          title: 'Błąd',
+          description: 'Nie udało się pobrać wiadomości. Spróbuj ponownie.',
+          variant: 'destructive',
+        });
+      }
     }
   });
 

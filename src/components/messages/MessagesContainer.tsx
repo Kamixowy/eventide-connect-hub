@@ -14,9 +14,6 @@ import { formatDate, formatMessageTime } from '@/components/messages/utils/dateU
 const MessagesContainer = () => {
   const { user } = useAuth();
 
-  // Usuwamy stan dla nowych wiadomości
-  // const [isNewMessageDialogOpen, setIsNewMessageDialogOpen] = useState(false);
-
   // Fetch conversations and messages data
   const {
     conversations,
@@ -27,9 +24,6 @@ const MessagesContainer = () => {
     refetchConversations,
     refetchMessages,
     sendMessageMutation,
-    // Usuwamy niepotrzebne metody
-    // startNewConversation,
-    // createTestConversationWithEmail,
     selectedConversationId,
     setSelectedConversationId
   } = useMessagesData(null);
@@ -52,14 +46,6 @@ const MessagesContainer = () => {
     console.log('Selecting conversation:', conversationId);
     setSelectedConversationId(conversationId);
   };
-
-  // Usuwamy handler do tworzenia nowych konwersacji
-  // const handleNewConversationCreated = (conversationId: string) => {
-  //   console.log('New conversation created:', conversationId);
-  //   refetchConversations().then(() => {
-  //     setSelectedConversationId(conversationId);
-  //   });
-  // };
 
   // Handle sending a message
   const handleSendMessage = async (content: string) => {
@@ -89,8 +75,6 @@ const MessagesContainer = () => {
           isLoading={isLoadingConversations}
           selectedConversationId={selectedConversationId}
           onSelectConversation={handleConversationSelect}
-          // Usuwamy przycisk tworzenia nowych wiadomości
-          // onNewMessageClick={() => setIsNewMessageDialogOpen(true)}
           userId={user?.id}
           formatDate={formatDate}
         />
@@ -111,24 +95,12 @@ const MessagesContainer = () => {
             <EmptyMessageView 
               isLoading={isLoadingConversations}
               conversationsCount={conversations.length}
-              // Usuwamy przycisk tworzenia nowych wiadomości
-              // onNewMessageClick={() => setIsNewMessageDialogOpen(true)}
               isError={isConversationsError}
               onRefetch={refetchConversations}
-              // Usuwamy opcję tworzenia testowej konwersacji
-              // onCreateTestConversation={createTestConversationWithEmail}
             />
           )}
         </div>
       </div>
-      
-      {/* Usuwamy dialog tworzenia nowych wiadomości */}
-      {/* <NewMessageDialog 
-        open={isNewMessageDialogOpen} 
-        onOpenChange={setIsNewMessageDialogOpen}
-        onConversationCreated={handleNewConversationCreated}
-        startNewConversation={startNewConversation}
-      /> */}
     </div>
   );
 };

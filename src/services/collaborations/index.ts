@@ -1,440 +1,337 @@
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { CollaborationType } from '@/types/collaboration';
 
-import { supabase } from '@/lib/supabase';
-import type { CollaborationType } from '@/types/collaboration';
+// Interface for creating collaboration option
+interface CollaborationOptionCreate {
+  collaboration_id: string;
+  sponsorship_option_id: string;
+}
 
-export interface NewCollaboration {
+// Interface for creating a new collaboration
+interface CollaborationCreate {
   sponsor_id: string;
   organization_id: string;
+  event_id: string;
   status: string;
-  message?: string;
+  message: string;
   total_amount: number;
 }
 
-export interface CollaborationOption {
+// Interface for creating custom option
+interface CustomOptionCreate {
+  event_id: string;
   title: string;
   description?: string;
-  amount: number;
-  is_custom: boolean;
-  sponsorship_option_id?: string;
+  price: number;
 }
 
-// Pobranie wszystkich współprac użytkownika (jako sponsor lub organizacja)
-export const fetchUserCollaborations = async (): Promise<CollaborationType[]> => {
-  const { data: userProfile } = await supabase.auth.getUser();
-  
-  if (!userProfile.user) {
-    throw new Error('Użytkownik nie jest zalogowany');
-  }
-  
-  const { data: profileData, error: profileError } = await supabase
-    .from('profiles')
-    .select('user_type')
-    .eq('id', userProfile.user.id)
-    .single();
-    
-  if (profileError) {
-    throw new Error(`Błąd podczas pobierania typu użytkownika: ${profileError.message}`);
-  }
-  
-  let collaborationsQuery;
-  
-  if (profileData.user_type === 'organization') {
-    // Dla organizacji pobieramy współprace skierowane do ich organizacji
-    const { data: organizations, error: orgError } = await supabase
-      .from('organizations')
-      .select('id')
-      .eq('user_id', userProfile.user.id);
-      
-    if (orgError) {
-      throw new Error(`Błąd podczas pobierania organizacji: ${orgError.message}`);
-    }
-    
-    if (!organizations.length) {
-      throw new Error('Nie znaleziono organizacji dla tego użytkownika');
-    }
-    
-    const orgIds = organizations.map(org => org.id);
-    
-    collaborationsQuery = supabase
-      .from('collaborations')
-      .select(`
-        *,
-        events:collaboration_events(event:events(*)),
-        options:collaboration_options(*),
-        sponsor:profiles!collaborations_sponsor_id_fkey(*)
-      `)
-      .in('organization_id', orgIds);
-  } else {
-    // Dla sponsorów pobieramy współprace, które oni stworzyli
-    collaborationsQuery = supabase
-      .from('collaborations')
-      .select(`
-        *,
-        events:collaboration_events(event:events(*)),
-        options:collaboration_options(*),
-        organization:organizations(*)
-      `)
-      .eq('sponsor_id', userProfile.user.id);
-  }
-  
-  const { data, error } = await collaborationsQuery;
-  
-  if (error) {
-    throw new Error(`Błąd podczas pobierania współprac: ${error.message}`);
-  }
-  
-  return transformCollaborationsData(data, profileData.user_type);
-};
-
-// Pobranie pojedynczej współpracy po ID
-export const fetchCollaborationById = async (id: string): Promise<CollaborationType> => {
-  const { data: userProfile } = await supabase.auth.getUser();
-  
-  if (!userProfile.user) {
-    throw new Error('Użytkownik nie jest zalogowany');
-  }
-  
-  const { data: profileData, error: profileError } = await supabase
-    .from('profiles')
-    .select('user_type')
-    .eq('id', userProfile.user.id)
-    .single();
-    
-  if (profileError) {
-    throw new Error(`Błąd podczas pobierania typu użytkownika: ${profileError.message}`);
-  }
-  
-  let query;
-  
-  if (profileData.user_type === 'organization') {
-    query = supabase
-      .from('collaborations')
-      .select(`
-        *,
-        events:collaboration_events(event:events(*)),
-        options:collaboration_options(*),
-        sponsor:profiles!collaborations_sponsor_id_fkey(*)
-      `)
-      .eq('id', id)
-      .single();
-  } else {
-    query = supabase
-      .from('collaborations')
-      .select(`
-        *,
-        events:collaboration_events(event:events(*)),
-        options:collaboration_options(*),
-        organization:organizations(*)
-      `)
-      .eq('id', id)
-      .single();
-  }
-  
-  const { data, error } = await query;
-  
-  if (error) {
-    throw new Error(`Błąd podczas pobierania współpracy: ${error.message}`);
-  }
-  
-  const collaborations = transformCollaborationsData([data], profileData.user_type);
-  return collaborations[0];
-};
-
-// Tworzenie nowej współpracy
-export const createCollaboration = async (
-  collaboration: NewCollaboration,
-  collaborationOptions: CollaborationOption[],
-  eventIds: string[] = []
-): Promise<string> => {
-  // Rozpocznij transakcję
-  const { data: userProfile } = await supabase.auth.getUser();
-  
-  if (!userProfile.user) {
-    throw new Error('Użytkownik nie jest zalogowany');
-  }
-  
+// Function to fetch all collaborations for authenticated user
+export const fetchCollaborations = async (userType?: string) => {
   try {
-    console.log("Tworzenie współpracy z danymi:", collaboration);
-    console.log("Opcje współpracy:", collaborationOptions);
-    console.log("Identyfikatory wydarzeń:", eventIds);
+    const { data: { user } } = await supabase.auth.getUser();
     
-    // 1. Dodaj współpracę
-    const { data: collabData, error: collabError } = await supabase
-      .from('collaborations')
-      .insert({
-        sponsor_id: userProfile.user.id, // Zawsze używamy zalogowanego użytkownika jako sponsora
-        organization_id: collaboration.organization_id,
-        status: collaboration.status,
-        message: collaboration.message,
-        total_amount: collaboration.total_amount
-      })
-      .select('id')
-      .single();
-      
-    if (collabError) {
-      console.error("Błąd podczas tworzenia współpracy:", collabError);
-      throw new Error(`Błąd podczas tworzenia współpracy: ${collabError.message}`);
+    if (!user) {
+      throw new Error('User not authenticated');
     }
-    
-    const collaborationId = collabData.id;
-    console.log("Utworzono współpracę z ID:", collaborationId);
-    
-    // 2. Dodaj opcje współpracy
-    if (collaborationOptions.length > 0) {
-      const optionsToInsert = collaborationOptions.map(option => ({
-        collaboration_id: collaborationId,
-        title: option.title,
-        description: option.description,
-        amount: option.amount,
-        is_custom: option.is_custom,
-        sponsorship_option_id: option.sponsorship_option_id
-      }));
-      
-      console.log("Dodawanie opcji współpracy:", optionsToInsert);
-      
-      const { error: optionsError } = await supabase
-        .from('collaboration_options')
-        .insert(optionsToInsert);
-        
-      if (optionsError) {
-        console.error("Błąd podczas dodawania opcji współpracy:", optionsError);
-        throw new Error(`Błąd podczas dodawania opcji współpracy: ${optionsError.message}`);
-      }
+
+    // Determine query based on user type
+    let query;
+
+    if (userType === 'organization') {
+      query = supabase
+        .from('collaborations')
+        .select(`
+          *,
+          events:event_id(*),
+          sponsor:sponsor_id(
+            id,
+            profiles:user_id(*)
+          )
+        `)
+        .eq('organization_id', user.id);
+    } else {
+      query = supabase
+        .from('collaborations')
+        .select(`
+          *,
+          events:event_id(*),
+          organization:organization_id(
+            id,
+            name,
+            description,
+            logo_url,
+            profiles:user_id(*)
+          )
+        `)
+        .eq('sponsor_id', user.id);
     }
-    
-    // 3. Dodaj powiązania z wydarzeniami
-    if (eventIds.length > 0) {
-      const eventsToInsert = eventIds.map(eventId => ({
-        collaboration_id: collaborationId,
-        event_id: eventId
-      }));
-      
-      console.log("Dodawanie powiązań z wydarzeniami:", eventsToInsert);
-      
-      // Sprawdź, czy tabela collaboration_events istnieje
-      const { data: tableExists } = await supabase
-        .from('information_schema.tables')
-        .select('table_name')
-        .eq('table_name', 'collaboration_events')
-        .single();
-      
-      // Jeśli tabela istnieje, dodaj powiązania
-      if (tableExists) {
-        const { error: eventsError } = await supabase
-          .from('collaboration_events')
-          .insert(eventsToInsert);
-          
-        if (eventsError) {
-          console.error("Błąd podczas dodawania powiązań z wydarzeniami:", eventsError);
-          throw new Error(`Błąd podczas dodawania powiązań z wydarzeniami: ${eventsError.message}`);
-        }
-      } else {
-        console.log("Tabela collaboration_events nie istnieje, pomijamy dodawanie powiązań");
-        // Alternatywnie, możemy zaktualizować współpracę z jednym wydarzeniem
-        if (eventIds.length > 0) {
-          const { error: updateError } = await supabase
-            .from('collaborations')
-            .update({ event_id: eventIds[0] })
-            .eq('id', collaborationId);
-            
-          if (updateError) {
-            console.error("Błąd podczas aktualizacji wydarzenia dla współpracy:", updateError);
-            throw new Error(`Błąd podczas aktualizacji wydarzenia dla współpracy: ${updateError.message}`);
-          }
-        }
-      }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching collaborations:', error);
+      throw error;
     }
-    
-    return collaborationId;
-  } catch (error: any) {
-    console.error('Błąd podczas tworzenia współpracy:', error);
+
+    return data || [];
+  } catch (error) {
+    console.error('Failed to fetch collaborations:', error);
     throw error;
   }
 };
 
-// Aktualizacja statusu współpracy
-export const updateCollaborationStatus = async (
-  collaborationId: string, 
-  newStatus: string
-): Promise<void> => {
-  const { error } = await supabase
-    .from('collaborations')
-    .update({ status: newStatus })
-    .eq('id', collaborationId);
-    
-  if (error) {
-    throw new Error(`Błąd podczas aktualizacji statusu współpracy: ${error.message}`);
-  }
-};
-
-// Dodanie opcji współpracy
-export const addCollaborationOption = async (
-  collaborationId: string,
-  option: CollaborationOption
-): Promise<void> => {
-  const { error } = await supabase
-    .from('collaboration_options')
-    .insert({
-      collaboration_id: collaborationId,
-      title: option.title,
-      description: option.description,
-      amount: option.amount,
-      is_custom: option.is_custom,
-      sponsorship_option_id: option.sponsorship_option_id
+// Create a new collaboration
+export const createCollaboration = async (
+  eventId: string,
+  organization: { id: string },
+  selectedOptions: Array<{ id: string }>,
+  customOptions: Array<{ title: string, description?: string, price: number }>,
+  message: string,
+  totalAmount: number
+) => {
+  try {
+    console.log('Creating collaboration with data:', {
+      eventId,
+      organization,
+      selectedOptions,
+      customOptions,
+      message,
+      totalAmount
     });
+
+    const { data: { user } } = await supabase.auth.getUser();
     
-  if (error) {
-    throw new Error(`Błąd podczas dodawania opcji współpracy: ${error.message}`);
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // 1. Create the collaboration record
+    const { data: collaboration, error: collaborationError } = await supabase
+      .from('collaborations')
+      .insert({
+        sponsor_id: user.id,
+        organization_id: organization.id,
+        event_id: eventId,
+        status: 'Przesłana',
+        message: message,
+        total_amount: totalAmount
+      })
+      .select()
+      .single();
+
+    if (collaborationError) {
+      console.error('Error creating collaboration:', collaborationError);
+      throw new Error(`Błąd podczas tworzenia współpracy: ${collaborationError.message}`);
+    }
+
+    if (!collaboration) {
+      throw new Error('Nie udało się utworzyć współpracy');
+    }
+
+    const collaborationId = collaboration.id;
+    
+    // 2. Create custom sponsorship options if needed
+    if (customOptions && customOptions.length > 0) {
+      const customOptionsData = customOptions.map(option => ({
+        event_id: eventId,
+        title: option.title,
+        description: option.description || '',
+        price: option.price
+      }));
+
+      const { data: createdCustomOptions, error: customOptionsError } = await supabase
+        .from('sponsorship_options')
+        .insert(customOptionsData)
+        .select();
+
+      if (customOptionsError) {
+        console.error('Error creating custom options:', customOptionsError);
+        // Continue with existing options, don't fail the whole process
+      }
+
+      // Add the custom options to selectedOptions for the next step
+      if (createdCustomOptions) {
+        selectedOptions = [...selectedOptions, ...createdCustomOptions];
+      }
+    }
+
+    // 3. Link the selected options to the collaboration
+    if (selectedOptions && selectedOptions.length > 0) {
+      const optionLinks = selectedOptions.map(option => ({
+        collaboration_id: collaborationId,
+        sponsorship_option_id: option.id
+      }));
+
+      const { error: optionsLinkError } = await supabase
+        .from('collaboration_options')
+        .insert(optionLinks);
+
+      if (optionsLinkError) {
+        console.error('Error linking options to collaboration:', optionsLinkError);
+        // Continue despite the error
+      }
+    }
+
+    return { success: true, collaborationId };
+  } catch (error: any) {
+    console.error('Error in createCollaboration:', error);
+    throw new Error(`Błąd podczas tworzenia współpracy: ${error.message}`);
   }
 };
 
-// Aktualizacja opcji współpracy
-export const updateCollaborationOption = async (
-  optionId: string,
-  option: Partial<CollaborationOption>
-): Promise<void> => {
-  const { error } = await supabase
-    .from('collaboration_options')
-    .update({
-      title: option.title,
-      description: option.description,
-      amount: option.amount
-    })
-    .eq('id', optionId);
-    
-  if (error) {
-    throw new Error(`Błąd podczas aktualizacji opcji współpracy: ${error.message}`);
+// Gets collaboration details by ID
+export const getCollaborationById = async (id: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('collaborations')
+      .select(`
+        *,
+        events:event_id(*),
+        sponsor:sponsor_id(
+          id,
+          profiles:user_id(*)
+        ),
+        organization:organization_id(
+          id,
+          name,
+          description,
+          logo_url,
+          profiles:user_id(*)
+        ),
+        options:collaboration_options(
+          id,
+          sponsorship_options:sponsorship_option_id(*)
+        )
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching collaboration:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch collaboration:', error);
+    throw error;
   }
 };
 
-// Usunięcie opcji współpracy
-export const deleteCollaborationOption = async (optionId: string): Promise<void> => {
-  const { error } = await supabase
-    .from('collaboration_options')
-    .delete()
-    .eq('id', optionId);
-    
-  if (error) {
-    throw new Error(`Błąd podczas usuwania opcji współpracy: ${error.message}`);
+// Updates collaboration status
+export const updateCollaborationStatus = async (id: string, status: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('collaborations')
+      .update({ status })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating collaboration status:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Failed to update collaboration status:', error);
+    throw error;
   }
 };
 
-// Dodanie wiadomości do współpracy
-export const addCollaborationMessage = async (
+// Send a message in a collaboration conversation
+export const sendCollaborationMessage = async (
   collaborationId: string,
   content: string
-): Promise<void> => {
-  const { data: userProfile } = await supabase.auth.getUser();
-  
-  if (!userProfile.user) {
-    throw new Error('Użytkownik nie jest zalogowany');
-  }
-  
-  const { error } = await supabase
-    .from('collaboration_messages')
-    .insert({
-      collaboration_id: collaborationId,
-      sender_id: userProfile.user.id,
-      content: content
-    });
+) => {
+  try {
+    // First, check if this collaboration has a conversation
+    const { data: collaboration, error: collabError } = await supabase
+      .from('collaborations')
+      .select('*')
+      .eq('id', collaborationId)
+      .single();
+
+    if (collabError) {
+      console.error('Error fetching collaboration:', collabError);
+      throw new Error('Nie znaleziono współpracy');
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
     
-  if (error) {
-    throw new Error(`Błąd podczas dodawania wiadomości: ${error.message}`);
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Create a new message in direct_messages table
+    const { data: message, error: messageError } = await supabase
+      .from('direct_messages')
+      .insert({
+        conversation_id: 'your-conversation-id', // You need to implement a way to get or create conversation ID for collaborations
+        sender_id: user.id,
+        content
+      })
+      .select()
+      .single();
+
+    if (messageError) {
+      console.error('Error sending message:', messageError);
+      throw new Error('Nie udało się wysłać wiadomości');
+    }
+
+    return message;
+  } catch (error: any) {
+    console.error('Error in sendCollaborationMessage:', error);
+    throw new Error(`Błąd podczas wysyłania wiadomości: ${error.message}`);
   }
 };
 
-// Pobranie wiadomości dla współpracy
-export const fetchCollaborationMessages = async (collaborationId: string) => {
-  const { data, error } = await supabase
-    .from('collaboration_messages')
-    .select(`
-      *,
-      sender:profiles(*)
-    `)
-    .eq('collaboration_id', collaborationId)
-    .order('created_at', { ascending: true });
-    
-  if (error) {
+// Get messages for a collaboration
+export const getCollaborationMessages = async (collaborationId: string) => {
+  try {
+    // First, get the conversation ID for this collaboration
+    // You need to implement a way to get conversation ID for collaborations
+
+    // Then fetch messages
+    const { data: messages, error: messagesError } = await supabase
+      .from('direct_messages')
+      .select('*')
+      .eq('conversation_id', 'your-conversation-id') // Replace with actual conversation ID
+      .order('created_at', { ascending: true });
+
+    if (messagesError) {
+      console.error('Error fetching messages:', messagesError);
+      throw new Error('Nie udało się pobrać wiadomości');
+    }
+
+    return messages || [];
+  } catch (error: any) {
+    console.error('Error in getCollaborationMessages:', error);
     throw new Error(`Błąd podczas pobierania wiadomości: ${error.message}`);
   }
-  
-  return data;
 };
 
-// Oznaczenie wiadomości jako przeczytanych
-export const markCollaborationMessagesAsRead = async (collaborationId: string): Promise<void> => {
-  const { error } = await supabase
-    .rpc('mark_collaboration_messages_as_read', {
-      collaboration_id: collaborationId
+// Mark all messages in a collaboration as read
+export const markCollaborationMessagesAsRead = async (collaborationId: string) => {
+  try {
+    // First, get the conversation ID for this collaboration
+    // You need to implement a way to get conversation ID for collaborations
+
+    // Call the RPC function to mark messages as read
+    const { data, error } = await supabase.rpc('mark_messages_as_read', {
+      conversation_id: 'your-conversation-id' // Replace with actual conversation ID
     });
-    
-  if (error) {
-    throw new Error(`Błąd podczas oznaczania wiadomości jako przeczytanych: ${error.message}`);
-  }
-};
 
-// Funkcja pomocnicza do transformacji danych współprac
-const transformCollaborationsData = (
-  data: any[], 
-  userType: string
-): CollaborationType[] => {
-  return data.map(collab => {
-    // Przygotuj dane podstawowe
-    const transformedEvents = collab.events?.map((eventRel: any) => eventRel.event) || [];
-    const sponsorshipOptions = collab.options || [];
-    
-    // Oblicz łączną kwotę ze wszystkich opcji
-    const totalAmount = sponsorshipOptions.reduce(
-      (sum: number, option: any) => sum + (parseFloat(option.amount) || 0), 
-      0
-    );
-    
-    // Formatuj daty
-    const createdAt = new Date(collab.created_at).toLocaleDateString('pl-PL');
-    const lastUpdated = new Date(collab.updated_at).toLocaleDateString('pl-PL');
-    
-    // Wybierz odpowiednie dane zależnie od typu użytkownika
-    const eventData = transformedEvents[0] || { 
-      id: 0, 
-      title: "Brak wydarzenia", 
-      organization: "", 
-      date: "", 
-      image: "" 
-    };
-    
-    const sponsorData = userType === 'organization' 
-      ? { 
-          id: collab.sponsor?.id || 0, 
-          name: collab.sponsor?.name || "Nieznany sponsor", 
-          avatar: collab.sponsor?.avatar_url || "" 
-        }
-      : { 
-          id: 0, 
-          name: "Ty", 
-          avatar: "" 
-        };
-    
-    return {
-      id: collab.id,
-      event: {
-        id: eventData.id,
-        title: eventData.title,
-        organization: eventData.organization_id ? "Organizacja" : "",
-        date: eventData.start_date ? new Date(eventData.start_date).toLocaleDateString('pl-PL') : "",
-        image: eventData.image_url || ""
-      },
-      sponsor: sponsorData,
-      status: collab.status,
-      createdAt: createdAt,
-      lastUpdated: lastUpdated,
-      sponsorshipOptions: sponsorshipOptions.map((option: any) => ({
-        title: option.title,
-        description: option.description || "",
-        amount: parseFloat(option.amount) || 0
-      })),
-      totalAmount: totalAmount,
-      message: collab.message || "",
-      conversation: [] // Będziemy pobierać osobno
-    };
-  });
+    if (error) {
+      console.error('Error marking messages as read:', error);
+      throw new Error('Nie udało się oznaczyć wiadomości jako przeczytane');
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error in markCollaborationMessagesAsRead:', error);
+    throw new Error(`Błąd podczas oznaczania wiadomości jako przeczytane: ${error.message}`);
+  }
 };

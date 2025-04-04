@@ -1,8 +1,7 @@
 
 import { useState } from 'react';
-import { Search, ChevronDown, ChevronUp, Plus, Loader2 } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +12,6 @@ interface ConversationsListProps {
   isLoading: boolean;
   selectedConversationId: string | null;
   onSelectConversation: (conversationId: string) => void;
-  onNewMessageClick: () => void;
   userId: string | undefined;
   formatDate: (dateString: string) => string;
 }
@@ -23,7 +21,6 @@ const ConversationsList = ({
   isLoading,
   selectedConversationId,
   onSelectConversation,
-  onNewMessageClick,
   userId,
   formatDate
 }: ConversationsListProps) => {
@@ -74,14 +71,6 @@ const ConversationsList = ({
             Filtry
             {expandedFilters ? <ChevronUp size={16} className="ml-1" /> : <ChevronDown size={16} className="ml-1" />}
           </button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-ngo"
-            onClick={onNewMessageClick}
-          >
-            <Plus size={16} className="mr-1" /> Nowa wiadomość
-          </Button>
         </div>
         
         {expandedFilters && (
@@ -179,7 +168,7 @@ const ConversationsList = ({
             ) : (
               <div className="p-8 text-center text-muted-foreground">
                 {conversations.length === 0 
-                  ? "Brak konwersacji. Rozpocznij nową konwersację, klikając przycisk 'Nowa wiadomość'." 
+                  ? "Brak konwersacji. Konwersacje są dostępne w ramach współprac." 
                   : "Nie znaleziono wiadomości spełniających kryteria wyszukiwania"}
               </div>
             )}

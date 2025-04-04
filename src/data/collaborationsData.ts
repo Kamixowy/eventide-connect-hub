@@ -1,19 +1,18 @@
-
 import { CollaborationType } from "@/types/collaboration";
 
 // Sample collaboration data
 export const sampleCollaborations: CollaborationType[] = [
   {
-    id: 1,
+    id: "1",
     event: {
-      id: 101,
+      id: "101",
       title: 'Bieg Charytatywny "Pomagamy Dzieciom"',
       organization: 'Fundacja Szczęśliwe Dzieciństwo',
       date: '15.06.2023',
       image: 'https://images.unsplash.com/photo-1533560904424-a0c61dc306fc?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
     },
     sponsor: {
-      id: 201,
+      id: "201",
       name: 'TechCorp Polska',
       avatar: 'https://images.unsplash.com/photo-1598301257982-0cf014dabbcd?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80'
     },
@@ -31,7 +30,7 @@ export const sampleCollaborations: CollaborationType[] = [
     message: 'Dzień dobry, jesteśmy zainteresowani sponsorowaniem Państwa wydarzenia jako Partner Główny. Proszę o kontakt w celu ustalenia szczegółów współpracy.',
     conversation: [
       {
-        id: 1,
+        id: "1",
         sender: 'sponsor',
         text: 'Dzień dobry, jesteśmy zainteresowani sponsorowaniem Państwa wydarzenia jako Partner Główny. Proszę o kontakt w celu ustalenia szczegółów współpracy.',
         date: '28.04.2023 10:25'

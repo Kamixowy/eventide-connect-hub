@@ -9,7 +9,7 @@ const Messages = () => {
   return (
     <Layout>
       <div className="container py-6">
-        <Alert variant="info" className="mb-4">
+        <Alert variant="default" className="mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Informacja o wiadomościach</AlertTitle>
           <AlertDescription>
