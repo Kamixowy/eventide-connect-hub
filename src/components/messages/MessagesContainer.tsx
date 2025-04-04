@@ -1,7 +1,6 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import NewMessageDialog from '@/components/messages/NewMessageDialog';
 import ConversationsList from '@/components/messages/ConversationsList';
 import MessageView from '@/components/messages/MessageView';
 import EmptyMessageView from '@/components/messages/EmptyMessageView';
@@ -13,8 +12,10 @@ import { useMessageHandlers } from '@/components/messages/hooks/useMessageHandle
 import { formatDate, formatMessageTime } from '@/components/messages/utils/dateUtils';
 
 const MessagesContainer = () => {
-  const [isNewMessageDialogOpen, setIsNewMessageDialogOpen] = useState(false);
   const { user } = useAuth();
+
+  // Usuwamy stan dla nowych wiadomości
+  // const [isNewMessageDialogOpen, setIsNewMessageDialogOpen] = useState(false);
 
   // Fetch conversations and messages data
   const {
@@ -26,8 +27,9 @@ const MessagesContainer = () => {
     refetchConversations,
     refetchMessages,
     sendMessageMutation,
-    startNewConversation,
-    createTestConversationWithEmail,
+    // Usuwamy niepotrzebne metody
+    // startNewConversation,
+    // createTestConversationWithEmail,
     selectedConversationId,
     setSelectedConversationId
   } = useMessagesData(null);
@@ -51,13 +53,13 @@ const MessagesContainer = () => {
     setSelectedConversationId(conversationId);
   };
 
-  // Handler for creating a new conversation
-  const handleNewConversationCreated = (conversationId: string) => {
-    console.log('New conversation created:', conversationId);
-    refetchConversations().then(() => {
-      setSelectedConversationId(conversationId);
-    });
-  };
+  // Usuwamy handler do tworzenia nowych konwersacji
+  // const handleNewConversationCreated = (conversationId: string) => {
+  //   console.log('New conversation created:', conversationId);
+  //   refetchConversations().then(() => {
+  //     setSelectedConversationId(conversationId);
+  //   });
+  // };
 
   // Handle sending a message
   const handleSendMessage = async (content: string) => {
@@ -87,7 +89,8 @@ const MessagesContainer = () => {
           isLoading={isLoadingConversations}
           selectedConversationId={selectedConversationId}
           onSelectConversation={handleConversationSelect}
-          onNewMessageClick={() => setIsNewMessageDialogOpen(true)}
+          // Usuwamy przycisk tworzenia nowych wiadomości
+          // onNewMessageClick={() => setIsNewMessageDialogOpen(true)}
           userId={user?.id}
           formatDate={formatDate}
         />
@@ -108,21 +111,24 @@ const MessagesContainer = () => {
             <EmptyMessageView 
               isLoading={isLoadingConversations}
               conversationsCount={conversations.length}
-              onNewMessageClick={() => setIsNewMessageDialogOpen(true)}
+              // Usuwamy przycisk tworzenia nowych wiadomości
+              // onNewMessageClick={() => setIsNewMessageDialogOpen(true)}
               isError={isConversationsError}
               onRefetch={refetchConversations}
-              onCreateTestConversation={createTestConversationWithEmail}
+              // Usuwamy opcję tworzenia testowej konwersacji
+              // onCreateTestConversation={createTestConversationWithEmail}
             />
           )}
         </div>
       </div>
       
-      <NewMessageDialog 
+      {/* Usuwamy dialog tworzenia nowych wiadomości */}
+      {/* <NewMessageDialog 
         open={isNewMessageDialogOpen} 
         onOpenChange={setIsNewMessageDialogOpen}
         onConversationCreated={handleNewConversationCreated}
         startNewConversation={startNewConversation}
-      />
+      /> */}
     </div>
   );
 };

@@ -1,28 +1,24 @@
 
-import Layout from "@/components/layout/Layout";
-import MessagesContainer from "@/components/messages/MessagesContainer";
-import { useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import React from 'react';
+import Layout from '@/components/layout/Layout';
+import MessagesContainer from '@/components/messages/MessagesContainer';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const Messages = () => {
-  const { user, isLoading } = useAuth();
-  const { toast } = useToast();
-  
-  // Check authentication status
-  useEffect(() => {
-    if (!isLoading && !user) {
-      toast({
-        title: "Wymagane logowanie",
-        description: "Musisz być zalogowany, aby przeglądać wiadomości",
-        variant: "destructive"
-      });
-    }
-  }, [user, isLoading, toast]);
-
   return (
     <Layout>
-      <MessagesContainer />
+      <div className="container py-6">
+        <Alert variant="info" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Informacja o wiadomościach</AlertTitle>
+          <AlertDescription>
+            Tutaj znajdziesz wiadomości związane z Twoimi współpracami. Aby rozpocząć nową konwersację, 
+            najpierw utwórz propozycję współpracy.
+          </AlertDescription>
+        </Alert>
+        <MessagesContainer />
+      </div>
     </Layout>
   );
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -67,12 +66,15 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
       }
       
       try {
+        console.log("Ładowanie opcji sponsoringu dla wydarzeń:", selectedEventIds);
+        
         const { data, error } = await supabase
           .from('sponsorship_options')
           .select('*')
           .in('event_id', selectedEventIds);
           
         if (error) {
+          console.error("Błąd podczas ładowania opcji sponsoringu:", error);
           throw error;
         }
         
@@ -100,9 +102,11 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
           .select('id, name, logo_url');
           
         if (error) {
+          console.error("Błąd podczas ładowania organizacji:", error);
           throw error;
         }
         
+        console.log("Załadowane organizacje:", data);
         setOrganizations(data || []);
         
         // Ustaw domyślną organizację, jeśli nie jest wybrana
@@ -126,15 +130,19 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
       }
       
       try {
+        console.log("Ładowanie wydarzeń dla organizacji:", selectedOrganizationId);
+        
         const { data, error } = await supabase
           .from('events')
           .select('id, title, start_date, image_url')
           .eq('organization_id', selectedOrganizationId);
           
         if (error) {
+          console.error("Błąd podczas ładowania wydarzeń:", error);
           throw error;
         }
         
+        console.log("Załadowane wydarzenia:", data);
         setEvents(data || []);
       } catch (error: any) {
         console.error('Błąd podczas ładowania wydarzeń:', error);
@@ -236,6 +244,14 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
     
     try {
       setIsLoading(true);
+      
+      console.log("Tworzenie nowej współpracy:", {
+        sponsor_id: user?.id || '',
+        organization_id: selectedOrganizationId,
+        status: COLLABORATION_STATUSES.SENT,
+        message: message,
+        total_amount: totalAmount
+      });
       
       const collaborationId = await createCollaboration(
         {

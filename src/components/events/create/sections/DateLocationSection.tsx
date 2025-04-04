@@ -71,6 +71,7 @@ const DateLocationSection = ({ methods }: DateLocationSectionProps) => {
                 className="pl-10" 
                 {...register('end_date', {
                   valueAsDate: true,
+                  required: false, // Wyraźnie zaznaczamy, że pole jest opcjonalne
                 })}
                 min={startDate ? new Date(startDate).toISOString().split('T')[0] : undefined}
               />

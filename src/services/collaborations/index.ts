@@ -155,6 +155,8 @@ export const createCollaboration = async (
   
   try {
     console.log("Tworzenie współpracy z danymi:", collaboration);
+    console.log("Opcje współpracy:", collaborationOptions);
+    console.log("Identyfikatory wydarzeń:", eventIds);
     
     // 1. Dodaj współpracę
     const { data: collabData, error: collabError } = await supabase
@@ -170,6 +172,7 @@ export const createCollaboration = async (
       .single();
       
     if (collabError) {
+      console.error("Błąd podczas tworzenia współpracy:", collabError);
       throw new Error(`Błąd podczas tworzenia współpracy: ${collabError.message}`);
     }
     
@@ -194,6 +197,7 @@ export const createCollaboration = async (
         .insert(optionsToInsert);
         
       if (optionsError) {
+        console.error("Błąd podczas dodawania opcji współpracy:", optionsError);
         throw new Error(`Błąd podczas dodawania opcji współpracy: ${optionsError.message}`);
       }
     }
@@ -207,12 +211,37 @@ export const createCollaboration = async (
       
       console.log("Dodawanie powiązań z wydarzeniami:", eventsToInsert);
       
-      const { error: eventsError } = await supabase
-        .from('collaboration_events')
-        .insert(eventsToInsert);
-        
-      if (eventsError) {
-        throw new Error(`Błąd podczas dodawania powiązań z wydarzeniami: ${eventsError.message}`);
+      // Sprawdź, czy tabela collaboration_events istnieje
+      const { data: tableExists } = await supabase
+        .from('information_schema.tables')
+        .select('table_name')
+        .eq('table_name', 'collaboration_events')
+        .single();
+      
+      // Jeśli tabela istnieje, dodaj powiązania
+      if (tableExists) {
+        const { error: eventsError } = await supabase
+          .from('collaboration_events')
+          .insert(eventsToInsert);
+          
+        if (eventsError) {
+          console.error("Błąd podczas dodawania powiązań z wydarzeniami:", eventsError);
+          throw new Error(`Błąd podczas dodawania powiązań z wydarzeniami: ${eventsError.message}`);
+        }
+      } else {
+        console.log("Tabela collaboration_events nie istnieje, pomijamy dodawanie powiązań");
+        // Alternatywnie, możemy zaktualizować współpracę z jednym wydarzeniem
+        if (eventIds.length > 0) {
+          const { error: updateError } = await supabase
+            .from('collaborations')
+            .update({ event_id: eventIds[0] })
+            .eq('id', collaborationId);
+            
+          if (updateError) {
+            console.error("Błąd podczas aktualizacji wydarzenia dla współpracy:", updateError);
+            throw new Error(`Błąd podczas aktualizacji wydarzenia dla współpracy: ${updateError.message}`);
+          }
+        }
       }
     }
     
