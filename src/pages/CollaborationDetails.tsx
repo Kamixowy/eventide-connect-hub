@@ -39,7 +39,6 @@ const CollaborationDetails = () => {
         
         setCollaboration(data);
         
-        // Ustawienie typu użytkownika na podstawie Auth Context
         if (user?.user_metadata?.userType === 'organization') {
           setUserType('organization');
         } else {
@@ -65,7 +64,6 @@ const CollaborationDetails = () => {
     try {
       await updateCollaborationStatus(id, newStatus);
       
-      // Aktualizuj lokalny stan
       setCollaboration(prev => ({
         ...prev,
         status: newStatus
@@ -121,7 +119,6 @@ const CollaborationDetails = () => {
     <Layout>
       <div className="container py-8">
         <div className="flex flex-col gap-6">
-          {/* Nagłówek */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={() => navigate('/wspolprace')}>
@@ -138,9 +135,7 @@ const CollaborationDetails = () => {
             </Badge>
           </div>
           
-          {/* Główna zawartość */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Informacje boczne */}
             <div className="md:col-span-1 space-y-6">
               <Card className="p-4">
                 <h3 className="text-xl font-semibold mb-4">Informacje</h3>
@@ -198,7 +193,6 @@ const CollaborationDetails = () => {
                 </div>
               </Card>
               
-              {/* Panel akcji */}
               <Card className="p-4">
                 <h3 className="text-xl font-semibold mb-4">Akcje</h3>
                 
@@ -277,7 +271,6 @@ const CollaborationDetails = () => {
               </Card>
             </div>
             
-            {/* Treść główna */}
             <div className="md:col-span-2">
               <Card className="p-4">
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
