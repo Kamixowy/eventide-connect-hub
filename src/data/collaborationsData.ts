@@ -4,7 +4,7 @@
 
 export const collaborationsData = [
   {
-    id: "1", // Changed from number to string
+    id: "1",
     event: {
       id: "101",
       title: "Charity Run 2023",
@@ -32,7 +32,7 @@ export const collaborationsData = [
     ]
   },
   {
-    id: "2", // Changed from number to string
+    id: "2",
     event: {
       id: "102",
       title: "Food Festival 2023",
@@ -60,7 +60,7 @@ export const collaborationsData = [
     ]
   },
   {
-    id: "3", // Changed from number to string
+    id: "3",
     event: {
       id: "103",
       title: "Tech Conference 2023",
@@ -100,7 +100,7 @@ export const collaborationsData = [
     ]
   },
   {
-    id: "4", // Changed from number to string
+    id: "4",
     event: {
       id: "104",
       title: "Eco Festival 2023",

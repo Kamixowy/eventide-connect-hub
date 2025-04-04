@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -52,7 +53,7 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
   const [message, setMessage] = useState('');
   
   const totalAmount = selectedOptions.reduce(
-    (sum, option) => sum + (parseFloat(option.amount.toString()) || 0), 
+    (sum, option) => sum + (option.amount || 0), 
     0
   );
   
@@ -161,7 +162,7 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
         ...selectedOptions,
         {
           title: option.title,
-          description: option.description || undefined,
+          description: option.description,
           amount: option.price,
           is_custom: false,
           sponsorship_option_id: option.id
@@ -225,6 +226,15 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
       toast({
         title: "Błąd",
         description: "Wybierz przynajmniej jedną opcję współpracy",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (selectedEventIds.length === 0) {
+      toast({
+        title: "Błąd",
+        description: "Wybierz przynajmniej jedno wydarzenie",
         variant: "destructive"
       });
       return;
@@ -519,7 +529,8 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
                 disabled={
                   isLoading || 
                   !selectedOrganizationId || 
-                  selectedOptions.length === 0
+                  selectedOptions.length === 0 ||
+                  selectedEventIds.length === 0
                 }
               >
                 {isLoading ? (

@@ -1,39 +1,16 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { CollaborationType } from '@/types/collaboration';
 
 // Interface for collaboration option
 export interface CollaborationOption {
-  id: string;
+  id?: string;
   title: string;
-  description?: string;
-  price: number;
-  event_id: string;
-}
-
-// Interface for creating collaboration option
-interface CollaborationOptionCreate {
-  collaboration_id: string;
-  sponsorship_option_id: string;
-}
-
-// Interface for creating a new collaboration
-interface CollaborationCreate {
-  sponsor_id: string;
-  organization_id: string;
-  event_id: string;
-  status: string;
-  message: string;
-  total_amount: number;
-}
-
-// Interface for creating custom option
-interface CustomOptionCreate {
-  event_id: string;
-  title: string;
-  description?: string;
-  price: number;
+  description?: string | null;
+  amount: number;
+  is_custom?: boolean;
+  sponsorship_option_id?: string;
+  event_id?: string;
 }
 
 // Function to fetch all collaborations for authenticated user
@@ -94,39 +71,33 @@ export const fetchCollaborations = async (userType?: string) => {
 
 // Create a new collaboration
 export const createCollaboration = async (
-  eventId: string,
-  organization: { id: string },
-  selectedOptions: Array<{ id: string }>,
-  customOptions: Array<{ title: string, description?: string, price: number }>,
-  message: string,
-  totalAmount: number
+  collaboration: {
+    sponsor_id: string;
+    organization_id: string;
+    status: string;
+    message: string;
+    total_amount: number;
+  },
+  selectedOptions: CollaborationOption[],
+  selectedEventIds: string[]
 ) => {
   try {
-    console.log('Creating collaboration with data:', {
-      eventId,
-      organization,
+    console.log("Creating new collaboration:", {
+      collaboration,
       selectedOptions,
-      customOptions,
-      message,
-      totalAmount
+      selectedEventIds
     });
-
-    const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
-      throw new Error('User not authenticated');
+    if (selectedEventIds.length === 0) {
+      throw new Error('No events selected');
     }
 
-    // 1. Create the collaboration record
-    const { data: collaboration, error: collaborationError } = await supabase
+    // First, create collaboration record using the first event (we'll link to others later)
+    const { data: collaborationData, error: collaborationError } = await supabase
       .from('collaborations')
       .insert({
-        sponsor_id: user.id,
-        organization_id: organization.id,
-        event_id: eventId,
-        status: 'Przesłana',
-        message: message,
-        total_amount: totalAmount
+        ...collaboration,
+        event_id: selectedEventIds[0] // Use the first selected event as primary
       })
       .select()
       .single();
@@ -136,55 +107,74 @@ export const createCollaboration = async (
       throw new Error(`Błąd podczas tworzenia współpracy: ${collaborationError.message}`);
     }
 
-    if (!collaboration) {
+    if (!collaborationData) {
       throw new Error('Nie udało się utworzyć współpracy');
     }
 
-    const collaborationId = collaboration.id;
-    
-    // 2. Create custom sponsorship options if needed
-    if (customOptions && customOptions.length > 0) {
-      const customOptionsData = customOptions.map(option => ({
-        event_id: eventId,
-        title: option.title,
-        description: option.description || '',
-        price: option.price
-      }));
+    const collaborationId = collaborationData.id;
+    console.log("Created collaboration with ID:", collaborationId);
 
-      const { data: createdCustomOptions, error: customOptionsError } = await supabase
-        .from('sponsorship_options')
-        .insert(customOptionsData)
-        .select();
+    // Create custom options if needed
+    const customOptions = selectedOptions.filter(option => option.is_custom);
+    const existingOptions = selectedOptions.filter(option => !option.is_custom);
 
-      if (customOptionsError) {
-        console.error('Error creating custom options:', customOptionsError);
-        // Continue with existing options, don't fail the whole process
-      }
+    if (customOptions.length > 0) {
+      console.log("Creating custom options:", customOptions);
+      
+      for (const option of customOptions) {
+        // For each custom option, create a sponsorship option linked to the event
+        const { data: customOption, error: customOptionError } = await supabase
+          .from('sponsorship_options')
+          .insert({
+            title: option.title,
+            description: option.description || '',
+            price: option.amount,
+            event_id: selectedEventIds[0] // Link to the first event for simplicity
+          })
+          .select()
+          .single();
 
-      // Add the custom options to selectedOptions for the next step
-      if (createdCustomOptions) {
-        selectedOptions = [...selectedOptions, ...createdCustomOptions];
+        if (customOptionError) {
+          console.error('Error creating custom option:', customOptionError);
+          continue; // Skip this option but continue with others
+        }
+
+        if (customOption) {
+          // Link the new custom option to the collaboration
+          const { error: linkError } = await supabase
+            .from('collaboration_options')
+            .insert({
+              collaboration_id: collaborationId,
+              sponsorship_option_id: customOption.id
+            });
+
+          if (linkError) {
+            console.error('Error linking custom option to collaboration:', linkError);
+          }
+        }
       }
     }
 
-    // 3. Link the selected options to the collaboration
-    if (selectedOptions && selectedOptions.length > 0) {
-      const optionLinks = selectedOptions.map(option => ({
+    // Link existing sponsorship options to the collaboration
+    if (existingOptions.length > 0) {
+      console.log("Linking existing options:", existingOptions);
+      
+      const optionLinks = existingOptions.map(option => ({
         collaboration_id: collaborationId,
-        sponsorship_option_id: option.id
+        sponsorship_option_id: option.sponsorship_option_id
       }));
 
-      const { error: optionsLinkError } = await supabase
+      const { error: linkError } = await supabase
         .from('collaboration_options')
         .insert(optionLinks);
 
-      if (optionsLinkError) {
-        console.error('Error linking options to collaboration:', optionsLinkError);
-        // Continue despite the error
+      if (linkError) {
+        console.error('Error linking options to collaboration:', linkError);
       }
     }
 
-    return { success: true, collaborationId };
+    // Return the collaboration ID
+    return collaborationId;
   } catch (error: any) {
     console.error('Error in createCollaboration:', error);
     throw new Error(`Błąd podczas tworzenia współpracy: ${error.message}`);
@@ -258,7 +248,7 @@ export const sendCollaborationMessage = async (
   content: string
 ) => {
   try {
-    // First, check if this collaboration has a conversation
+    // Check if the collaboration exists
     const { data: collaboration, error: collabError } = await supabase
       .from('collaborations')
       .select('*')
@@ -276,11 +266,11 @@ export const sendCollaborationMessage = async (
       throw new Error('User not authenticated');
     }
 
-    // Create a new message in direct_messages table
+    // Create a new message in direct_messages table using collaboration ID as conversation_id
     const { data: message, error: messageError } = await supabase
       .from('direct_messages')
       .insert({
-        conversation_id: collaborationId, // Using collaboration ID as conversation ID for now
+        conversation_id: collaborationId, // Using collaboration ID as conversation ID
         sender_id: user.id,
         content
       })
