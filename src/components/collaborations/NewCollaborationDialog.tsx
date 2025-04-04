@@ -245,6 +245,7 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
       console.log("Tworzenie nowej współpracy:", {
         sponsor_id: user?.id || '',
         organization_id: selectedOrganizationId,
+        event_id: selectedEventIds[0],
         status: 'pending',
         message: message,
         total_amount: totalAmount
@@ -254,6 +255,7 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
         {
           sponsor_id: user?.id || '',
           organization_id: selectedOrganizationId,
+          event_id: selectedEventIds[0],
           status: 'pending',
           message: message,
           total_amount: totalAmount

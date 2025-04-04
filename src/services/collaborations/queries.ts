@@ -108,9 +108,10 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
         ...data.events,
         date: data.events.start_date // Add the date property expected by components
       }
-    } as CollaborationDetailsResponse;
+    };
 
-    return transformedData;
+    // Use type assertion after ensuring object structure matches
+    return transformedData as unknown as CollaborationDetailsResponse;
   } catch (error) {
     console.error('Failed to fetch collaboration:', error);
     throw error;

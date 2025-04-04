@@ -11,7 +11,7 @@ import { Collaboration, CollaborationOption } from './types';
  * @returns Promise with the ID of the created collaboration
  */
 export const createCollaboration = async (
-  collaboration: Collaboration,
+  collaboration: Partial<Collaboration>, // Make it partial to allow for missing event_id
   selectedOptions: CollaborationOption[],
   selectedEventIds: string[]
 ) => {

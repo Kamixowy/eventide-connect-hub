@@ -36,6 +36,7 @@ export interface CollaborationDetailsResponse {
     id: string;
     title: string;
     start_date: string; // This is what comes from the database
+    date?: string; // This is needed for component compatibility
     [key: string]: any;
   };
   sponsor: {
