@@ -1,6 +1,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { Collaboration, CollaborationOption } from './types';
+import { COLLABORATION_STATUSES } from './utils';
 
 /**
  * Create a new collaboration
@@ -27,9 +28,7 @@ export const createCollaboration = async (
     }
 
     // Ensure the status value is valid - it must be one of the values accepted by the database check constraint
-    // Most likely it should be 'pending', 'sent' or similar value - checking the database constraint would help
-    // Normally we would import a constant for this, but for now let's ensure the status is 'pending'
-    const validatedStatus = 'pending';
+    const validatedStatus = COLLABORATION_STATUSES.PENDING;
 
     // First, create collaboration record using the first event (we'll link to others later)
     const { data: collaborationData, error: collaborationError } = await supabase
@@ -133,6 +132,11 @@ export const createCollaboration = async (
  */
 export const updateCollaborationStatus = async (id: string, status: string) => {
   try {
+    // Validate that the status is one of the allowed values
+    if (!Object.values(COLLABORATION_STATUSES).includes(status)) {
+      throw new Error(`Invalid status value: ${status}`);
+    }
+    
     const { data, error } = await supabase
       .from('collaborations')
       .update({ status })
