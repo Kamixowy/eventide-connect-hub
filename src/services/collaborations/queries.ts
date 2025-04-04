@@ -26,9 +26,9 @@ export const fetchCollaborations = async (userType?: string) => {
         .select(`
           *,
           events:event_id(*),
-          sponsor:sponsor_id(
+          sponsor!collaborations_sponsor_id_fkey(
             id,
-            profiles:user_id(*)
+            profiles:id(*)
           )
         `)
         .eq('organization_id', user.id);
@@ -71,14 +71,16 @@ export const fetchCollaborations = async (userType?: string) => {
  */
 export const getCollaborationById = async (id: string): Promise<CollaborationDetailsResponse> => {
   try {
+    console.log('Fetching collaboration with ID:', id);
+    
     const { data, error } = await supabase
       .from('collaborations')
       .select(`
         *,
         events:event_id(*),
-        sponsor:sponsor_id(
+        sponsor!collaborations_sponsor_id_fkey(
           id,
-          profiles:user_id(*)
+          profiles:id(*)
         ),
         organization:organization_id(
           id,
@@ -99,6 +101,8 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
       console.error('Error fetching collaboration:', error);
       throw error;
     }
+
+    console.log('Collaboration data received:', data);
 
     // Transform the data to match the expected interface
     // The database returns start_date but our component expects date
