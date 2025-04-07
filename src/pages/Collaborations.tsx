@@ -10,6 +10,7 @@ import { Plus } from 'lucide-react';
 import NewCollaborationDialog from '@/components/collaborations/NewCollaborationDialog';
 import { fetchCollaborations } from '@/services/collaborations';
 import { COLLABORATION_STATUS_NAMES } from '@/services/collaborations/utils';
+import { supabase } from '@/lib/supabase';
 
 const Collaborations = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -18,12 +19,39 @@ const Collaborations = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [collaborations, setCollaborations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [organizationData, setOrganizationData] = useState<any>(null);
   
   const { user } = useAuth();
   const { toast } = useToast();
   
   // Determine user type from authentication context
   const userType = user?.user_metadata?.userType === 'organization' ? 'organization' : 'sponsor';
+
+  // Fetch organization data if user is of type organization
+  useEffect(() => {
+    const getOrganizationData = async () => {
+      if (user && userType === 'organization') {
+        try {
+          const { data, error } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+            
+          if (error) {
+            console.error('Error fetching organization:', error);
+          } else {
+            console.log('Organization data:', data);
+            setOrganizationData(data);
+          }
+        } catch (err) {
+          console.error('Failed to fetch organization data:', err);
+        }
+      }
+    };
+    
+    getOrganizationData();
+  }, [user, userType]);
 
   // Fetch user collaborations
   useEffect(() => {
@@ -35,6 +63,7 @@ const Collaborations = () => {
         console.log('Fetching collaborations with user type:', userType);
         console.log('Current user ID:', user.id);
         console.log('User metadata:', user.user_metadata);
+        console.log('Organization data:', organizationData);
 
         const data = await fetchCollaborations(userType);
         console.log('Fetched collaborations:', data); 
@@ -52,7 +81,7 @@ const Collaborations = () => {
     };
     
     getCollaborations();
-  }, [user, toast, userType]);
+  }, [user, toast, userType, organizationData]);
   
   // Filtering collaborations
   const filteredCollaborations = collaborations.filter((collaboration) => {

@@ -17,10 +17,27 @@ export const fetchCollaborations = async (userType?: string) => {
       throw new Error('User not authenticated');
     }
 
-    // Determine query based on user type
     let query;
+    let userData;
 
+    // First get the organization ID if user is an organization
     if (userType === 'organization') {
+      // Get organization ID for the current user
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('id, name, logo_url')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (orgError) {
+        console.error('Error fetching organization data:', orgError);
+        throw orgError;
+      }
+      
+      console.log('Found organization for user:', orgData);
+      userData = orgData;
+      
+      // Query collaborations for this organization
       query = supabase
         .from('collaborations')
         .select(`
@@ -31,10 +48,30 @@ export const fetchCollaborations = async (userType?: string) => {
           created_at,
           updated_at,
           events:event_id(*),
-          sponsor:sponsor_id(*)
+          sponsor:sponsor_id(
+            id, 
+            name, 
+            avatar_url
+          )
         `)
-        .eq('organization_id', user.id);
+        .eq('organization_id', orgData.id);
     } else {
+      // Get profile data for sponsor
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileError) {
+        console.error('Error fetching profile data:', profileError);
+        throw profileError;
+      }
+      
+      console.log('Found profile for user:', profileData);
+      userData = profileData;
+      
+      // Query collaborations for this sponsor
       query = supabase
         .from('collaborations')
         .select(`
@@ -109,16 +146,11 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
         sponsor_id,
         organization_id,
         events:event_id(*),
-        profiles:sponsor_id!inner(name, avatar_url),
         organization:organization_id(
           id,
           name,
           description,
           logo_url
-        ),
-        options:collaboration_options(
-          id,
-          sponsorship_options:sponsorship_option_id(*)
         )
       `)
       .eq('id', id)
@@ -128,14 +160,38 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
       console.error('Error fetching collaboration:', error);
       throw error;
     }
-
-    console.log('Collaboration data received:', data);
-
-    // Get the profiles data correctly - it's an array of objects
-    const profileData = Array.isArray(data.profiles) ? data.profiles[0] : null;
-
+    
+    console.log('Collaboration base data received:', data);
+    
+    // Fetch sponsor profile information separately
+    const { data: sponsorData, error: sponsorError } = await supabase
+      .from('profiles')
+      .select('name, avatar_url')
+      .eq('id', data.sponsor_id)
+      .single();
+      
+    if (sponsorError) {
+      console.error('Error fetching sponsor profile:', sponsorError);
+      // Continue without sponsor data
+    }
+    
+    console.log('Sponsor profile data:', sponsorData);
+    
+    // Get collaboration options
+    const { data: optionsData, error: optionsError } = await supabase
+      .from('collaboration_options')
+      .select(`
+        id,
+        sponsorship_options:sponsorship_option_id(*)
+      `)
+      .eq('collaboration_id', id);
+      
+    if (optionsError) {
+      console.error('Error fetching collaboration options:', optionsError);
+      // Continue without options data
+    }
+    
     // Transform the data to match the expected interface
-    // The database returns start_date but our component expects date
     const transformedData = {
       ...data,
       events: {
@@ -145,11 +201,17 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
       // Add sponsor field structure expected by components
       sponsor: {
         id: data.sponsor_id,
-        name: profileData?.name || 'Unknown',
-        avatar: profileData?.avatar_url || '/placeholder.svg'
-      }
+        name: sponsorData?.name || 'Unknown',
+        avatar: sponsorData?.avatar_url || '/placeholder.svg'
+      },
+      // Add options data
+      options: optionsData || [],
+      // Add profiles for compatibility
+      profiles: sponsorData ? [sponsorData] : []
     };
 
+    console.log('Transformed collaboration data:', transformedData);
+    
     // Use type assertion after ensuring object structure matches
     return transformedData as unknown as CollaborationDetailsResponse;
   } catch (error) {
