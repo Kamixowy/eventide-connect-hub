@@ -35,8 +35,7 @@ const Collaborations = () => {
           // First get organization memberships for the current user
           const { data: memberships, error: membershipError } = await supabase
             .from('organization_members')
-            .select('organization_id, role')
-            .eq('user_id', user.id);
+            .select('organization_id, role');
             
           if (membershipError) {
             console.error('Error fetching organization memberships:', membershipError);

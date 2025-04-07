@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { CollaborationDetailsResponse } from './types';
 
@@ -101,9 +102,9 @@ export const fetchCollaborations = async (userType?: string, organizations?: any
           ...collaboration,
           // Add profiles structure as expected by components
           profiles: [{
-            name: collaboration.sponsor.name || 'Unknown sponsor',
-            username: collaboration.sponsor.username || 'Unknown',
-            avatar_url: collaboration.sponsor.avatar_url || '/placeholder.svg'
+            name: collaboration.sponsor?.name || 'Unknown sponsor',
+            username: collaboration.sponsor?.username || 'Unknown',
+            avatar_url: collaboration.sponsor?.avatar_url || '/placeholder.svg'
           }]
         };
       }
@@ -201,9 +202,9 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
       options: optionsData || [],
       // Add profiles for compatibility
       profiles: sponsorData ? [{
-        name: sponsorData.name,
-        username: sponsorData.username,
-        avatar_url: sponsorData.avatar_url
+        name: sponsorData.name || '',
+        username: sponsorData.username || '',
+        avatar_url: sponsorData.avatar_url || ''
       }] : []
     };
 
