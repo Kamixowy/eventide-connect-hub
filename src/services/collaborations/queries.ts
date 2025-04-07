@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { CollaborationDetailsResponse } from './types';
 
@@ -6,9 +5,10 @@ import { CollaborationDetailsResponse } from './types';
  * Fetches all collaborations for authenticated user
  * 
  * @param userType - Type of user (organization or sponsor)
+ * @param organizations - Array of organizations (only used for organization users)
  * @returns Promise with array of collaborations
  */
-export const fetchCollaborations = async (userType?: string) => {
+export const fetchCollaborations = async (userType?: string, organizations?: any[]) => {
   try {
     console.log('Fetching collaborations for user type:', userType);
     const { data: { user } } = await supabase.auth.getUser();
@@ -18,26 +18,15 @@ export const fetchCollaborations = async (userType?: string) => {
     }
 
     let query;
-    let userData;
 
-    // First get the organization ID if user is an organization
-    if (userType === 'organization') {
-      // Get organization ID for the current user
-      const { data: orgData, error: orgError } = await supabase
-        .from('organizations')
-        .select('id, name, logo_url')
-        .eq('user_id', user.id)
-        .single();
+    // For organization users
+    if (userType === 'organization' && organizations && organizations.length > 0) {
+      console.log('Fetching collaborations for organization ids:', organizations.map(org => org.id));
       
-      if (orgError) {
-        console.error('Error fetching organization data:', orgError);
-        throw orgError;
-      }
+      // Get organization IDs from memberships
+      const organizationIds = organizations.map(org => org.id);
       
-      console.log('Found organization for user:', orgData);
-      userData = orgData;
-      
-      // Query collaborations for this organization
+      // Query collaborations for these organizations
       query = supabase
         .from('collaborations')
         .select(`
@@ -50,12 +39,16 @@ export const fetchCollaborations = async (userType?: string) => {
           events:event_id(*),
           sponsor:sponsor_id(
             id, 
-            name, 
+            name,
+            username,
             avatar_url
           )
         `)
-        .eq('organization_id', orgData.id);
+        .in('organization_id', organizationIds);
     } else {
+      // For sponsor users - keep existing query
+      console.log('Fetching collaborations for sponsor:', user.id);
+      
       // Get profile data for sponsor
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -69,7 +62,6 @@ export const fetchCollaborations = async (userType?: string) => {
       }
       
       console.log('Found profile for user:', profileData);
-      userData = profileData;
       
       // Query collaborations for this sponsor
       query = supabase
@@ -110,6 +102,7 @@ export const fetchCollaborations = async (userType?: string) => {
           // Add profiles structure as expected by components
           profiles: [{
             name: collaboration.sponsor.name || 'Unknown sponsor',
+            username: collaboration.sponsor.username || 'Unknown',
             avatar_url: collaboration.sponsor.avatar_url || '/placeholder.svg'
           }]
         };
@@ -166,7 +159,7 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
     // Fetch sponsor profile information separately
     const { data: sponsorData, error: sponsorError } = await supabase
       .from('profiles')
-      .select('name, avatar_url')
+      .select('name, username, avatar_url')
       .eq('id', data.sponsor_id)
       .single();
       
@@ -201,13 +194,17 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
       // Add sponsor field structure expected by components
       sponsor: {
         id: data.sponsor_id,
-        name: sponsorData?.name || 'Unknown',
+        name: sponsorData?.name || sponsorData?.username || 'Unknown',
         avatar: sponsorData?.avatar_url || '/placeholder.svg'
       },
       // Add options data
       options: optionsData || [],
       // Add profiles for compatibility
-      profiles: sponsorData ? [sponsorData] : []
+      profiles: sponsorData ? [{
+        name: sponsorData.name,
+        username: sponsorData.username,
+        avatar_url: sponsorData.avatar_url
+      }] : []
     };
 
     console.log('Transformed collaboration data:', transformedData);
