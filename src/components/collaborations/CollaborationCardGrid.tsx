@@ -19,6 +19,8 @@ export const CollaborationCardGrid = ({ collaboration, userType }: Collaboration
     return null;
   }
 
+  console.log('Rendering collaboration card:', collaboration, 'User type:', userType);
+
   const statusName = COLLABORATION_STATUS_NAMES[collaboration.status] || 'Nieznany status';
   const statusColor = COLLABORATION_STATUS_COLORS[collaboration.status] || 'gray';
   
@@ -34,17 +36,22 @@ export const CollaborationCardGrid = ({ collaboration, userType }: Collaboration
 
   // Get partner name based on user type
   let partnerName = 'Nieznany partner';
+  let partnerImage = '/placeholder.svg';
+  
   if (userType === 'organization') {
     // For organizations, get the sponsor name
     if (collaboration.profiles && Array.isArray(collaboration.profiles) && collaboration.profiles.length > 0) {
-      partnerName = collaboration.profiles[0].name;
-    } else if (collaboration.sponsor?.name) {
-      partnerName = collaboration.sponsor.name;
+      partnerName = collaboration.profiles[0].name || 'Nieznany sponsor';
+      partnerImage = collaboration.profiles[0].avatar_url || '/placeholder.svg';
+    } else if (collaboration.sponsor) {
+      partnerName = collaboration.sponsor.name || 'Nieznany sponsor';
+      partnerImage = collaboration.sponsor.avatar || '/placeholder.svg';
     }
   } else {
     // For sponsors, get the organization name
-    if (collaboration.organization?.name) {
-      partnerName = collaboration.organization.name;
+    if (collaboration.organization) {
+      partnerName = collaboration.organization.name || 'Nieznana organizacja';
+      partnerImage = collaboration.organization.logo_url || '/placeholder.svg';
     }
   }
 
@@ -53,7 +60,7 @@ export const CollaborationCardGrid = ({ collaboration, userType }: Collaboration
   const eventImage = collaboration.events?.image_url || collaboration.event?.image || '/placeholder.svg';
   const eventDate = collaboration.events?.start_date 
     ? formatDate(collaboration.events.start_date) 
-    : (collaboration.event?.date || 'Nie określono');
+    : (collaboration.events?.date || collaboration.event?.date || 'Nie określono');
   
   // Get last updated date from either field
   const lastUpdated = collaboration.updated_at 

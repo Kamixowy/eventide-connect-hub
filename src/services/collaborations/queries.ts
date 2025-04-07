@@ -31,7 +31,7 @@ export const fetchCollaborations = async (userType?: string) => {
           created_at,
           updated_at,
           events:event_id(*),
-          profiles(name, avatar_url)
+          sponsor:sponsor_id(*)
         `)
         .eq('organization_id', user.id);
     } else {
@@ -63,7 +63,24 @@ export const fetchCollaborations = async (userType?: string) => {
     }
 
     console.log('Collaborations data received:', data);
-    return data || [];
+    
+    // Transform data for consistent format between user types
+    const transformedData = data?.map(collaboration => {
+      // For organization view, we need to transform sponsor data
+      if (userType === 'organization' && collaboration.sponsor) {
+        return {
+          ...collaboration,
+          // Add profiles structure as expected by components
+          profiles: [{
+            name: collaboration.sponsor.name || 'Unknown sponsor',
+            avatar_url: collaboration.sponsor.avatar_url || '/placeholder.svg'
+          }]
+        };
+      }
+      return collaboration;
+    }) || [];
+
+    return transformedData;
   } catch (error) {
     console.error('Failed to fetch collaborations:', error);
     throw error;
