@@ -32,6 +32,10 @@ const Collaborations = () => {
       
       try {
         setIsLoading(true);
+        console.log('Fetching collaborations with user type:', userType);
+        console.log('Current user ID:', user.id);
+        console.log('User metadata:', user.user_metadata);
+
         const data = await fetchCollaborations(userType);
         console.log('Fetched collaborations:', data); 
         setCollaborations(data);

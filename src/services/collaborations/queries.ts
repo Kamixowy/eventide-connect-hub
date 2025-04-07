@@ -92,7 +92,7 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
         sponsor_id,
         organization_id,
         events:event_id(*),
-        profiles:sponsor_id(name, avatar_url),
+        profiles:sponsor_id!inner(name, avatar_url),
         organization:organization_id(
           id,
           name,
@@ -114,6 +114,9 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
 
     console.log('Collaboration data received:', data);
 
+    // Get the profiles data correctly - it's an array of objects
+    const profileData = Array.isArray(data.profiles) ? data.profiles[0] : null;
+
     // Transform the data to match the expected interface
     // The database returns start_date but our component expects date
     const transformedData = {
@@ -125,8 +128,8 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
       // Add sponsor field structure expected by components
       sponsor: {
         id: data.sponsor_id,
-        name: data.profiles?.[0]?.name || 'Unknown',
-        avatar: data.profiles?.[0]?.avatar_url || '/placeholder.svg'
+        name: profileData?.name || 'Unknown',
+        avatar: profileData?.avatar_url || '/placeholder.svg'
       }
     };
 
