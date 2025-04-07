@@ -13,7 +13,8 @@ interface CollaborationCardGridProps {
 }
 
 export const CollaborationCardGrid = ({ collaboration, userType }: CollaborationCardGridProps) => {
-  if (!collaboration || !collaboration.events) {
+  // Early return if collaboration is invalid
+  if (!collaboration) {
     console.error('Invalid collaboration data:', collaboration);
     return null;
   }
@@ -31,21 +32,32 @@ export const CollaborationCardGrid = ({ collaboration, userType }: Collaboration
     }
   };
 
-  // Get organization or sponsor name
+  // Get partner name - handle both data structures
   const partnerName = userType === 'organization' 
-    ? (collaboration.profiles?.name || 'Nieznany sponsor') 
+    ? (collaboration.profiles?.name || collaboration?.sponsor?.name || 'Nieznany sponsor') 
     : (collaboration.organization?.name || 'Nieznana organizacja');
 
-  const eventImage = collaboration.events?.image_url || '/placeholder.svg';
-  const eventDate = collaboration.events?.start_date ? formatDate(collaboration.events.start_date) : 'Nie określono';
-  const lastUpdated = collaboration.updated_at ? formatDate(collaboration.updated_at) : 'Nie określono';
+  // Handle both data structures for event details
+  const eventTitle = collaboration.events?.title || collaboration.event?.title || 'Bez tytułu';
+  const eventImage = collaboration.events?.image_url || collaboration.event?.image || '/placeholder.svg';
+  const eventDate = collaboration.events?.start_date 
+    ? formatDate(collaboration.events.start_date) 
+    : (collaboration.event?.date || 'Nie określono');
+  
+  // Get last updated date from either field
+  const lastUpdated = collaboration.updated_at 
+    ? formatDate(collaboration.updated_at) 
+    : (collaboration.lastUpdated || 'Nie określono');
+
+  // Get total amount from either field
+  const totalAmount = collaboration.total_amount || collaboration.totalAmount || 0;
 
   return (
     <Card className="overflow-hidden h-full transition-all hover:shadow-md">
       <div className="relative h-48 w-full overflow-hidden">
         <img 
           src={eventImage} 
-          alt={collaboration.events.title || 'Wydarzenie'} 
+          alt={eventTitle || 'Wydarzenie'} 
           className="object-cover w-full h-full"
         />
         <div className={`
@@ -56,7 +68,7 @@ export const CollaborationCardGrid = ({ collaboration, userType }: Collaboration
         </div>
       </div>
       <CardContent className="p-4">
-        <h3 className="font-semibold text-lg mb-2 line-clamp-1">{collaboration.events.title}</h3>
+        <h3 className="font-semibold text-lg mb-2 line-clamp-1">{eventTitle}</h3>
         <p className="text-muted-foreground text-sm mb-3 line-clamp-1">
           {partnerName}
         </p>
@@ -71,7 +83,7 @@ export const CollaborationCardGrid = ({ collaboration, userType }: Collaboration
             <span>Ostatnia aktualizacja: {lastUpdated}</span>
           </div>
           <div className="flex items-center text-sm font-medium">
-            <span>Kwota: {collaboration.total_amount} PLN</span>
+            <span>Kwota: {totalAmount} PLN</span>
           </div>
         </div>
         
