@@ -31,8 +31,7 @@ export const fetchCollaborations = async (userType?: string) => {
           created_at,
           updated_at,
           events:event_id(*),
-          sponsor_id,
-          profiles:sponsor_id(name, avatar_url)
+          profiles(name, avatar_url)
         `)
         .eq('organization_id', user.id);
     } else {
@@ -51,8 +50,7 @@ export const fetchCollaborations = async (userType?: string) => {
             name,
             description,
             logo_url
-          ),
-          profiles:organization_id(name, avatar_url)
+          )
         `)
         .eq('sponsor_id', user.id);
     }
@@ -127,7 +125,8 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
       // Add sponsor field structure expected by components
       sponsor: {
         id: data.sponsor_id,
-        profiles: data.profiles || {}
+        name: data.profiles?.[0]?.name || 'Unknown',
+        avatar: data.profiles?.[0]?.avatar_url || '/placeholder.svg'
       }
     };
 

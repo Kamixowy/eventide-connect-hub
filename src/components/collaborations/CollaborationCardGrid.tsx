@@ -32,10 +32,21 @@ export const CollaborationCardGrid = ({ collaboration, userType }: Collaboration
     }
   };
 
-  // Get partner name - handle both data structures
-  const partnerName = userType === 'organization' 
-    ? (collaboration.profiles?.name || collaboration?.sponsor?.name || 'Nieznany sponsor') 
-    : (collaboration.organization?.name || 'Nieznana organizacja');
+  // Get partner name based on user type
+  let partnerName = 'Nieznany partner';
+  if (userType === 'organization') {
+    // For organizations, get the sponsor name
+    if (collaboration.profiles && Array.isArray(collaboration.profiles) && collaboration.profiles.length > 0) {
+      partnerName = collaboration.profiles[0].name;
+    } else if (collaboration.sponsor?.name) {
+      partnerName = collaboration.sponsor.name;
+    }
+  } else {
+    // For sponsors, get the organization name
+    if (collaboration.organization?.name) {
+      partnerName = collaboration.organization.name;
+    }
+  }
 
   // Handle both data structures for event details
   const eventTitle = collaboration.events?.title || collaboration.event?.title || 'Bez tytułu';
@@ -51,6 +62,10 @@ export const CollaborationCardGrid = ({ collaboration, userType }: Collaboration
 
   // Get total amount from either field
   const totalAmount = collaboration.total_amount || collaboration.totalAmount || 0;
+
+  // Provide empty array if sponsorshipOptions doesn't exist
+  const sponsorshipOptions = collaboration.sponsorshipOptions || [];
+  const conversation = collaboration.conversation || [];
 
   return (
     <Card className="overflow-hidden h-full transition-all hover:shadow-md">
@@ -88,7 +103,14 @@ export const CollaborationCardGrid = ({ collaboration, userType }: Collaboration
         </div>
         
         <div className="space-y-2">
-          <CollaborationDialog collaboration={collaboration} userType={userType}>
+          <CollaborationDialog 
+            collaboration={{
+              ...collaboration,
+              sponsorshipOptions,
+              conversation
+            }} 
+            userType={userType}
+          >
             <Button variant="outline" className="w-full">
               <MessageSquare size={16} className="mr-2" /> Konwersacja
             </Button>

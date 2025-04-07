@@ -25,7 +25,7 @@ const Collaborations = () => {
   // Determine user type from authentication context
   const userType = user?.user_metadata?.userType === 'organization' ? 'organization' : 'sponsor';
 
-  // Pobierz współprace użytkownika
+  // Fetch user collaborations
   useEffect(() => {
     const getCollaborations = async () => {
       if (!user) return;
@@ -36,10 +36,10 @@ const Collaborations = () => {
         console.log('Fetched collaborations:', data); 
         setCollaborations(data);
       } catch (error: any) {
-        console.error('Błąd podczas pobierania współprac:', error);
+        console.error('Error fetching collaborations:', error);
         toast({
           title: "Błąd",
-          description: "Nie udało się pobrać danych współprac",
+          description: "Nie udało się pobrać danych współprac: " + (error.message || error),
           variant: "destructive"
         });
       } finally {
@@ -57,7 +57,10 @@ const Collaborations = () => {
     const matchesSearch = searchQuery === '' || 
       collaboration.events?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       collaboration.organization?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (collaboration.profiles?.name?.toLowerCase().includes(searchQuery.toLowerCase()));
+      (collaboration.profiles && Array.isArray(collaboration.profiles) && 
+       collaboration.profiles.some(profile => 
+         profile.name?.toLowerCase().includes(searchQuery.toLowerCase())
+       ));
     
     const matchesStatus = statusFilter === '' || 
       COLLABORATION_STATUS_NAMES[collaboration.status] === statusFilter;
