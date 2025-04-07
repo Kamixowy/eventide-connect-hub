@@ -24,27 +24,35 @@ export const fetchCollaborations = async (userType?: string) => {
       query = supabase
         .from('collaborations')
         .select(`
-          *,
+          id,
+          status,
+          message,
+          total_amount,
+          created_at,
+          updated_at,
           events:event_id(*),
-          sponsor!collaborations_sponsor_id_fkey(
-            id,
-            profiles:id(*)
-          )
+          sponsor_id,
+          profiles:sponsor_id(name, avatar_url)
         `)
         .eq('organization_id', user.id);
     } else {
       query = supabase
         .from('collaborations')
         .select(`
-          *,
+          id,
+          status,
+          message,
+          total_amount,
+          created_at,
+          updated_at,
           events:event_id(*),
           organization:organization_id(
             id,
             name,
             description,
-            logo_url,
-            profiles:user_id(*)
-          )
+            logo_url
+          ),
+          profiles:organization_id(name, avatar_url)
         `)
         .eq('sponsor_id', user.id);
     }
@@ -56,6 +64,7 @@ export const fetchCollaborations = async (userType?: string) => {
       throw error;
     }
 
+    console.log('Collaborations data received:', data);
     return data || [];
   } catch (error) {
     console.error('Failed to fetch collaborations:', error);
@@ -76,18 +85,21 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
     const { data, error } = await supabase
       .from('collaborations')
       .select(`
-        *,
+        id,
+        status,
+        message,
+        total_amount,
+        created_at,
+        updated_at,
+        sponsor_id,
+        organization_id,
         events:event_id(*),
-        sponsor!collaborations_sponsor_id_fkey(
-          id,
-          profiles:id(*)
-        ),
+        profiles:sponsor_id(name, avatar_url),
         organization:organization_id(
           id,
           name,
           description,
-          logo_url,
-          profiles:user_id(*)
+          logo_url
         ),
         options:collaboration_options(
           id,
@@ -111,6 +123,11 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
       events: {
         ...data.events,
         date: data.events.start_date // Add the date property expected by components
+      },
+      // Add sponsor field structure expected by components
+      sponsor: {
+        id: data.sponsor_id,
+        profiles: data.profiles || {}
       }
     };
 

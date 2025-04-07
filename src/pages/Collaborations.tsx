@@ -33,6 +33,7 @@ const Collaborations = () => {
       try {
         setIsLoading(true);
         const data = await fetchCollaborations(userType);
+        console.log('Fetched collaborations:', data); 
         setCollaborations(data);
       } catch (error: any) {
         console.error('Błąd podczas pobierania współprac:', error);
@@ -51,10 +52,12 @@ const Collaborations = () => {
   
   // Filtering collaborations
   const filteredCollaborations = collaborations.filter((collaboration) => {
+    if (!collaboration) return false;
+    
     const matchesSearch = searchQuery === '' || 
-      collaboration.event?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      collaboration.events?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       collaboration.organization?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      collaboration.sponsor?.profiles?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      (collaboration.profiles?.name?.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesStatus = statusFilter === '' || 
       COLLABORATION_STATUS_NAMES[collaboration.status] === statusFilter;

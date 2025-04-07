@@ -18,6 +18,8 @@ export const CollaborationsList = ({
   isLoading = false
 }: CollaborationsListProps) => {
   
+  console.log('Rendering collaborations list:', collaborations);
+  
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-24">
