@@ -7,9 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import CollaborationMessages from '@/components/collaborations/CollaborationMessages';
 import CollaborationOptions from '@/components/collaborations/CollaborationOptions';
 import CollaborationActions from '@/components/collaborations/CollaborationActions';
 import CollaborationInfo from '@/components/collaborations/CollaborationInfo';
@@ -24,7 +22,6 @@ const CollaborationDetailsPage = () => {
   
   const [collaboration, setCollaboration] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('details');
   const [userType, setUserType] = useState<'organization' | 'sponsor'>('sponsor');
   
   useEffect(() => {
@@ -151,23 +148,7 @@ const CollaborationDetailsPage = () => {
             
             <div className="md:col-span-2">
               <Card className="p-4">
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="mb-4">
-                    <TabsTrigger value="details">Szczegóły</TabsTrigger>
-                    <TabsTrigger value="conversation">Konwersacja</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="details">
-                    <CollaborationOptions collaboration={collaboration} />
-                  </TabsContent>
-                  
-                  <TabsContent value="conversation">
-                    <CollaborationMessages
-                      collaboration={collaboration}
-                      userType={userType}
-                    />
-                  </TabsContent>
-                </Tabs>
+                <CollaborationOptions collaboration={collaboration} />
               </Card>
             </div>
           </div>
