@@ -15,7 +15,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ message, setMessage }) => {
         placeholder="Dodaj wiadomość dla organizacji..."
         value={message}
         onChange={(e) => setMessage(e.target.value)}
-        className="min-h-[120px]"
+        className="min-h-[120px] resize-none"
       />
     </div>
   );

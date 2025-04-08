@@ -1,10 +1,12 @@
 
 import React from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 interface OrganizationSelectorProps {
   organizations: any[];
   selectedOrganizationId: string;
-  handleOrganizationChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  handleOrganizationChange: (value: string) => void;
   isDisabled: boolean;
 }
 
@@ -19,19 +21,22 @@ const OrganizationSelector: React.FC<OrganizationSelectorProps> = ({
       <h3 className="text-lg font-semibold mb-3">Wybierz organizację</h3>
       
       <div className="space-y-4">
-        <select
-          className="w-full border border-gray-300 rounded-md p-2"
+        <Select 
           value={selectedOrganizationId}
-          onChange={handleOrganizationChange}
+          onValueChange={handleOrganizationChange}
           disabled={isDisabled}
         >
-          <option value="">Wybierz organizację</option>
-          {organizations.map((org) => (
-            <option key={org.id} value={org.id}>
-              {org.name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Wybierz organizację" />
+          </SelectTrigger>
+          <SelectContent>
+            {organizations.map((org) => (
+              <SelectItem key={org.id} value={org.id}>
+                {org.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

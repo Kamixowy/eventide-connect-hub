@@ -26,20 +26,38 @@ export const sendMessageToConversation = async (
     
     // Sprawdź, czy użytkownik jest uczestnikiem konwersacji
     const isParticipant = await checkConversationParticipation(conversationId, user.id);
+    
+    // Jeśli użytkownik nie jest uczestnikiem, dodaj go
     if (!isParticipant) {
       console.log(`Użytkownik ${user.id} nie jest uczestnikiem konwersacji ${conversationId}, próba dodania...`);
       
-      // Dodaj użytkownika jako uczestnika
-      const { error: participantError } = await supabase
-        .from('conversation_participants')
-        .insert({
-          conversation_id: conversationId,
-          user_id: user.id
-        });
-      
-      if (participantError) {
-        console.error("Błąd podczas dodawania użytkownika jako uczestnika:", participantError);
-        throw new Error("Nie masz uprawnień do wysyłania wiadomości w tej konwersacji");
+      try {
+        // Użyj własnej funkcji RPC do bezpiecznego dodania uczestnika
+        const { error: participantError } = await supabase.rpc(
+          'add_participant_to_conversation',
+          {
+            conversation_id: conversationId,
+            participant_id: user.id
+          }
+        );
+        
+        if (participantError) {
+          console.error("Błąd podczas dodawania użytkownika jako uczestnika:", participantError);
+          throw new Error("Nie masz uprawnień do wysyłania wiadomości w tej konwersacji");
+        }
+      } catch (err) {
+        // Fallback do bezpośredniego insertu jeśli funkcja RPC nie istnieje
+        const { error: participantError } = await supabase
+          .from('conversation_participants')
+          .insert({
+            conversation_id: conversationId,
+            user_id: user.id
+          });
+        
+        if (participantError) {
+          console.error("Błąd podczas dodawania użytkownika jako uczestnika:", participantError);
+          throw new Error("Nie masz uprawnień do wysyłania wiadomości w tej konwersacji");
+        }
       }
     }
     
@@ -139,14 +157,21 @@ export const createTestConversation = async (
       throw new Error("Nie znaleziono użytkownika docelowego");
     }
     
-    // Utwórz lub pobierz konwersację
-    const conversationId = await createOrGetConversation(targetUser.id);
+    // Utwórz lub pobierz konwersację przy użyciu zabezpieczonej funkcji RPC
+    const { data: conversationData, error: convError } = await supabase
+      .rpc('create_conversation_and_participants', {
+        user_one: user.id,
+        user_two: targetUser.id
+      });
     
-    if (!conversationId) {
+    if (convError || !conversationData || conversationData.length === 0) {
+      console.error("Błąd podczas tworzenia konwersacji:", convError || "Brak danych");
       throw new Error("Nie udało się utworzyć konwersacji");
     }
     
-    // Dodaj testowe wiadomości bezpośrednio jako wpisy w tabeli
+    const conversationId = conversationData[0].conversation_id;
+    
+    // Dodaj testowe wiadomości
     await supabase.from('direct_messages').insert([
       {
         conversation_id: conversationId,
