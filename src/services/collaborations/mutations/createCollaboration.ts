@@ -115,6 +115,80 @@ export const createCollaboration = async (
       }
     }
 
+    // Create a conversation between the sponsor and the organization
+    console.log("Creating conversation for collaboration:", collaborationId);
+    
+    try {
+      // Fetch sponsor and organization information
+      const { data: sponsorData, error: sponsorError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', collaboration.sponsor_id)
+        .single();
+      
+      if (sponsorError) {
+        console.error('Error fetching sponsor data:', sponsorError);
+        throw sponsorError;
+      }
+      
+      // Fetch organization's owner user_id
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('user_id')
+        .eq('id', collaboration.organization_id)
+        .single();
+      
+      if (orgError) {
+        console.error('Error fetching organization data:', orgError);
+        throw orgError;
+      }
+      
+      // Create conversation
+      const { data: conversationData, error: conversationError } = await supabase
+        .rpc('create_conversation_and_participants', {
+          user_one: sponsorData.id,
+          user_two: orgData.user_id
+        });
+      
+      if (conversationError) {
+        console.error('Error creating conversation:', conversationError);
+        throw conversationError;
+      }
+      
+      if (conversationData?.length > 0) {
+        const conversationId = conversationData[0].conversation_id;
+        console.log("Created conversation with ID:", conversationId);
+        
+        // Update the collaboration to link it with the conversation
+        const { error: updateError } = await supabase
+          .from('direct_conversations')
+          .update({ collaboration_id: collaborationId })
+          .eq('id', conversationId);
+        
+        if (updateError) {
+          console.error('Error updating conversation with collaboration ID:', updateError);
+        }
+        
+        // If there's a message, send it
+        if (collaboration.message && collaboration.message.trim() !== '') {
+          const { error: messageError } = await supabase
+            .from('direct_messages')
+            .insert({
+              conversation_id: conversationId,
+              sender_id: collaboration.sponsor_id,
+              content: collaboration.message
+            });
+          
+          if (messageError) {
+            console.error('Error sending initial message:', messageError);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error in conversation creation:', error);
+      // We don't throw here to allow collaboration to be created even if conversation fails
+    }
+
     // Return the collaboration ID
     return collaborationId;
   } catch (error: any) {

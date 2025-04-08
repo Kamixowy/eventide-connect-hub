@@ -12,3 +12,11 @@ export interface NewCollaborationDialogProps {
   organizationId?: string;
   children: React.ReactNode;
 }
+
+export interface CollaborationOption {
+  title: string;
+  description?: string | null;
+  amount: number;
+  is_custom: boolean;
+  sponsorship_option_id?: string;
+}

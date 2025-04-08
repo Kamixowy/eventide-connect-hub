@@ -4,11 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { 
-  createCollaboration, 
-  CollaborationOption 
+  createCollaboration
 } from '@/services/collaborations';
 import { COLLABORATION_STATUSES } from '@/services/collaborations/utils';
-import { SponsorshipOption } from '../types';
+import { SponsorshipOption, CollaborationOption } from '../types';
 
 export const useCollaborationForm = (initialEventId?: string, initialOrganizationId?: string) => {
   const { user } = useAuth();
