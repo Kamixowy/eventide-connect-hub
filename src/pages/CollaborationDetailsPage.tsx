@@ -11,8 +11,10 @@ import { useToast } from '@/hooks/use-toast';
 import CollaborationOptions from '@/components/collaborations/CollaborationOptions';
 import CollaborationActions from '@/components/collaborations/CollaborationActions';
 import CollaborationInfo from '@/components/collaborations/CollaborationInfo';
+import CollaborationMessages from '@/components/collaborations/CollaborationMessages';
 import { getCollaborationById, updateCollaborationStatus } from '@/services/collaborations';
 import { COLLABORATION_STATUS_NAMES, COLLABORATION_STATUS_COLORS } from '@/services/collaborations/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const CollaborationDetailsPage = () => {
   const { id } = useParams();
@@ -23,6 +25,7 @@ const CollaborationDetailsPage = () => {
   const [collaboration, setCollaboration] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [userType, setUserType] = useState<'organization' | 'sponsor'>('sponsor');
+  const [activeTab, setActiveTab] = useState('details');
   
   useEffect(() => {
     const loadCollaboration = async () => {
@@ -147,9 +150,31 @@ const CollaborationDetailsPage = () => {
             </div>
             
             <div className="md:col-span-2">
-              <Card className="p-4">
-                <CollaborationOptions collaboration={collaboration} />
-              </Card>
+              <Tabs 
+                value={activeTab} 
+                onValueChange={setActiveTab}
+                className="w-full"
+              >
+                <TabsList className="mb-4 w-full">
+                  <TabsTrigger value="details" className="flex-1">Szczegóły</TabsTrigger>
+                  <TabsTrigger value="messages" className="flex-1">Wiadomości</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="details">
+                  <Card className="p-4">
+                    <CollaborationOptions collaboration={collaboration} />
+                  </Card>
+                </TabsContent>
+                
+                <TabsContent value="messages">
+                  <Card className="p-4">
+                    <CollaborationMessages 
+                      collaboration={collaboration}
+                      userType={userType}
+                    />
+                  </Card>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         </div>

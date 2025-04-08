@@ -50,30 +50,37 @@ export const sendCollaborationMessage = async (
       conversationId = conversations[0].id;
     } else {
       // Create a new conversation for this collaboration
-      // Fix: Use a properly typed object that matches the direct_conversations table schema
-      const { data: newConversation, error: createError } = await supabase
-        .from('direct_conversations')
-        .insert({ 
-          collaboration_id: collaborationId,
-          updated_at: new Date().toISOString() 
-        })
-        .select()
+      // First get the organization owner
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('user_id')
+        .eq('id', collaboration.organization_id)
         .single();
+        
+      if (orgError) {
+        console.error('Error fetching organization:', orgError);
+        throw new Error('Nie znaleziono organizacji');
+      }
+      
+      // Create conversation between sponsor and organization owner
+      const { data: conversationData, error: createError } = await supabase
+        .rpc('create_conversation_and_participants', {
+          user_one: collaboration.sponsor_id,
+          user_two: orgData.user_id
+        });
         
       if (createError) {
         console.error('Error creating conversation:', createError);
         throw new Error('Nie udało się utworzyć konwersacji');
       }
       
-      conversationId = newConversation.id;
+      conversationId = conversationData[0].conversation_id;
       
-      // Add participants (sponsor and organization)
+      // Link the conversation to the collaboration
       await supabase
-        .from('conversation_participants')
-        .insert([
-          { conversation_id: conversationId, user_id: collaboration.sponsor_id },
-          { conversation_id: conversationId, user_id: collaboration.organization_id }
-        ]);
+        .from('direct_conversations')
+        .update({ collaboration_id: collaborationId })
+        .eq('id', conversationId);
     }
 
     // Create a new message in direct_messages table

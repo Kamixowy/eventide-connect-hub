@@ -1,9 +1,17 @@
 
-// Main export file for collaboration services
-// Re-export all functionality from individual modules
+// Export all services
 
-export * from './types';
+// Queries
 export * from './queries';
+
+// Mutations 
 export * from './mutations';
+
+// Utils
+export * from './utils';
+
+// Messages
 export * from './messages';
-export * from './subscriptions';
+
+// Types
+export * from './types';

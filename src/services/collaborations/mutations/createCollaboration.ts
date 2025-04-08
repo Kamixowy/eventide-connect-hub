@@ -38,7 +38,7 @@ export const createCollaboration = async (
         organization_id: collaboration.organization_id,
         event_id: selectedEventIds[0], // Use the first selected event as primary
         status: validatedStatus, // Use validated status value
-        message: collaboration.message,
+        message: collaboration.message || null, // Make message optional
         total_amount: collaboration.total_amount
       })
       .select()
@@ -159,7 +159,7 @@ export const createCollaboration = async (
         const conversationId = conversationData[0].conversation_id;
         console.log("Created conversation with ID:", conversationId);
         
-        // Update the collaboration to link it with the conversation
+        // Update the conversation to link it with the collaboration
         const { error: updateError } = await supabase
           .from('direct_conversations')
           .update({ collaboration_id: collaborationId })
