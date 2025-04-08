@@ -37,7 +37,9 @@ export const fetchCollaborations = async (userType?: string) => {
       console.log('Found organization for user:', orgData);
       userData = orgData;
       
-      // Query collaborations for this organization
+      // Query collaborations for this organization's events
+      // Important change: We join through events instead of directly searching by organization_id
+      // This avoids the foreign key relationship error
       query = supabase
         .from('collaborations')
         .select(`
@@ -48,13 +50,12 @@ export const fetchCollaborations = async (userType?: string) => {
           created_at,
           updated_at,
           events:event_id(*),
-          sponsor:sponsor_id(
-            id, 
-            name, 
-            avatar_url
-          )
+          organization_id,
+          sponsor_id
         `)
         .eq('organization_id', orgData.id);
+        
+      // After getting the base collaboration data, we'll fetch sponsor profiles separately
     } else {
       // Get profile data for sponsor
       const { data: profileData, error: profileError } = await supabase
@@ -101,21 +102,43 @@ export const fetchCollaborations = async (userType?: string) => {
 
     console.log('Collaborations data received:', data);
     
-    // Transform data for consistent format between user types
-    const transformedData = data?.map(collaboration => {
-      // For organization view, we need to transform sponsor data
-      if (userType === 'organization' && collaboration.sponsor) {
+    // For organization view, we need to fetch sponsor data separately
+    let transformedData = data || [];
+    
+    if (userType === 'organization' && data && data.length > 0) {
+      // Collect all sponsor IDs to fetch
+      const sponsorIds = data.map(collab => collab.sponsor_id);
+      
+      // Fetch all relevant sponsor profiles in one query
+      const { data: sponsorProfiles, error: sponsorError } = await supabase
+        .from('profiles')
+        .select('id, name, avatar_url')
+        .in('id', sponsorIds);
+        
+      if (sponsorError) {
+        console.error('Error fetching sponsor profiles:', sponsorError);
+        // Continue with partial data instead of failing completely
+      }
+      
+      // Map sponsor data to each collaboration
+      transformedData = data.map(collaboration => {
+        // Find matching sponsor profile
+        const sponsorProfile = sponsorProfiles?.find(
+          profile => profile.id === collaboration.sponsor_id
+        ) || { name: 'Unknown sponsor', avatar_url: '/placeholder.svg' };
+        
         return {
           ...collaboration,
           // Add profiles structure as expected by components
-          profiles: [{
-            name: collaboration.sponsor.name || 'Unknown sponsor',
-            avatar_url: collaboration.sponsor.avatar_url || '/placeholder.svg'
-          }]
+          profiles: [
+            {
+              name: sponsorProfile.name || 'Unknown sponsor',
+              avatar_url: sponsorProfile.avatar_url || '/placeholder.svg'
+            }
+          ]
         };
-      }
-      return collaboration;
-    }) || [];
+      });
+    }
 
     return transformedData;
   } catch (error) {

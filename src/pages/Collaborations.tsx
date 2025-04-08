@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Plus } from 'lucide-react';
 import NewCollaborationDialog from '@/components/collaborations/NewCollaborationDialog';
-import { fetchCollaborations } from '@/services/collaborations';
+import { fetchCollaborations, subscribeToUserCollaborations } from '@/services/collaborations';
 import { COLLABORATION_STATUS_NAMES } from '@/services/collaborations/utils';
 import { supabase } from '@/lib/supabase';
 
@@ -62,12 +62,41 @@ const Collaborations = () => {
         setIsLoading(true);
         console.log('Fetching collaborations with user type:', userType);
         console.log('Current user ID:', user.id);
-        console.log('User metadata:', user.user_metadata);
-        console.log('Organization data:', organizationData);
 
         const data = await fetchCollaborations(userType);
         console.log('Fetched collaborations:', data); 
         setCollaborations(data);
+        
+        // Setup real-time updates subscription
+        if (userType === 'organization' && organizationData?.id) {
+          const subscription = subscribeToUserCollaborations(
+            'organization', 
+            organizationData.id,
+            (payload) => {
+              console.log('Collaboration update received:', payload);
+              // Refresh collaborations data when changes are detected
+              getCollaborations();
+            }
+          );
+          
+          return () => {
+            subscription.unsubscribe();
+          };
+        } else if (userType === 'sponsor' && user.id) {
+          const subscription = subscribeToUserCollaborations(
+            'sponsor', 
+            user.id,
+            (payload) => {
+              console.log('Collaboration update received:', payload);
+              // Refresh collaborations data when changes are detected
+              getCollaborations();
+            }
+          );
+          
+          return () => {
+            subscription.unsubscribe();
+          };
+        }
       } catch (error: any) {
         console.error('Error fetching collaborations:', error);
         toast({
