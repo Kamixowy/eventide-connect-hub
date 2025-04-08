@@ -40,7 +40,7 @@ export const fetchConversations = async (
     let conversationIds: string[] = participations?.map(p => p.conversation_id) || [];
     
     if (userType === 'organization' && organizationId) {
-      // Fix: First fetch collaboration IDs associated with this organization
+      // Najpierw pobierz współprace związane z tą organizacją
       const { data: orgCollaborations } = await supabase
         .from('collaborations')
         .select('id')
@@ -49,14 +49,14 @@ export const fetchConversations = async (
       if (orgCollaborations && orgCollaborations.length > 0) {
         const collaborationIds = orgCollaborations.map(c => c.id);
         
-        // Then fetch conversations linked to those collaborations
+        // Następnie pobierz konwersacje powiązane z tymi współpracami
         const { data: orgConversations } = await supabase
           .from('direct_conversations')
           .select('id')
           .in('collaboration_id', collaborationIds);
         
         if (orgConversations && orgConversations.length > 0) {
-          // Add these conversation IDs to the list
+          // Dodaj te ID konwersacji do listy
           const orgIds = orgConversations.map(c => c.id);
           conversationIds = [...new Set([...conversationIds, ...orgIds])];
         }
@@ -71,19 +71,7 @@ export const fetchConversations = async (
     // Pobierz konwersacje
     const { data: conversations, error: conversationsError } = await supabase
       .from('direct_conversations')
-      .select(`
-        *,
-        collaboration:collaboration_id(
-          id, 
-          status,
-          event_id,
-          organization_id,
-          sponsor_id,
-          events:event_id(
-            title
-          )
-        )
-      `)
+      .select('*, collaboration_id')
       .in('id', conversationIds)
       .order('updated_at', { ascending: false });
 
@@ -122,29 +110,46 @@ export const fetchConversations = async (
         let title = '';
         let subtitle = '';
         
-        if (conversation.collaboration) {
-          // Handle potential undefined values safely
-          const collaborationData = conversation.collaboration;
-          title = collaborationData.events?.title || 'Współpraca';
+        if (conversation.collaboration_id) {
+          // Pobierz dane o współpracy
+          const { data: collaborationData } = await supabase
+            .from('collaborations')
+            .select(`
+              id, 
+              status,
+              event_id,
+              organization_id,
+              sponsor_id,
+              events:event_id(
+                title
+              )
+            `)
+            .eq('id', conversation.collaboration_id)
+            .single();
           
-          if (userType === 'organization') {
-            // Znajdź nazwę sponsora
-            const { data: sponsor } = await supabase
-              .from('profiles')
-              .select('name')
-              .eq('id', collaborationData.sponsor_id)
-              .single();
+          if (collaborationData) {
+            // Ustaw tytuł na podstawie nazwy wydarzenia
+            title = collaborationData.events?.title || 'Współpraca';
             
-            subtitle = sponsor?.name || 'Sponsor';
-          } else {
-            // Fix: Fetch organization data separately instead of using potentially ambiguous join
-            const { data: organization } = await supabase
-              .from('organizations')
-              .select('name')
-              .eq('id', collaborationData.organization_id)
-              .single();
-            
-            subtitle = organization?.name || 'Organizacja';
+            if (userType === 'organization') {
+              // Znajdź nazwę sponsora
+              const { data: sponsor } = await supabase
+                .from('profiles')
+                .select('name')
+                .eq('id', collaborationData.sponsor_id)
+                .single();
+              
+              subtitle = sponsor?.name || 'Sponsor';
+            } else {
+              // Pobierz dane organizacji oddzielnie
+              const { data: organization } = await supabase
+                .from('organizations')
+                .select('name')
+                .eq('id', collaborationData.organization_id)
+                .single();
+              
+              subtitle = organization?.name || 'Organizacja';
+            }
           }
         }
 

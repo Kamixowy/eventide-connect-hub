@@ -37,9 +37,7 @@ export const fetchCollaborations = async (userType?: string) => {
       console.log('Found organization for user:', orgData);
       userData = orgData;
       
-      // Query collaborations for this organization's events
-      // Important change: We join through events instead of directly searching by organization_id
-      // This avoids the foreign key relationship error
+      // Query collaborations for this organization
       query = supabase
         .from('collaborations')
         .select(`
@@ -49,13 +47,16 @@ export const fetchCollaborations = async (userType?: string) => {
           total_amount,
           created_at,
           updated_at,
-          events:event_id(*),
-          organization_id,
+          events:event_id(
+            id,
+            title,
+            start_date,
+            image_url
+          ),
           sponsor_id
         `)
         .eq('organization_id', orgData.id);
         
-      // After getting the base collaboration data, we'll fetch sponsor profiles separately
     } else {
       // Get profile data for sponsor
       const { data: profileData, error: profileError } = await supabase
@@ -82,13 +83,13 @@ export const fetchCollaborations = async (userType?: string) => {
           total_amount,
           created_at,
           updated_at,
-          events:event_id(*),
-          organization:organization_id(
+          events:event_id(
             id,
-            name,
-            description,
-            logo_url
-          )
+            title,
+            start_date,
+            image_url
+          ),
+          organization_id
         `)
         .eq('sponsor_id', user.id);
     }
@@ -138,6 +139,38 @@ export const fetchCollaborations = async (userType?: string) => {
           ]
         };
       });
+    } else if (userType === 'sponsor' && data && data.length > 0) {
+      // For sponsor view, we need to fetch organization data separately
+      const organizationIds = data.map(collab => collab.organization_id);
+      
+      // Fetch all relevant organizations in one query
+      const { data: orgs, error: orgsError } = await supabase
+        .from('organizations')
+        .select('id, name, logo_url')
+        .in('id', organizationIds);
+        
+      if (orgsError) {
+        console.error('Error fetching organization data:', orgsError);
+        // Continue with partial data instead of failing completely
+      }
+      
+      // Map organization data to each collaboration
+      transformedData = data.map(collaboration => {
+        // Find matching organization
+        const org = orgs?.find(
+          o => o.id === collaboration.organization_id
+        ) || { name: 'Unknown organization', logo_url: '/placeholder.svg' };
+        
+        return {
+          ...collaboration,
+          // Add organization structure for compatibility
+          organization: {
+            id: org.id,
+            name: org.name,
+            logo_url: org.logo_url
+          }
+        };
+      });
     }
 
     return transformedData;
@@ -168,13 +201,7 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
         updated_at,
         sponsor_id,
         organization_id,
-        events:event_id(*),
-        organization:organization_id(
-          id,
-          name,
-          description,
-          logo_url
-        )
+        events:event_id(*)
       `)
       .eq('id', id)
       .single();
@@ -196,6 +223,18 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
     if (sponsorError) {
       console.error('Error fetching sponsor profile:', sponsorError);
       // Continue without sponsor data
+    }
+    
+    // Fetch organization data separately
+    const { data: organizationData, error: organizationError } = await supabase
+      .from('organizations')
+      .select('id, name, description, logo_url')
+      .eq('id', data.organization_id)
+      .single();
+      
+    if (organizationError) {
+      console.error('Error fetching organization data:', organizationError);
+      // Continue without organization data
     }
     
     console.log('Sponsor profile data:', sponsorData);
@@ -226,6 +265,13 @@ export const getCollaborationById = async (id: string): Promise<CollaborationDet
         id: data.sponsor_id,
         name: sponsorData?.name || 'Unknown',
         avatar: sponsorData?.avatar_url || '/placeholder.svg'
+      },
+      // Add organization data
+      organization: organizationData || {
+        id: data.organization_id,
+        name: 'Unknown Organization',
+        description: '',
+        logo_url: '/placeholder.svg'
       },
       // Add options data
       options: optionsData || [],
