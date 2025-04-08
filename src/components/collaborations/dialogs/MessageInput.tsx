@@ -12,7 +12,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ message, setMessage, requir
   return (
     <div>
       <h3 className="text-lg font-semibold mb-3">
-        Wiadomość {required ? '<span className="text-red-500">*</span>' : '(opcjonalnie)'}
+        Wiadomość {required ? <span className="text-red-500">*</span> : '(opcjonalnie)'}
       </h3>
       <Textarea 
         placeholder="Dodaj wiadomość dla organizacji..."
