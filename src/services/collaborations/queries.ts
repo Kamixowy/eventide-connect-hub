@@ -156,19 +156,24 @@ export const fetchCollaborations = async (userType?: string) => {
       
       // Map organization data to each collaboration
       transformedData = data.map(collaboration => {
-        // Find matching organization
-        const org = orgs?.find(
-          o => o.id === collaboration.organization_id
-        ) || { name: 'Unknown organization', logo_url: '/placeholder.svg' };
+        // Find matching organization with proper type checking
+        const org = orgs?.find(o => o.id === collaboration.organization_id);
+        
+        // Make sure org is defined and has all required properties before using it
+        const safeOrg = org ? {
+          id: org.id,
+          name: org.name || 'Unknown organization',
+          logo_url: org.logo_url || '/placeholder.svg'
+        } : {
+          id: collaboration.organization_id,
+          name: 'Unknown organization',
+          logo_url: '/placeholder.svg'
+        };
         
         return {
           ...collaboration,
           // Add organization structure for compatibility
-          organization: {
-            id: org.id,
-            name: org.name,
-            logo_url: org.logo_url
-          }
+          organization: safeOrg
         };
       });
     }

@@ -56,6 +56,53 @@ export const createCollaboration = async (
     const collaborationId = collaborationData.id;
     console.log("Created collaboration with ID:", collaborationId);
 
+    // Get organization user ID (we need to fetch the user_id associated with this organization)
+    const { data: organizationData, error: orgError } = await supabase
+      .from('organizations')
+      .select('user_id')
+      .eq('id', collaboration.organization_id)
+      .single();
+    
+    if (orgError) {
+      console.error('Error fetching organization user ID:', orgError);
+      // Continue anyway, conversation creation shouldn't block collaboration creation
+    }
+    
+    // Create a direct conversation between the sponsor and organization
+    if (organizationData && organizationData.user_id) {
+      try {
+        // Using the built-in function to create a conversation and add participants
+        const { data: conversationData, error: convError } = await supabase.rpc(
+          'create_conversation_and_participants',
+          { 
+            user_one: collaboration.sponsor_id,
+            user_two: organizationData.user_id 
+          }
+        );
+        
+        if (convError) {
+          console.error('Error creating conversation:', convError);
+        } else {
+          console.log('Created conversation:', conversationData);
+          
+          // Link the conversation to the collaboration
+          if (conversationData && conversationData.length > 0) {
+            const { error: linkError } = await supabase
+              .from('direct_conversations')
+              .update({ collaboration_id: collaborationId })
+              .eq('id', conversationData[0].conversation_id);
+              
+            if (linkError) {
+              console.error('Error linking conversation to collaboration:', linkError);
+            }
+          }
+        }
+      } catch (convCreateError) {
+        console.error('Error in conversation creation process:', convCreateError);
+        // Don't fail the collaboration creation if conversation setup fails
+      }
+    }
+
     // Create custom options if needed
     const customOptions = selectedOptions.filter(option => option.is_custom);
     const existingOptions = selectedOptions.filter(option => !option.is_custom);
