@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -191,8 +190,8 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
     }
   };
   
-  const handleOrganizationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedOrganizationId(e.target.value);
+  const handleOrganizationChange = (value: string) => {
+    setSelectedOrganizationId(value);
     setSelectedEventIds([]);
   };
   

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Message } from '../types';
 import { createOrGetConversation } from './createOrGetConversation';
@@ -31,33 +30,17 @@ export const sendMessageToConversation = async (
     if (!isParticipant) {
       console.log(`Użytkownik ${user.id} nie jest uczestnikiem konwersacji ${conversationId}, próba dodania...`);
       
-      try {
-        // Użyj własnej funkcji RPC do bezpiecznego dodania uczestnika
-        const { error: participantError } = await supabase.rpc(
-          'add_participant_to_conversation',
-          {
-            conversation_id: conversationId,
-            participant_id: user.id
-          }
-        );
-        
-        if (participantError) {
-          console.error("Błąd podczas dodawania użytkownika jako uczestnika:", participantError);
-          throw new Error("Nie masz uprawnień do wysyłania wiadomości w tej konwersacji");
-        }
-      } catch (err) {
-        // Fallback do bezpośredniego insertu jeśli funkcja RPC nie istnieje
-        const { error: participantError } = await supabase
-          .from('conversation_participants')
-          .insert({
-            conversation_id: conversationId,
-            user_id: user.id
-          });
-        
-        if (participantError) {
-          console.error("Błąd podczas dodawania użytkownika jako uczestnika:", participantError);
-          throw new Error("Nie masz uprawnień do wysyłania wiadomości w tej konwersacji");
-        }
+      // Use direct insert approach instead of trying to use the RPC function
+      const { error: participantError } = await supabase
+        .from('conversation_participants')
+        .insert({
+          conversation_id: conversationId,
+          user_id: user.id
+        });
+      
+      if (participantError) {
+        console.error("Błąd podczas dodawania użytkownika jako uczestnika:", participantError);
+        throw new Error("Nie masz uprawnień do wysyłania wiadomości w tej konwersacji");
       }
     }
     
