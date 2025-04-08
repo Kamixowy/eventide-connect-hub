@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -232,7 +233,7 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
           organization_id: selectedOrganizationId,
           event_id: selectedEventIds[0],
           status: COLLABORATION_STATUSES.PENDING,
-          message: message,
+          message: message, // Message is now optional
           total_amount: totalAmount
         },
         selectedOptions,
@@ -303,6 +304,7 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
             <MessageInput 
               message={message}
               setMessage={setMessage}
+              required={false}
             />
           </div>
           
