@@ -19,7 +19,7 @@ const Collaborations = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [collaborations, setCollaborations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [organizationsData, setOrganizationsData] = useState<any[]>([]);
+  const [organizationData, setOrganizationData] = useState<any>(null);
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -27,48 +27,30 @@ const Collaborations = () => {
   // Determine user type from authentication context
   const userType = user?.user_metadata?.userType === 'organization' ? 'organization' : 'sponsor';
 
-  // Fetch organizations for the current user if they're an organization user
+  // Fetch organization data if user is of type organization
   useEffect(() => {
-    const getOrganizationsData = async () => {
+    const getOrganizationData = async () => {
       if (user && userType === 'organization') {
         try {
-          // First get organization memberships for the current user
-          const { data: memberships, error: membershipError } = await supabase
-            .from('organization_members')
-            .select('organization_id, role');
-            
-          if (membershipError) {
-            console.error('Error fetching organization memberships:', membershipError);
-            return;
-          }
-
-          if (!memberships || memberships.length === 0) {
-            console.log('No organization memberships found for user');
-            return;
-          }
-          
-          console.log('Organization memberships:', memberships);
-          
-          // Get organization data for each membership
-          const organizationIds = memberships.map(m => m.organization_id);
-          const { data: organizations, error: organizationsError } = await supabase
+          const { data, error } = await supabase
             .from('organizations')
             .select('*')
-            .in('id', organizationIds);
+            .eq('user_id', user.id)
+            .single();
             
-          if (organizationsError) {
-            console.error('Error fetching organizations:', organizationsError);
+          if (error) {
+            console.error('Error fetching organization:', error);
           } else {
-            console.log('Organizations data:', organizations);
-            setOrganizationsData(organizations || []);
+            console.log('Organization data:', data);
+            setOrganizationData(data);
           }
         } catch (err) {
-          console.error('Failed to fetch organizations data:', err);
+          console.error('Failed to fetch organization data:', err);
         }
       }
     };
     
-    getOrganizationsData();
+    getOrganizationData();
   }, [user, userType]);
 
   // Fetch user collaborations
@@ -81,9 +63,9 @@ const Collaborations = () => {
         console.log('Fetching collaborations with user type:', userType);
         console.log('Current user ID:', user.id);
         console.log('User metadata:', user.user_metadata);
-        console.log('Organizations data:', organizationsData);
+        console.log('Organization data:', organizationData);
 
-        const data = await fetchCollaborations(userType, organizationsData);
+        const data = await fetchCollaborations(userType);
         console.log('Fetched collaborations:', data); 
         setCollaborations(data);
       } catch (error: any) {
@@ -98,10 +80,8 @@ const Collaborations = () => {
       }
     };
     
-    if (organizationsData.length > 0 || userType === 'sponsor') {
-      getCollaborations();
-    }
-  }, [user, toast, userType, organizationsData]);
+    getCollaborations();
+  }, [user, toast, userType, organizationData]);
   
   // Filtering collaborations
   const filteredCollaborations = collaborations.filter((collaboration) => {
@@ -112,8 +92,7 @@ const Collaborations = () => {
       collaboration.organization?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (collaboration.profiles && Array.isArray(collaboration.profiles) && 
        collaboration.profiles.some(profile => 
-         profile.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-         profile.username?.toLowerCase().includes(searchQuery.toLowerCase())
+         profile.name?.toLowerCase().includes(searchQuery.toLowerCase())
        ));
     
     const matchesStatus = statusFilter === '' || 

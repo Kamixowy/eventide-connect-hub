@@ -242,7 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       aud: 'authenticated',
       created_at: new Date().toISOString(),
       user_metadata: {
-        username: type === 'organization' ? 'DemoOrg' : 'DemoSponsor',
+        name: type === 'organization' ? 'Demo Organizacja' : 'Demo Sponsor',
         userType: type
       }
     } as User;
