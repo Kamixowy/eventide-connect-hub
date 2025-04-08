@@ -26,6 +26,27 @@ export const CollaborationDialog = ({ collaboration, userType, children }: Colla
   const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
 
+  // Get event details, accounting for different data structures
+  const eventTitle = collaboration.events?.title || 
+    (collaboration.event ? collaboration.event.title : 'Bez tytułu');
+
+  // Get partner name based on user type
+  let partnerName = 'Nieznany partner';
+  
+  if (userType === 'organization') {
+    // For organizations, get the sponsor name
+    if (collaboration.profiles && Array.isArray(collaboration.profiles) && collaboration.profiles.length > 0) {
+      partnerName = collaboration.profiles[0].name || 'Nieznany sponsor';
+    } else if (collaboration.sponsor) {
+      partnerName = collaboration.sponsor.name || 'Nieznany sponsor';
+    }
+  } else {
+    // For sponsors, get the organization name
+    if (collaboration.organization) {
+      partnerName = collaboration.organization.name || 'Nieznana organizacja';
+    }
+  }
+
   const handleSendMessage = async () => {
     if (!message.trim() || isSending) return;
     
@@ -51,6 +72,13 @@ export const CollaborationDialog = ({ collaboration, userType, children }: Colla
     }
   };
 
+  // Safely get the total amount
+  const totalAmount = collaboration.total_amount || collaboration.totalAmount || 0;
+
+  // Provide empty arrays if sponsorshipOptions or conversation doesn't exist
+  const sponsorshipOptions = collaboration.sponsorshipOptions || [];
+  const conversation = collaboration.conversation || [];
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -60,29 +88,32 @@ export const CollaborationDialog = ({ collaboration, userType, children }: Colla
         <DialogHeader>
           <DialogTitle>Szczegóły współpracy</DialogTitle>
           <DialogDescription>
-            {collaboration.event.title} - {collaboration.status}
+            {eventTitle} - {collaboration.status}
           </DialogDescription>
         </DialogHeader>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Organizacja</p>
-            <p className="font-medium">{collaboration.event.organization}</p>
+            <p className="font-medium">
+              {collaboration.organization?.name || 
+               (collaboration.event?.organization || 'Nieznana organizacja')}
+            </p>
           </div>
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Sponsor</p>
-            <p className="font-medium">{collaboration.sponsor.name}</p>
+            <p className="font-medium">{partnerName}</p>
           </div>
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Wartość</p>
-            <p className="font-medium">{collaboration.totalAmount} PLN</p>
+            <p className="font-medium">{totalAmount} PLN</p>
           </div>
         </div>
         
         <div className="mb-4">
           <h3 className="font-semibold mb-2">Opcje współpracy</h3>
           <div className="space-y-2">
-            {collaboration.sponsorshipOptions.map((option, index) => (
+            {sponsorshipOptions.map((option, index) => (
               <div key={index} className="border rounded-md p-3">
                 <div className="flex justify-between">
                   <p className="font-medium">{option.title}</p>
@@ -97,7 +128,7 @@ export const CollaborationDialog = ({ collaboration, userType, children }: Colla
         <div>
           <h3 className="font-semibold mb-2">Konwersacja</h3>
           <div className="max-h-80 overflow-y-auto space-y-3 border rounded-md p-3">
-            {collaboration.conversation.map((message) => (
+            {conversation.map((message) => (
               <div 
                 key={message.id} 
                 className={`flex ${message.sender === 'sponsor' ? 'justify-end' : 'justify-start'}`}
