@@ -81,9 +81,6 @@ export const fetchConversations = async (
           sponsor_id,
           events:event_id(
             title
-          ),
-          organization:organization_id(
-            name
           )
         )
       `)
@@ -140,8 +137,14 @@ export const fetchConversations = async (
             
             subtitle = sponsor?.name || 'Sponsor';
           } else {
-            // Nazwa organizacji
-            subtitle = collaborationData.organization?.name || 'Organizacja';
+            // Fix: Fetch organization data separately instead of using potentially ambiguous join
+            const { data: organization } = await supabase
+              .from('organizations')
+              .select('name')
+              .eq('id', collaborationData.organization_id)
+              .single();
+            
+            subtitle = organization?.name || 'Organizacja';
           }
         }
 
