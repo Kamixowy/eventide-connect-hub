@@ -31,12 +31,52 @@ export const sendCollaborationMessage = async (
     if (!user) {
       throw new Error('User not authenticated');
     }
+    
+    // Find the conversation for this collaboration
+    const { data: conversations, error: convError } = await supabase
+      .from('direct_conversations')
+      .select('id')
+      .eq('collaboration_id', collaborationId);
+      
+    if (convError) {
+      console.error('Error finding conversation:', convError);
+      throw new Error('Nie znaleziono konwersacji dla tej współpracy');
+    }
+    
+    let conversationId;
+    
+    if (conversations && conversations.length > 0) {
+      // Use existing conversation
+      conversationId = conversations[0].id;
+    } else {
+      // Create a new conversation for this collaboration
+      const { data: newConversation, error: createError } = await supabase
+        .from('direct_conversations')
+        .insert({ collaboration_id: collaborationId })
+        .select()
+        .single();
+        
+      if (createError) {
+        console.error('Error creating conversation:', createError);
+        throw new Error('Nie udało się utworzyć konwersacji');
+      }
+      
+      conversationId = newConversation.id;
+      
+      // Add participants (sponsor and organization)
+      await supabase
+        .from('conversation_participants')
+        .insert([
+          { conversation_id: conversationId, user_id: collaboration.sponsor_id },
+          { conversation_id: conversationId, user_id: collaboration.organization_id }
+        ]);
+    }
 
-    // Create a new message in direct_messages table using collaboration ID as conversation_id
+    // Create a new message in direct_messages table
     const { data: message, error: messageError } = await supabase
       .from('direct_messages')
       .insert({
-        conversation_id: collaborationId, // Using collaboration ID as conversation ID
+        conversation_id: conversationId,
         sender_id: user.id,
         content
       })
@@ -63,11 +103,28 @@ export const sendCollaborationMessage = async (
  */
 export const getCollaborationMessages = async (collaborationId: string): Promise<Message[]> => {
   try {
-    // Fetch messages directly using collaboration ID as conversation ID
+    // Find the conversation for this collaboration
+    const { data: conversations, error: convError } = await supabase
+      .from('direct_conversations')
+      .select('id')
+      .eq('collaboration_id', collaborationId);
+      
+    if (convError) {
+      console.error('Error finding conversation:', convError);
+      throw new Error('Nie znaleziono konwersacji dla tej współpracy');
+    }
+    
+    if (!conversations || conversations.length === 0) {
+      return []; // No conversation yet
+    }
+    
+    const conversationId = conversations[0].id;
+
+    // Fetch messages
     const { data: messages, error: messagesError } = await supabase
       .from('direct_messages')
       .select('*')
-      .eq('conversation_id', collaborationId)
+      .eq('conversation_id', conversationId)
       .order('created_at', { ascending: true });
 
     if (messagesError) {
@@ -90,9 +147,26 @@ export const getCollaborationMessages = async (collaborationId: string): Promise
  */
 export const markCollaborationMessagesAsRead = async (collaborationId: string) => {
   try {
+    // Find the conversation for this collaboration
+    const { data: conversations, error: convError } = await supabase
+      .from('direct_conversations')
+      .select('id')
+      .eq('collaboration_id', collaborationId);
+      
+    if (convError) {
+      console.error('Error finding conversation:', convError);
+      throw new Error('Nie znaleziono konwersacji dla tej współpracy');
+    }
+    
+    if (!conversations || conversations.length === 0) {
+      return { success: true }; // No conversation to mark
+    }
+    
+    const conversationId = conversations[0].id;
+    
     // Call the RPC function to mark messages as read
     const { data, error } = await supabase.rpc('mark_messages_as_read', {
-      conversation_id: collaborationId
+      conversation_id: conversationId
     });
 
     if (error) {

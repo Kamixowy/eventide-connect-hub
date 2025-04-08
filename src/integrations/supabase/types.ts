@@ -134,21 +134,32 @@ export type Database = {
       }
       direct_conversations: {
         Row: {
+          collaboration_id: string | null
           created_at: string
           id: string
           updated_at: string
         }
         Insert: {
+          collaboration_id?: string | null
           created_at?: string
           id?: string
           updated_at?: string
         }
         Update: {
+          collaboration_id?: string | null
           created_at?: string
           id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "direct_conversations_collaboration_id_fkey"
+            columns: ["collaboration_id"]
+            isOneToOne: false
+            referencedRelation: "collaborations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       direct_messages: {
         Row: {
@@ -436,6 +447,14 @@ export type Database = {
       check_column_exists: {
         Args: { table_name: string; column_name: string }
         Returns: boolean
+      }
+      create_collaboration_conversation: {
+        Args: {
+          collaboration_id: string
+          sponsor_id: string
+          organization_id: string
+        }
+        Returns: string
       }
       create_conversation_and_participants: {
         Args: { user_one: string; user_two: string }

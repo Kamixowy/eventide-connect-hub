@@ -1,81 +1,61 @@
 
-// Types for collaboration service
-
-import { PostgrestSingleResponse } from '@supabase/supabase-js';
+// Types for collaboration services
 
 export interface CollaborationOption {
-  id?: string;
   title: string;
   description?: string | null;
   amount: number;
-  is_custom?: boolean;
+  is_custom: boolean;
   sponsorship_option_id?: string;
-  event_id?: string;
-}
-
-export interface Collaboration {
-  id?: string;
-  sponsor_id: string;
-  organization_id: string;
-  event_id: string;
-  status: string;
-  message: string;
-  total_amount: number;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface CollaborationDetailsResponse {
-  id: string;
-  status: string;
-  message: string;
-  total_amount: number;
-  created_at: string;
-  updated_at: string;
-  events: {
-    id: string;
-    title: string;
-    start_date: string; // This is what comes from the database
-    date?: string; // This is needed for component compatibility
-    [key: string]: any;
-  };
-  sponsor: {
-    id: string;
-    profiles: {
-      name: string;
-      avatar_url: string;
-      [key: string]: any;
-    };
-    [key: string]: any;
-  };
-  organization: {
-    id: string;
-    name: string;
-    description: string;
-    logo_url: string;
-    profiles: {
-      [key: string]: any;
-    };
-    [key: string]: any;
-  };
-  options: {
-    id: string;
-    sponsorship_options: {
-      id: string;
-      title: string;
-      description: string;
-      price: number;
-      [key: string]: any;
-    };
-    [key: string]: any;
-  }[];
 }
 
 export interface Message {
   id: string;
+  conversation_id: string;
   sender_id: string;
   content: string;
   created_at: string;
   read_at: string | null;
-  conversation_id: string;
+}
+
+export interface Collaboration {
+  id: string;
+  sponsor_id: string;
+  organization_id: string;
+  event_id: string;
+  status: string;
+  message?: string;
+  total_amount: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CollaborationDetailsResponse extends Collaboration {
+  events?: {
+    id: string;
+    title: string;
+    start_date: string;
+    end_date?: string;
+    date?: string;
+  };
+  event?: {
+    id: string;
+    title: string;
+    date?: string;
+    organization?: string;
+  };
+  organization?: {
+    id: string;
+    name: string;
+    description?: string;
+    logo_url?: string;
+  };
+  sponsor?: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
+  options?: any[];
+  profiles?: any[];
+  sponsorshipOptions?: any[];
 }

@@ -11,18 +11,48 @@ import {
   startConversationWithMessage,
   createTestConversation
 } from '@/services/messages/operations/sendMessageService';
+import { supabase } from '@/lib/supabase';
 
 export const useMessagesData = (initialSelectedConversationId: string | null) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(initialSelectedConversationId);
   const { toast } = useToast();
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialSelectedConversationId !== selectedConversationId) {
       setSelectedConversationId(initialSelectedConversationId);
     }
   }, [initialSelectedConversationId]);
+
+  // Fetch organization ID if user is of type organization
+  useEffect(() => {
+    const fetchOrganizationId = async () => {
+      if (user?.user_metadata?.userType === 'organization') {
+        try {
+          const { data, error } = await supabase
+            .from('organizations')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+            
+          if (error) {
+            console.error('Error fetching organization:', error);
+          } else if (data) {
+            console.log('Organization found:', data);
+            setOrganizationId(data.id);
+          }
+        } catch (err) {
+          console.error('Failed to fetch organization data:', err);
+        }
+      }
+    };
+    
+    if (user) {
+      fetchOrganizationId();
+    }
+  }, [user]);
 
   // Pobierz konwersacje
   const { 
@@ -31,8 +61,14 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     isError: isConversationsError,
     refetch: refetchConversations
   } = useQuery({
-    queryKey: ['conversations'],
-    queryFn: fetchConversations,
+    queryKey: ['conversations', organizationId],
+    queryFn: async () => {
+      // If user is organization admin, include conversations related to organization
+      if (user?.user_metadata?.userType === 'organization' && organizationId) {
+        return fetchConversations('organization', organizationId);
+      }
+      return fetchConversations();
+    },
     enabled: !!user,
     retry: 2,
     staleTime: 30000,
@@ -191,6 +227,7 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     startNewConversation,
     createTestConversationWithEmail,
     selectedConversationId,
-    setSelectedConversationId
+    setSelectedConversationId,
+    organizationId
   };
 };
