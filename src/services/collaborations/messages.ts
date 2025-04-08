@@ -50,9 +50,13 @@ export const sendCollaborationMessage = async (
       conversationId = conversations[0].id;
     } else {
       // Create a new conversation for this collaboration
+      // Fix: Use a properly typed object that matches the direct_conversations table schema
       const { data: newConversation, error: createError } = await supabase
         .from('direct_conversations')
-        .insert({ collaboration_id: collaborationId })
+        .insert({ 
+          collaboration_id: collaborationId,
+          updated_at: new Date().toISOString() 
+        })
         .select()
         .single();
         

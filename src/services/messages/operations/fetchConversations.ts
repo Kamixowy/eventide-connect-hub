@@ -40,22 +40,26 @@ export const fetchConversations = async (
     let conversationIds: string[] = participations?.map(p => p.conversation_id) || [];
     
     if (userType === 'organization' && organizationId) {
-      // Pobierz konwersacje powiązane z kolaboracjami tej organizacji
-      const { data: orgConversations, error: orgError } = await supabase
-        .from('direct_conversations')
+      // Fix: First fetch collaboration IDs associated with this organization
+      const { data: orgCollaborations } = await supabase
+        .from('collaborations')
         .select('id')
-        .in('collaboration_id', supabase
-          .from('collaborations')
+        .eq('organization_id', organizationId);
+        
+      if (orgCollaborations && orgCollaborations.length > 0) {
+        const collaborationIds = orgCollaborations.map(c => c.id);
+        
+        // Then fetch conversations linked to those collaborations
+        const { data: orgConversations } = await supabase
+          .from('direct_conversations')
           .select('id')
-          .eq('organization_id', organizationId)
-        );
-      
-      if (orgError) {
-        console.error('Błąd podczas pobierania konwersacji organizacji:', orgError);
-      } else if (orgConversations) {
-        // Dodaj konwersacje organizacji do listy
-        const orgIds = orgConversations.map(c => c.id);
-        conversationIds = [...new Set([...conversationIds, ...orgIds])];
+          .in('collaboration_id', collaborationIds);
+        
+        if (orgConversations && orgConversations.length > 0) {
+          // Add these conversation IDs to the list
+          const orgIds = orgConversations.map(c => c.id);
+          conversationIds = [...new Set([...conversationIds, ...orgIds])];
+        }
       }
     }
 
@@ -93,7 +97,10 @@ export const fetchConversations = async (
 
     // Wzbogacone konwersacje z uczestnikami, ostatnimi wiadomościami i nieprzeczytanymi
     const enhancedConversations = await Promise.all(
-      conversations.map(async (conversation) => {
+      (conversations || []).map(async (conversation) => {
+        // Guard against null or undefined conversation data
+        if (!conversation) return null;
+        
         // Pobierz uczestników dla tej konwersacji
         const { data: participants, error: participantsError } = await supabase
           .from('conversation_participants')
@@ -106,7 +113,7 @@ export const fetchConversations = async (
         }
 
         // Wzbogać uczestników o profile i organizacje
-        const enhancedParticipants = await enhanceParticipantsWithProfiles(participants, supabase);
+        const enhancedParticipants = await enhanceParticipantsWithProfiles(participants || [], supabase);
 
         // Pobierz ostatnią wiadomość
         const lastMessage = await getLastMessage(conversation.id, supabase);
@@ -119,20 +126,22 @@ export const fetchConversations = async (
         let subtitle = '';
         
         if (conversation.collaboration) {
-          title = conversation.collaboration.events?.title || 'Współpraca';
+          // Handle potential undefined values safely
+          const collaborationData = conversation.collaboration;
+          title = collaborationData.events?.title || 'Współpraca';
           
           if (userType === 'organization') {
             // Znajdź nazwę sponsora
             const { data: sponsor } = await supabase
               .from('profiles')
               .select('name')
-              .eq('id', conversation.collaboration.sponsor_id)
+              .eq('id', collaborationData.sponsor_id)
               .single();
             
             subtitle = sponsor?.name || 'Sponsor';
           } else {
             // Nazwa organizacji
-            subtitle = conversation.collaboration.organization?.name || 'Organizacja';
+            subtitle = collaborationData.organization?.name || 'Organizacja';
           }
         }
 
