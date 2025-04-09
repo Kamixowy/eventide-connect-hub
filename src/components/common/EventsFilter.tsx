@@ -50,17 +50,17 @@ const EventsFilter = ({
 
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-      <div className="relative w-full md:w-80">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-        <Input
-          placeholder="Szukaj..."
-          className="pl-10"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
-      
-      <div className="flex items-center gap-2">
+      <div className="flex w-full md:w-auto items-center gap-2">
+        <div className="relative flex-grow md:w-80">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+          <Input
+            placeholder="Szukaj..."
+            className="pl-10"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        
         {availableFilters.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -183,9 +183,9 @@ const EventsFilter = ({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        
-        <ViewToggle viewType={viewType} onChange={setViewType} />
       </div>
+      
+      <ViewToggle viewType={viewType} onChange={setViewType} />
     </div>
   );
 };
