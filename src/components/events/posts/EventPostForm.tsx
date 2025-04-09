@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { addEventPost } from '@/services/eventService';
+import { addEventPost } from '@/services/events/postService';
 
 interface EventPostFormProps {
   eventId: string;

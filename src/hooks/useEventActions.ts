@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { updateEventStatus } from '@/services/eventService';
+import { updateEventStatus } from '@/services/events/statusService';
 
 export const useEventActions = (eventId: string | undefined, fetchEventDetails: () => Promise<void>) => {
   const { toast } = useToast();
