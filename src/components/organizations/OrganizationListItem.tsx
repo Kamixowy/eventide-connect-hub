@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Users } from 'lucide-react';
+import { Users, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,7 +10,7 @@ import type { OrganizationCardProps } from './OrganizationCard';
 
 const OrganizationListItem = ({ organization }: OrganizationCardProps) => {
   return (
-    <Card className="w-full transition-all hover:shadow-md">
+    <Card className={`w-full transition-all hover:shadow-md ${organization.isCurrentUserOrg ? 'border-ngo border-2' : ''}`}>
       <CardContent className="p-4">
         <div className="flex items-start gap-4">
           <Avatar className="h-16 w-16 shrink-0">
@@ -23,7 +23,14 @@ const OrganizationListItem = ({ organization }: OrganizationCardProps) => {
           <div className="flex-1">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-2">
               <div>
-                <h3 className="font-semibold text-lg">{organization.name}</h3>
+                <div className="flex items-center flex-wrap gap-2">
+                  <h3 className="font-semibold text-lg">{organization.name}</h3>
+                  {organization.isCurrentUserOrg && (
+                    <Badge className="bg-ngo hover:bg-ngo">
+                      <CheckCircle className="h-3 w-3 mr-1" /> Twoja
+                    </Badge>
+                  )}
+                </div>
                 {organization.category && (
                   <Badge variant="outline" className="mr-2 bg-ngo/10 text-ngo border-ngo/20">
                     {organization.category}

@@ -72,12 +72,18 @@ export const OrganizationsList = ({
       
       // Demo user or testing environment
       if (user && user.id.startsWith('demo-')) {
-        setOrganizations(demoOrganizations);
+        // For demo users, mark their own organization
+        const markedDemoOrgs = demoOrganizations.map(org => ({
+          ...org,
+          isCurrentUserOrg: user.id === 'demo-organization' && org.id === 'org-1'
+        }));
+        setOrganizations(markedDemoOrgs);
         setLoading(false);
         return;
       }
       
       try {
+        // Fetch all organizations
         const { data, error } = await supabase
           .from('organizations')
           .select('*')
@@ -85,7 +91,13 @@ export const OrganizationsList = ({
         
         if (error) throw error;
         
-        setOrganizations(data.length > 0 ? data : demoOrganizations);
+        // Mark the organizations that belong to the current user
+        const orgsWithOwnership = (data.length > 0 ? data : demoOrganizations).map(org => ({
+          ...org,
+          isCurrentUserOrg: user?.id === org.user_id
+        }));
+        
+        setOrganizations(orgsWithOwnership);
       } catch (error) {
         console.error('Error fetching organizations:', error);
         toast({
@@ -93,7 +105,13 @@ export const OrganizationsList = ({
           description: "Nie udało się pobrać listy organizacji. Wyświetlamy przykładowe dane.",
           variant: "destructive"
         });
-        setOrganizations(demoOrganizations);
+        
+        // Mark demo data for current user if applicable
+        const markedDemoOrgs = demoOrganizations.map(org => ({
+          ...org,
+          isCurrentUserOrg: false // Default for error fallback
+        }));
+        setOrganizations(markedDemoOrgs);
       } finally {
         setLoading(false);
       }
