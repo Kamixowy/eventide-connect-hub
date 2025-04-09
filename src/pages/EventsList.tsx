@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
@@ -22,7 +21,6 @@ const EventsList = () => {
   const navigate = useNavigate();
   const { viewType, setViewPreference } = useViewPreference('events', 'grid');
 
-  // Przykładowe dane dla użytkowników demo lub gdy nie możemy pobrać danych z bazy
   const demoEvents = [
     {
       id: 'evt-1',
@@ -70,7 +68,6 @@ const EventsList = () => {
     }
   ];
 
-  // Dostępne filtry dla strony
   const availableFilters = [
     { label: 'Planowane', value: 'Planowane' },
     { label: 'W przygotowaniu', value: 'W przygotowaniu' },
@@ -87,64 +84,71 @@ const EventsList = () => {
     const fetchEvents = async () => {
       setLoading(true);
       
-      // Dla użytkowników demo zwracamy statyczne dane
       if (user && user.id.startsWith('demo-')) {
-        setEvents(demoEvents);
+        const markedDemoEvents = demoEvents.map(event => ({
+          ...event,
+          isCurrentUserOrg: user.id === 'demo-organization' && event.id === 'evt-1'
+        }));
+        setEvents(markedDemoEvents);
         setLoading(false);
         return;
       }
       
-      // Pobieramy wydarzenia z Supabase
-      try {
-        const { data: eventsData, error: eventsError } = await supabase
-          .from('events')
-          .select(`
-            *,
-            organizations(name)
-          `)
-          .order('start_date', { ascending: true });
-          
-        if (eventsError) {
-          console.error('Error fetching events:', eventsError);
-          toast({
-            title: "Błąd",
-            description: "Nie udało się pobrać wydarzeń. Pokazujemy przykładowe dane.",
-            variant: "destructive"
-          });
-          setEvents(demoEvents);
-        } else {
-          console.log('Events fetched:', eventsData);
-          
-          // Przekształć dane z Supabase, aby dopasować je do struktury potrzebnej w komponencie
-          const formattedEvents = eventsData.map(event => ({
-            ...event,
-            organization: event.organizations?.name || 'Nieznana organizacja'
-          }));
-          
-          setEvents(formattedEvents.length > 0 ? formattedEvents : demoEvents);
+      let userOrgId = null;
+      if (user) {
+        const { data: userOrg } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (userOrg) {
+          userOrgId = userOrg.id;
         }
-      } catch (error) {
-        console.error('Error in fetching events:', error);
+      }
+
+      const { data: eventsData, error: eventsError } = await supabase
+        .from('events')
+        .select(`
+          *,
+          organizations(name)
+        `)
+        .order('start_date', { ascending: true });
+        
+      if (eventsError) {
+        console.error('Error fetching events:', eventsError);
         toast({
           title: "Błąd",
-          description: "Wystąpił problem z pobieraniem danych. Pokazujemy przykładowe dane.",
+          description: "Nie udało się pobrać wydarzeń. Pokazujemy przykładowe dane.",
           variant: "destructive"
         });
-        setEvents(demoEvents);
-      } finally {
-        setLoading(false);
+        
+        const markedDemoEvents = demoEvents.map(event => ({
+          ...event,
+          isCurrentUserOrg: user?.id === 'demo-organization' && event.id === 'evt-1'
+        }));
+        
+        setEvents(markedDemoEvents);
+      } else {
+        console.log('Events fetched:', eventsData);
+        
+        const formattedEvents = eventsData.map(event => ({
+          ...event,
+          organization: event.organizations?.name || 'Nieznana organizacja',
+          isCurrentUserOrg: userOrgId ? event.organization_id === userOrgId : false
+        }));
+        
+        setEvents(formattedEvents.length > 0 ? formattedEvents : demoEvents);
       }
     };
     
     fetchEvents();
   }, [user, toast]);
 
-  // Handle event click to navigate to event details
   const handleEventClick = (eventId: string) => {
     navigate(`/wydarzenia/${eventId}`);
   };
 
-  // Sort events based on the current sort option
   const sortEvents = (events: any[]) => {
     return [...events].sort((a, b) => {
       switch (sortOption) {
@@ -166,17 +170,14 @@ const EventsList = () => {
     });
   };
 
-  // Filter events based on search query and active filters
   const filterEvents = (events: any[]) => {
     return events.filter(event => {
-      // Search filter
       const matchesSearch = 
         event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (event.location && event.location.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (event.category && event.category.toLowerCase().includes(searchQuery.toLowerCase()));
       
-      // Category and status filters
       const matchesFilters = activeFilters.length === 0 || activeFilters.every(filter => {
         if (filter.startsWith('category:')) {
           const category = filter.replace('category:', '');

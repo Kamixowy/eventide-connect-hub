@@ -19,6 +19,7 @@ interface Event {
   post_count?: number;
   status?: string;
   category?: string;
+  isCurrentUserOrg?: boolean;
 }
 
 interface EventsTabProps {
@@ -49,8 +50,19 @@ const EventsTab: React.FC<EventsTabProps> = ({ organization, isOwner }) => {
 
       // Sprawdzenie, czy to jest demo użytkownik
       if (organization.id.startsWith('demo-') || organization.id === '101') {
-        setUpcomingEvents(organization.upcomingEvents || []);
-        setPastEvents(organization.pastEvents || []);
+        // For demo data, mark events as belonging to current user if isOwner is true
+        const upcomingWithOwnership = (organization.upcomingEvents || []).map((event: Event) => ({
+          ...event,
+          isCurrentUserOrg: isOwner
+        }));
+
+        const pastWithOwnership = (organization.pastEvents || []).map((event: Event) => ({
+          ...event,
+          isCurrentUserOrg: isOwner
+        }));
+
+        setUpcomingEvents(upcomingWithOwnership);
+        setPastEvents(pastWithOwnership);
         setLoading(false);
         return;
       }
@@ -94,7 +106,8 @@ const EventsTab: React.FC<EventsTabProps> = ({ organization, isOwner }) => {
             raw_date: event.start_date,
             post_count: postCount || 0,
             status: event.status || 'Planowane',
-            category: event.category
+            category: event.category,
+            isCurrentUserOrg: isOwner // Mark as owner's event if they own the organization
           };
 
           // Sprawdzenie czy wydarzenie ma status "Zakończone", "Anulowane" lub jest przeszłe
@@ -115,7 +128,7 @@ const EventsTab: React.FC<EventsTabProps> = ({ organization, isOwner }) => {
     };
 
     fetchOrganizationEvents();
-  }, [organization.id]);
+  }, [organization.id, isOwner]);
 
   const convertEventForCard = (event: Event) => {
     return {
@@ -125,7 +138,8 @@ const EventsTab: React.FC<EventsTabProps> = ({ organization, isOwner }) => {
       start_date: event.raw_date || new Date().toISOString(),
       image_url: event.image,
       status: event.status,
-      category: event.category
+      category: event.category,
+      isCurrentUserOrg: event.isCurrentUserOrg
     };
   };
 

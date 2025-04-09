@@ -1,6 +1,6 @@
 
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Users } from 'lucide-react';
+import { Calendar, MapPin, Users, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,7 @@ import type { EventCardProps } from './EventCard';
 
 const EventListItem = ({ event, showOrgName = false }: EventCardProps) => {
   return (
-    <Card className="w-full transition-all hover:shadow-md">
+    <Card className={`w-full transition-all hover:shadow-md ${event.isCurrentUserOrg ? 'border-ngo border-2' : ''}`}>
       <CardContent className="p-4">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Image */}
@@ -37,7 +37,14 @@ const EventListItem = ({ event, showOrgName = false }: EventCardProps) => {
           <div className="flex-1">
             <div className="flex flex-col md:flex-row justify-between md:items-center mb-2">
               <div>
-                <h3 className="font-semibold text-lg">{event.title}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-lg">{event.title}</h3>
+                  {event.isCurrentUserOrg && (
+                    <Badge className="bg-ngo hover:bg-ngo">
+                      <CheckCircle className="h-3 w-3 mr-1" /> Twoje
+                    </Badge>
+                  )}
+                </div>
                 {showOrgName && event.organizations && (
                   <p className="text-muted-foreground text-sm">
                     {event.organizations.name || 'Nieznana organizacja'}

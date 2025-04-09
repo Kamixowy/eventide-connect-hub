@@ -1,6 +1,6 @@
 
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Users } from 'lucide-react';
+import { Calendar, MapPin, Users, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,13 +20,14 @@ export interface EventCardProps {
     category?: string;
     status?: string;
     organizations?: { name?: string };
+    isCurrentUserOrg?: boolean;
   };
   showOrgName?: boolean;
 }
 
 const EventCard = ({ event, showOrgName = false }: EventCardProps) => {
   return (
-    <Card className="overflow-hidden h-full transition-all hover:shadow-md">
+    <Card className={`overflow-hidden h-full transition-all hover:shadow-md ${event.isCurrentUserOrg ? 'border-ngo border-2' : ''}`}>
       <div className="relative h-48 w-full overflow-hidden">
         {event.image_url ? (
           <img 
@@ -56,7 +57,15 @@ const EventCard = ({ event, showOrgName = false }: EventCardProps) => {
         )}
       </div>
       <CardContent className="p-4">
-        <h3 className="font-semibold text-lg mb-2 line-clamp-1">{event.title}</h3>
+        <div className="flex items-center gap-2 mb-2">
+          <h3 className="font-semibold text-lg line-clamp-1">{event.title}</h3>
+          {event.isCurrentUserOrg && (
+            <Badge className="bg-ngo hover:bg-ngo">
+              <CheckCircle className="h-3 w-3 mr-1" /> Twoje
+            </Badge>
+          )}
+        </div>
+        
         {showOrgName && event.organizations && (
           <p className="text-muted-foreground text-sm mb-3 line-clamp-1">
             {event.organizations.name || 'Nieznana organizacja'}
