@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, ArrowUpDown, Calendar } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Calendar, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import ViewToggle from '@/components/common/ViewToggle';
 import {
   DropdownMenu,
@@ -40,6 +41,12 @@ const EventsFilter = ({
   activeFilters = [],
   setActiveFilters = () => {},
 }: EventsFilterProps) => {
+  const hasActiveFilters = activeFilters.length > 0;
+
+  // Handle clearing all filters
+  const handleClearFilters = () => {
+    setActiveFilters([]);
+  };
 
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -57,28 +64,86 @@ const EventsFilter = ({
         {availableFilters.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Filter size={18} />
+              <Button variant="outline" size="icon" className={hasActiveFilters ? "border-primary bg-primary/10" : ""}>
+                <Filter size={18} className={hasActiveFilters ? "text-primary" : ""} />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Filtruj według</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {availableFilters.map((filter) => (
-                <DropdownMenuCheckboxItem
-                  key={filter.value}
-                  checked={activeFilters.includes(filter.value)}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setActiveFilters([...activeFilters, filter.value]);
-                    } else {
-                      setActiveFilters(activeFilters.filter(f => f !== filter.value));
-                    }
-                  }}
-                >
-                  {filter.label}
-                </DropdownMenuCheckboxItem>
-              ))}
+              
+              {/* Status filters section */}
+              {availableFilters.filter(f => !f.value.startsWith('category:')).length > 0 && (
+                <>
+                  <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">Status</DropdownMenuLabel>
+                  {availableFilters
+                    .filter(filter => !filter.value.startsWith('category:'))
+                    .map((filter) => (
+                      <DropdownMenuCheckboxItem
+                        key={filter.value}
+                        checked={activeFilters.includes(filter.value)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setActiveFilters([...activeFilters, filter.value]);
+                          } else {
+                            setActiveFilters(activeFilters.filter(f => f !== filter.value));
+                          }
+                        }}
+                      >
+                        {filter.label}
+                      </DropdownMenuCheckboxItem>
+                    ))
+                  }
+                </>
+              )}
+              
+              {/* Separator between status and category filters */}
+              {availableFilters.some(f => !f.value.startsWith('category:')) && 
+               availableFilters.some(f => f.value.startsWith('category:')) && (
+                <Separator className="my-2 h-[2px] bg-muted-foreground/20" />
+              )}
+              
+              {/* Category filters section */}
+              {availableFilters.filter(f => f.value.startsWith('category:')).length > 0 && (
+                <>
+                  <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">Kategoria</DropdownMenuLabel>
+                  {availableFilters
+                    .filter(filter => filter.value.startsWith('category:'))
+                    .map((filter) => (
+                      <DropdownMenuCheckboxItem
+                        key={filter.value}
+                        checked={activeFilters.includes(filter.value)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setActiveFilters([...activeFilters, filter.value]);
+                          } else {
+                            setActiveFilters(activeFilters.filter(f => f !== filter.value));
+                          }
+                        }}
+                      >
+                        {filter.label}
+                      </DropdownMenuCheckboxItem>
+                    ))
+                  }
+                </>
+              )}
+              
+              {/* Clear filters button */}
+              {hasActiveFilters && (
+                <>
+                  <Separator className="my-2 h-[2px] bg-muted-foreground/20" />
+                  <div className="px-2 py-1.5">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full text-xs justify-center" 
+                      onClick={handleClearFilters}
+                    >
+                      <X size={14} className="mr-1" /> Wyczyść filtry
+                    </Button>
+                  </div>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}
