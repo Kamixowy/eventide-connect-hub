@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,6 +19,17 @@ const AddEvent = () => {
   const [bannerImage, setBannerImage] = useState<File | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Dostęp zabroniony",
+        description: "Musisz być zalogowany, aby dodać wydarzenie",
+        variant: "destructive",
+      });
+      navigate('/logowanie');
+    }
+  }, [user, navigate, toast]);
+  
   const [sponsorshipOptions, setSponsorshipOptions] = useState<SponsorshipOption[]>([
     {
       id: '1',
@@ -31,7 +41,6 @@ const AddEvent = () => {
     }
   ]);
 
-  // Initialize form with resolver
   const methods = useForm<EventCreateValues>({
     resolver: zodResolver(eventCreateSchema),
     defaultValues: {
@@ -131,7 +140,6 @@ const AddEvent = () => {
     try {
       setIsSubmitting(true);
       
-      // Get organization ID
       const organization = await getOrganizationByUserId(user.id);
       
       if (!organization) {
@@ -143,13 +151,11 @@ const AddEvent = () => {
         return;
       }
 
-      // Upload banner image if provided
       let imageUrl = null;
       if (bannerImage) {
         imageUrl = await uploadEventBanner(bannerImage);
       }
 
-      // Create event
       const eventId = await createEvent(data, organization.id, imageUrl, sponsorshipOptions);
 
       toast({
@@ -157,7 +163,6 @@ const AddEvent = () => {
         description: "Twoje wydarzenie zostało pomyślnie dodane",
       });
       
-      // Navigate to the event details page
       navigate(`/wydarzenia/${eventId}`);
     } catch (error) {
       console.error('Error in event creation:', error);
@@ -170,6 +175,16 @@ const AddEvent = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (!user) {
+    return (
+      <Layout>
+        <div className="container py-8">
+          <p className="text-center text-muted-foreground">Przekierowywanie...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
