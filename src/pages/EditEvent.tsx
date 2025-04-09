@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -9,7 +10,7 @@ import Layout from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { eventFormSchema, EventFormValues, SponsorshipOption } from '@/components/events/edit/EventEditSchema';
 import { useEventImageUpload } from '@/hooks/useEventImageUpload';
-import { fetchEventById, updateEvent } from '@/services/eventService';
+import { fetchEventById, updateEvent, deleteEvent } from '@/services/eventService';
 import EventEditForm from '@/components/events/edit/EventEditForm';
 import LoadingState from '@/components/common/LoadingState';
 
@@ -22,6 +23,7 @@ const EditEvent = () => {
   const [loading, setLoading] = useState(true);
   const [event, setEvent] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [sponsorshipOptions, setSponsorshipOptions] = useState<SponsorshipOption[]>([]);
   
   const { 
@@ -245,6 +247,34 @@ const EditEvent = () => {
     }
   };
 
+  const handleDeleteEvent = async () => {
+    if (!id || !user) return;
+    
+    setDeleting(true);
+    
+    try {
+      await deleteEvent(id);
+      
+      toast({
+        title: "Wydarzenie usunięte",
+        description: "Wydarzenie zostało pomyślnie usunięte.",
+      });
+      
+      // Navigate to the events list
+      navigate('/wydarzenia');
+      
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast({
+        title: "Błąd",
+        description: "Nie udało się usunąć wydarzenia. Spróbuj ponownie.",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -276,6 +306,8 @@ const EditEvent = () => {
           handleAddBenefit={handleAddBenefit}
           handleRemoveBenefit={handleRemoveBenefit}
           handleSponsorshipNumberChange={handleSponsorshipNumberChange}
+          onDelete={handleDeleteEvent}
+          deleting={deleting}
         />
       </div>
     </Layout>

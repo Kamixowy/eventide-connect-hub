@@ -1,15 +1,26 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
-import { Loader2, Save, Calendar, Info, Tag, HandCoins } from 'lucide-react';
+import { Loader2, Save, Calendar, Info, Tag, HandCoins, Trash2 } from 'lucide-react';
 import { EventFormValues, SponsorshipOption } from './EventEditSchema';
 import BasicInfoTab from './BasicInfoTab';
 import DetailsTab from './DetailsTab';
 import MediaTab from './MediaTab';
 import SponsorshipTab from './SponsorshipTab';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 // Define status options for event status selection
 const statusOptions = [
@@ -33,6 +44,8 @@ interface EventEditFormProps {
   handleAddBenefit: (id: string, benefit: string, e?: React.MouseEvent) => void;
   handleRemoveBenefit: (id: string, benefit: string, e?: React.MouseEvent) => void;
   handleSponsorshipNumberChange: (e: React.ChangeEvent<HTMLInputElement>, id: string, field: 'priceFrom' | 'priceTo') => void;
+  onDelete: () => Promise<void>;
+  deleting: boolean;
 }
 
 const EventEditForm = ({
@@ -48,7 +61,16 @@ const EventEditForm = ({
   handleAddBenefit,
   handleRemoveBenefit,
   handleSponsorshipNumberChange,
+  onDelete,
+  deleting,
 }: EventEditFormProps) => {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  
+  const handleDelete = async () => {
+    await onDelete();
+    setDialogOpen(false);
+  };
+
   return (
     <Form {...methods}>
       <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
@@ -102,7 +124,48 @@ const EventEditForm = ({
           </TabsContent>
         </Tabs>
         
-        <div className="flex justify-end">
+        <div className="flex justify-between">
+          <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button 
+                type="button"
+                variant="destructive"
+                className="w-full md:w-auto"
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Usuwanie...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Usuń wydarzenie
+                  </>
+                )}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Czy na pewno chcesz usunąć to wydarzenie?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Ta operacja jest nieodwracalna. Wydarzenie zostanie całkowicie usunięte
+                  z systemu wraz ze wszystkimi powiązanymi informacjami.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleDelete}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Usuń
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          
           <Button 
             type="submit" 
             className="w-full md:w-auto"

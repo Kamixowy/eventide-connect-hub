@@ -91,6 +91,49 @@ export const deleteEventPost = async (postId: string) => {
   return true;
 };
 
+// Add function to delete an event
+export const deleteEvent = async (eventId: string) => {
+  try {
+    // First delete all sponsorship options
+    const { error: sponsorshipError } = await supabase
+      .from('sponsorship_options')
+      .delete()
+      .eq('event_id', eventId);
+      
+    if (sponsorshipError) {
+      console.error('Error deleting sponsorship options:', sponsorshipError);
+      throw sponsorshipError;
+    }
+    
+    // Then delete all event posts
+    const { error: postsError } = await supabase
+      .from('event_posts')
+      .delete()
+      .eq('event_id', eventId);
+      
+    if (postsError) {
+      console.error('Error deleting event posts:', postsError);
+      throw postsError;
+    }
+    
+    // Finally delete the event
+    const { error: eventError } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', eventId);
+      
+    if (eventError) {
+      console.error('Error deleting event:', eventError);
+      throw eventError;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error in deleteEvent:', error);
+    throw error;
+  }
+};
+
 // Update event with sponsorship options
 export const updateEvent = async (
   eventId: string, 
