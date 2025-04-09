@@ -47,7 +47,8 @@ export const createOrGetConversation = async (recipientUserId: string): Promise<
         .from('conversation_participants')
         .insert({
           conversation_id: data[0].conversation_id,
-          user_id: user.id
+          user_id: user.id,
+          is_organization: false // Make sure we're adding a user, not an organization
         });
       
       if (insertError) {

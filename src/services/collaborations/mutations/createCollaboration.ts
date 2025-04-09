@@ -149,7 +149,7 @@ export const createCollaboration = async (
       console.log("Created conversation with ID:", conversationId);
       
       // Now add participants - sponsor as a user, and organization as an organization entity
-      // First insert the sponsor participant
+      // Add sponsor participant
       const { error: sponsorParticipantError } = await supabase
         .from('conversation_participants')
         .insert({
@@ -162,15 +162,14 @@ export const createCollaboration = async (
         console.error('Error adding sponsor participant:', sponsorParticipantError);
       }
       
-      // Then insert the organization participant
+      // Add organization participant (with NULL user_id now that our schema allows it)
       const { error: orgParticipantError } = await supabase
         .from('conversation_participants')
         .insert({
           conversation_id: conversationId, 
           organization_id: collaboration.organization_id, 
-          is_organization: true,
-          // We need to provide user_id as it's a required field
-          user_id: '' // Empty string as placeholder since we're using organization_id
+          is_organization: true
+          // No user_id needed since we updated the schema
         });
       
       if (orgParticipantError) {

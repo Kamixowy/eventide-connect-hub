@@ -99,7 +99,7 @@ export const fetchConversations = async (
         // Guard against null or undefined conversation data
         if (!conversation) return null;
         
-        // Pobierz uczestników dla tej konwersacji
+        // Pobierz uczestników dla tej konwersacji (tylko wybrane pola)
         const { data: participants, error: participantsError } = await supabase
           .from('conversation_participants')
           .select('id, conversation_id, user_id, organization_id, is_organization')
