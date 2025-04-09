@@ -1,6 +1,6 @@
 
 import { Link } from 'react-router-dom';
-import { LogOut, User, Calendar, MessageSquare, Briefcase, ListChecks } from 'lucide-react';
+import { LogOut, User, Calendar, MessageSquare, Briefcase, ListChecks, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -36,7 +36,7 @@ const UserMenu = () => {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
-              <AvatarImage src="" alt={user.user_metadata?.name || 'User'} />
+              <AvatarImage src={user.user_metadata?.avatar_url || ""} alt={user.user_metadata?.name || 'User'} />
               <AvatarFallback>{user.user_metadata?.name?.substring(0, 2) || 'U'}</AvatarFallback>
             </Avatar>
           </Button>
@@ -52,6 +52,12 @@ const UserMenu = () => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link to="/moj-profil" className="cursor-pointer w-full flex">
+              <UserCircle className="mr-2 h-4 w-4" />
+              <span>Mój profil</span>
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link to="/profil" className="cursor-pointer w-full flex">
               <User className="mr-2 h-4 w-4" />

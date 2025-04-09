@@ -24,6 +24,7 @@ import Organizations from "./pages/Organizations";
 import OrganizationProfile from "./pages/OrganizationProfile";
 import MyEvents from "./pages/MyEvents";
 import Profile from "./pages/Profile";
+import UserProfile from "./pages/UserProfile";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => (
             <Route path="/organizacje/:id" element={<OrganizationProfile />} />
             <Route path="/moje-wydarzenia" element={<MyEvents />} />
             <Route path="/profil" element={<Profile />} />
+            <Route path="/moj-profil" element={<UserProfile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
