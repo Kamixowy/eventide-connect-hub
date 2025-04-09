@@ -1,10 +1,8 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Users } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDateRange } from '@/utils/dateUtils';
-
 interface EventBasicInfoProps {
   organization: {
     id: string | number;
@@ -17,7 +15,6 @@ interface EventBasicInfoProps {
   location: string;
   attendees: number;
 }
-
 const EventBasicInfo: React.FC<EventBasicInfoProps> = ({
   organization,
   date,
@@ -26,8 +23,7 @@ const EventBasicInfo: React.FC<EventBasicInfoProps> = ({
   location,
   attendees
 }) => {
-  return (
-    <>
+  return <>
       <Link to={`/organizacje/${organization.id}`} className="flex items-center mb-6 hover:text-ngo transition-colors">
         <Avatar className="h-12 w-12 mr-3">
           <AvatarImage src={organization.avatar || undefined} alt={organization.name} />
@@ -59,13 +55,12 @@ const EventBasicInfo: React.FC<EventBasicInfoProps> = ({
         <div className="flex items-center border rounded-lg p-4">
           <Users size={24} className="mr-3 text-ngo" /> 
           <div>
-            <p className="text-sm text-muted-foreground">Uczestnicy</p>
+            <p className="text-sm text-muted-foreground">Planowani uczestnicy
+          </p>
             <p className="font-medium">{attendees} osób</p>
           </div>
         </div>
       </div>
-    </>
-  );
+    </>;
 };
-
 export default EventBasicInfo;
