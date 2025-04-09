@@ -9,6 +9,12 @@ import { formatDateRange } from '@/utils/dateUtils';
 import type { EventCardProps } from './EventCard';
 
 const EventListItem = ({ event, showOrgName = false }: EventCardProps) => {
+  // Format number with space as thousands separator
+  const formatParticipants = (num?: number) => {
+    if (!num) return '0';
+    return num >= 1000 ? num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : num.toString();
+  };
+
   return (
     <Card className="w-full transition-all hover:shadow-md">
       <CardContent className="p-4">
@@ -74,7 +80,7 @@ const EventListItem = ({ event, showOrgName = false }: EventCardProps) => {
                 {event.expected_participants && (
                   <div className="flex items-center text-sm">
                     <Users size={16} className="mr-2 text-ngo" /> 
-                    <span>Uczestnicy: {event.expected_participants}</span>
+                    <span>Planowana liczba uczestników: {formatParticipants(event.expected_participants)}</span>
                   </div>
                 )}
               </div>

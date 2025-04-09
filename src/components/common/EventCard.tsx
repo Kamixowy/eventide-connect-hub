@@ -25,6 +25,12 @@ export interface EventCardProps {
 }
 
 const EventCard = ({ event, showOrgName = false }: EventCardProps) => {
+  // Format number with space as thousands separator
+  const formatParticipants = (num?: number) => {
+    if (!num) return '0';
+    return num >= 1000 ? num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : num.toString();
+  };
+
   return (
     <Card className="overflow-hidden h-full transition-all hover:shadow-md">
       <div className="relative h-48 w-full overflow-hidden">
@@ -77,7 +83,7 @@ const EventCard = ({ event, showOrgName = false }: EventCardProps) => {
           {event.expected_participants && (
             <div className="flex items-center text-sm">
               <Users size={16} className="mr-2 text-ngo" /> 
-              <span>Przewidywana liczba uczestników: {event.expected_participants}</span>
+              <span>Planowana liczba uczestników: {formatParticipants(event.expected_participants)}</span>
             </div>
           )}
         </div>
