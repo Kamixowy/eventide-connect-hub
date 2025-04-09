@@ -148,29 +148,34 @@ export const createCollaboration = async (
       const conversationId = conversationData.id;
       console.log("Created conversation with ID:", conversationId);
       
-      // Now add participants - sponsor as a user, and organization as an organization entity
-      // First insert the sponsor participant
-      const { error: sponsorParticipantError } = await supabase
-        .from('conversation_participants')
-        .insert({
-          conversation_id: conversationId, 
-          user_id: sponsorData.id, 
-          is_organization: false
-        });
+      // Verify sponsor user exists in auth.users
+      const { data: authUserData, error: authUserError } = await supabase.auth.getUser(sponsorData.id);
       
-      if (sponsorParticipantError) {
-        console.error('Error adding sponsor participant:', sponsorParticipantError);
+      if (!authUserError && authUserData.user) {
+        // Add sponsor as a user participant
+        const { error: sponsorParticipantError } = await supabase
+          .from('conversation_participants')
+          .insert({
+            conversation_id: conversationId, 
+            user_id: sponsorData.id, 
+            is_organization: false
+          });
+        
+        if (sponsorParticipantError) {
+          console.error('Error adding sponsor participant:', sponsorParticipantError);
+        }
+      } else {
+        console.error('Sponsor user does not exist in auth.users:', authUserError);
       }
       
-      // Then insert the organization participant
+      // Add organization as an organization participant
       const { error: orgParticipantError } = await supabase
         .from('conversation_participants')
         .insert({
           conversation_id: conversationId, 
           organization_id: collaboration.organization_id, 
           is_organization: true,
-          // We need to provide user_id as it's a required field
-          user_id: '' // Empty string as placeholder since we're using organization_id
+          user_id: null // Explicitly set user_id to null for organization participants
         });
       
       if (orgParticipantError) {
