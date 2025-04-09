@@ -97,8 +97,8 @@ const EventsTab: React.FC<EventsTabProps> = ({ organization, isOwner }) => {
             category: event.category
           };
 
-          // Sprawdzenie czy wydarzenie ma status "Zakończone" lub jest przeszłe
-          if (event.status === 'Zakończone' || isPast(new Date(event.start_date))) {
+          // Sprawdzenie czy wydarzenie ma status "Zakończone", "Anulowane" lub jest przeszłe
+          if (event.status === 'Zakończone' || event.status === 'Anulowane' || isPast(new Date(event.start_date))) {
             past.push(formattedEvent);
           } else {
             upcoming.push(formattedEvent);
@@ -171,10 +171,10 @@ const EventsTab: React.FC<EventsTabProps> = ({ organization, isOwner }) => {
             {pastEvents.map((event: Event) => (
               <Link to={`/wydarzenia/${event.id}`} key={event.id} className="block h-full">
                 <div className="relative h-full">
-                  <EventCard event={{...convertEventForCard(event), status: 'Zakończone'}} />
+                  <EventCard event={{...convertEventForCard(event), status: event.status}} />
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                     <Badge variant="outline" className="bg-white text-black">
-                      Zakończone
+                      {event.status === 'Anulowane' ? 'Anulowane' : 'Zakończone'}
                     </Badge>
                   </div>
                 </div>
