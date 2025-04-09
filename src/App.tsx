@@ -53,11 +53,12 @@ function App() {
               <Route path="/dodaj-wydarzenie" element={<AddEvent />} />
               <Route path="/edytuj-wydarzenie/:id" element={<EditEvent />} />
               <Route path="/moje-wydarzenia" element={<MyEvents />} />
-              <Route path="/profil" element={<Profile />} />
+              <Route path="/profil" element={<UserProfile />} />
               <Route path="/uzytkownicy/:id" element={<UserProfile />} />
               <Route path="/wspolprace" element={<Collaborations />} />
               <Route path="/wspolprace/:id" element={<CollaborationDetailsPage />} />
               <Route path="/wiadomosci" element={<Messages />} />
+              <Route path="/moje-wsparcia" element={<Collaborations />} />
               
               {/* Legal pages */}
               <Route path="/polityka-prywatnosci" element={<PrivacyPolicy />} />

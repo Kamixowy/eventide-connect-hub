@@ -5,7 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Key } from 'lucide-react';
+import { User, Key, Calendar } from 'lucide-react';
 import ProfileAvatar from '@/components/profile/ProfileAvatar';
 import ProfileInfo from '@/components/profile/ProfileInfo';
 import PersonalDataForm from '@/components/profile/PersonalDataForm';
@@ -16,6 +16,9 @@ const UserProfile = () => {
   const navigate = useNavigate();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(user?.user_metadata?.avatar_url || null);
   const [generalError, setGeneralError] = useState('');
+  
+  const isOrganization = user?.user_metadata?.userType === 'organization';
+  const isSponsor = user?.user_metadata?.userType === 'sponsor';
   
   if (!user) {
     navigate('/logowanie');
@@ -55,6 +58,12 @@ const UserProfile = () => {
                 <Key className="mr-2 h-4 w-4" />
                 Zmiana hasła
               </TabsTrigger>
+              {isSponsor && (
+                <TabsTrigger value="wsparcia">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Moje wsparcia
+                </TabsTrigger>
+              )}
             </TabsList>
             
             <TabsContent value="dane">
@@ -64,6 +73,17 @@ const UserProfile = () => {
             <TabsContent value="haslo">
               <PasswordChangeForm user={user} />
             </TabsContent>
+            
+            {isSponsor && (
+              <TabsContent value="wsparcia">
+                <div className="p-4 bg-muted rounded-lg">
+                  <h3 className="text-lg font-medium mb-4">Historia wsparć</h3>
+                  <p className="text-muted-foreground">
+                    Tutaj będzie wyświetlana historia Twoich wsparć dla wydarzeń.
+                  </p>
+                </div>
+              </TabsContent>
+            )}
           </Tabs>
         </div>
       </div>
