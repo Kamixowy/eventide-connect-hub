@@ -8,6 +8,26 @@ export const formatDate = (date: string | Date) => {
   return format(dateObject, 'd MMMM yyyy', { locale: pl });
 };
 
+// Format date range for display (with optional end date)
+export const formatDateRange = (startDate: string | Date, endDate?: string | Date | null) => {
+  const start = formatDate(startDate);
+  
+  // If no end date or end date is the same as start date, just return the start date
+  if (!endDate) return start;
+  
+  const startObj = startDate instanceof Date ? startDate : new Date(startDate);
+  const endObj = endDate instanceof Date ? endDate : new Date(endDate);
+  
+  // Check if dates are on the same day
+  if (startObj.toDateString() === endObj.toDateString()) {
+    return start;
+  }
+  
+  // Different days - show range
+  const end = formatDate(endObj);
+  return `${start} - ${end}`;
+};
+
 // Format message date for chat display
 export const formatMessageDate = (dateString: string) => {
   const date = new Date(dateString);

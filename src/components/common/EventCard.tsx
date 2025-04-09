@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import EventStatus from '@/components/common/EventStatus';
-import { formatDate } from '@/utils/dateUtils';
+import { formatDate, formatDateRange } from '@/utils/dateUtils';
 
 export interface EventCardProps {
   event: {
@@ -14,6 +14,7 @@ export interface EventCardProps {
     description: string;
     image_url: string | null;
     start_date: string;
+    end_date?: string | null;
     location?: string;
     expected_participants?: number;
     category?: string;
@@ -65,7 +66,7 @@ const EventCard = ({ event, showOrgName = false }: EventCardProps) => {
         <div className="space-y-2 mb-4">
           <div className="flex items-center text-sm">
             <Calendar size={16} className="mr-2 text-ngo" /> 
-            <span>{formatDate(event.start_date)}</span>
+            <span>{formatDateRange(event.start_date, event.end_date)}</span>
           </div>
           {event.location && (
             <div className="flex items-center text-sm">
