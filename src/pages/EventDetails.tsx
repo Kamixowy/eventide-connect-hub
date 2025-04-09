@@ -77,6 +77,7 @@ const EventDetails = () => {
               startDate={event.start_date}
               endDate={event.end_date}
               location={event.location}
+              detailed_location={event.detailed_location}
               attendees={event.attendees}
             />
 

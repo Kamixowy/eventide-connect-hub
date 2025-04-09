@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Users } from 'lucide-react';
@@ -13,6 +14,7 @@ interface EventBasicInfoProps {
   startDate: string;
   endDate?: string | null;
   location: string;
+  detailed_location?: string;
   attendees: number;
 }
 const EventBasicInfo: React.FC<EventBasicInfoProps> = ({
@@ -21,8 +23,14 @@ const EventBasicInfo: React.FC<EventBasicInfoProps> = ({
   startDate,
   endDate,
   location,
+  detailed_location,
   attendees
 }) => {
+  // Format number with space as thousands separator
+  const formatParticipants = (num: number) => {
+    return num >= 1000 ? num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : num.toString();
+  };
+
   return <>
       <Link to={`/organizacje/${organization.id}`} className="flex items-center mb-6 hover:text-ngo transition-colors">
         <Avatar className="h-12 w-12 mr-3">
@@ -50,6 +58,9 @@ const EventBasicInfo: React.FC<EventBasicInfoProps> = ({
           <div>
             <p className="text-sm text-muted-foreground">Lokalizacja</p>
             <p className="font-medium">{location}</p>
+            {detailed_location && (
+              <p className="text-sm text-muted-foreground mt-1">{detailed_location}</p>
+            )}
           </div>
         </div>
         <div className="flex items-center border rounded-lg p-4">
@@ -57,7 +68,7 @@ const EventBasicInfo: React.FC<EventBasicInfoProps> = ({
           <div>
             <p className="text-sm text-muted-foreground">Planowani uczestnicy
           </p>
-            <p className="font-medium">{attendees} osób</p>
+            <p className="font-medium">{formatParticipants(attendees)} osób</p>
           </div>
         </div>
       </div>
