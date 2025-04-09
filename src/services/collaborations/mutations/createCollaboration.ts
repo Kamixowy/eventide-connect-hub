@@ -131,7 +131,6 @@ export const createCollaboration = async (
         throw sponsorError;
       }
       
-      // For organization, we'll create a direct conversation with the organization_id, not the user_id
       // First, create the conversation
       const { data: conversationData, error: conversationError } = await supabase
         .from('direct_conversations')
@@ -153,8 +152,16 @@ export const createCollaboration = async (
       const { error: participantsError } = await supabase
         .from('conversation_participants')
         .insert([
-          { conversation_id: conversationId, user_id: sponsorData.id, is_organization: false },
-          { conversation_id: conversationId, organization_id: collaboration.organization_id, is_organization: true }
+          { 
+            conversation_id: conversationId, 
+            user_id: sponsorData.id, 
+            is_organization: false 
+          },
+          { 
+            conversation_id: conversationId, 
+            organization_id: collaboration.organization_id, 
+            is_organization: true 
+          }
         ]);
       
       if (participantsError) {

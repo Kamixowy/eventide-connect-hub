@@ -102,7 +102,7 @@ export const fetchConversations = async (
         // Pobierz uczestników dla tej konwersacji
         const { data: participants, error: participantsError } = await supabase
           .from('conversation_participants')
-          .select('*')
+          .select('*, organization_id, is_organization')
           .eq('conversation_id', conversation.id);
 
         if (participantsError) {

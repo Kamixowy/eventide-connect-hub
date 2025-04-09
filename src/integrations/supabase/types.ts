@@ -108,18 +108,24 @@ export type Database = {
           conversation_id: string
           created_at: string
           id: string
+          is_organization: boolean | null
+          organization_id: string | null
           user_id: string
         }
         Insert: {
           conversation_id: string
           created_at?: string
           id?: string
+          is_organization?: boolean | null
+          organization_id?: string | null
           user_id: string
         }
         Update: {
           conversation_id?: string
           created_at?: string
           id?: string
+          is_organization?: boolean | null
+          organization_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -128,6 +134,13 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "direct_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_participants_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
