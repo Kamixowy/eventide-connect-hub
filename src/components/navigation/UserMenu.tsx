@@ -52,7 +52,7 @@ const UserMenu = () => {
               <DropdownMenuItem asChild>
                 <Link to="/profil" className="cursor-pointer w-full flex">
                   <Edit className="mr-2 h-4 w-4" />
-                  <span>Moja o</span>
+                  <span>Moja organizacja</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
