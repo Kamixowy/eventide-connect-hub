@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 const UserMenu = () => {
   const {
@@ -12,10 +14,36 @@ const UserMenu = () => {
     signOut
   } = useAuth();
   
+  const [profileData, setProfileData] = useState<any>(null);
   const isOrganization = user?.user_metadata?.userType === 'organization';
   const isSponsor = user?.user_metadata?.userType === 'sponsor';
   
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+            
+          if (error) throw error;
+          if (data) setProfileData(data);
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+        }
+      }
+    };
+    
+    fetchProfile();
+  }, [user]);
+  
   if (!user) return null;
+  
+  // Use avatar_url from profile if available, otherwise from user metadata
+  const avatarUrl = profileData?.avatar_url || user.user_metadata?.avatar_url || '';
+  const userName = user.user_metadata?.name || profileData?.name || 'Użytkownik';
   
   const handleSignOut = () => {
     // Call signOut directly without any event parameters
@@ -33,15 +61,15 @@ const UserMenu = () => {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={user.user_metadata?.avatar_url || ""} alt={user.user_metadata?.name || 'User'} />
-              <AvatarFallback>{user.user_metadata?.name?.substring(0, 2) || 'U'}</AvatarFallback>
+              <AvatarImage src={avatarUrl} alt={userName} />
+              <AvatarFallback>{userName?.substring(0, 2) || 'U'}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{user.user_metadata?.name || 'Użytkownik'}</p>
+              <p className="text-sm font-medium leading-none">{userName}</p>
               <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
               <p className="text-xs leading-none text-muted-foreground mt-1">
                 {user.user_metadata?.userType === 'organization' ? 'Organizacja' : 'Sponsor'}

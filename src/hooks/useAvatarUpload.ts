@@ -57,25 +57,8 @@ export const useAvatarUpload = ({
         return;
       }
       
-      // Implement real avatar upload to Supabase Storage
+      // Upload to Supabase Storage
       const fileName = `avatar-${user.id}-${Date.now()}.${file.name.split('.').pop()}`;
-      
-      // Check if 'avatars' bucket exists, if not create one (normally this should be done on backend setup)
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const avatarBucket = buckets?.find(bucket => bucket.name === 'avatars');
-      
-      if (!avatarBucket) {
-        // Create avatars bucket if it doesn't exist
-        const { error: bucketError } = await supabase.storage.createBucket('avatars', {
-          public: true,
-          fileSizeLimit: 2 * 1024 * 1024, // 2MB
-        });
-        
-        if (bucketError) {
-          console.error('Error creating bucket:', bucketError);
-          throw new Error('Nie można utworzyć miejsca na avatary');
-        }
-      }
       
       // Upload the file to storage
       const { error: uploadError, data } = await supabase.storage
@@ -108,6 +91,17 @@ export const useAvatarUpload = ({
         throw updateError;
       }
       
+      // Also update the profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
+      
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+        // Don't throw here, as the user metadata is already updated
+      }
+      
       toast({
         title: 'Avatar zaktualizowany',
         description: 'Twój avatar został pomyślnie zaktualizowany',
@@ -117,7 +111,7 @@ export const useAvatarUpload = ({
       console.error('Error uploading avatar:', error);
       toast({
         title: 'Błąd przesyłania',
-        description: 'Nie udało się przesłać avatara. Spróbuj ponownie później.',
+        description: error.message || 'Nie udało się przesłać avatara. Spróbuj ponownie później.',
         variant: 'destructive',
       });
     } finally {

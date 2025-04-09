@@ -28,7 +28,7 @@ const ProfileAvatar = ({ user, avatarUrl, setAvatarUrl }: ProfileAvatarProps) =>
       <label htmlFor="avatar-upload" className="cursor-pointer">
         <div className="flex items-center gap-2 bg-muted hover:bg-muted/80 px-3 py-2 rounded-md text-sm transition-colors">
           <Upload size={16} />
-          <span>Zmień avatar</span>
+          <span>{loading ? 'Przesyłanie...' : 'Zmień avatar'}</span>
         </div>
         <input
           id="avatar-upload"
