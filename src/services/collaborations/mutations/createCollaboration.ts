@@ -115,7 +115,7 @@ export const createCollaboration = async (
       }
     }
 
-    // Create a conversation between the sponsor and the organization
+    // Create a conversation related to the collaboration
     console.log("Creating conversation for collaboration:", collaborationId);
     
     try {
@@ -131,57 +131,49 @@ export const createCollaboration = async (
         throw sponsorError;
       }
       
-      // Fetch organization's owner user_id
-      const { data: orgData, error: orgError } = await supabase
-        .from('organizations')
-        .select('user_id')
-        .eq('id', collaboration.organization_id)
-        .single();
-      
-      if (orgError) {
-        console.error('Error fetching organization data:', orgError);
-        throw orgError;
-      }
-      
-      // Create conversation between sponsor and organization owner (not organization itself)
+      // For organization, we'll create a direct conversation with the organization_id, not the user_id
+      // First, create the conversation
       const { data: conversationData, error: conversationError } = await supabase
-        .rpc('create_conversation_and_participants', {
-          user_one: sponsorData.id,
-          user_two: orgData.user_id  // Use organization owner's user_id, not the organization_id
-        });
+        .from('direct_conversations')
+        .insert({
+          collaboration_id: collaborationId
+        })
+        .select()
+        .single();
       
       if (conversationError) {
         console.error('Error creating conversation:', conversationError);
         throw conversationError;
       }
       
-      if (conversationData?.length > 0) {
-        const conversationId = conversationData[0].conversation_id;
-        console.log("Created conversation with ID:", conversationId);
+      const conversationId = conversationData.id;
+      console.log("Created conversation with ID:", conversationId);
+      
+      // Now add participants - sponsor as a user, and organization as an organization entity
+      const { error: participantsError } = await supabase
+        .from('conversation_participants')
+        .insert([
+          { conversation_id: conversationId, user_id: sponsorData.id, is_organization: false },
+          { conversation_id: conversationId, organization_id: collaboration.organization_id, is_organization: true }
+        ]);
+      
+      if (participantsError) {
+        console.error('Error adding conversation participants:', participantsError);
+        throw participantsError;
+      }
+      
+      // If there's a message, send it
+      if (collaboration.message && collaboration.message.trim() !== '') {
+        const { error: messageError } = await supabase
+          .from('direct_messages')
+          .insert({
+            conversation_id: conversationId,
+            sender_id: collaboration.sponsor_id,
+            content: collaboration.message
+          });
         
-        // Update the conversation to link it with the collaboration
-        const { error: updateError } = await supabase
-          .from('direct_conversations')
-          .update({ collaboration_id: collaborationId })
-          .eq('id', conversationId);
-        
-        if (updateError) {
-          console.error('Error updating conversation with collaboration ID:', updateError);
-        }
-        
-        // If there's a message, send it
-        if (collaboration.message && collaboration.message.trim() !== '') {
-          const { error: messageError } = await supabase
-            .from('direct_messages')
-            .insert({
-              conversation_id: conversationId,
-              sender_id: collaboration.sponsor_id,
-              content: collaboration.message
-            });
-          
-          if (messageError) {
-            console.error('Error sending initial message:', messageError);
-          }
+        if (messageError) {
+          console.error('Error sending initial message:', messageError);
         }
       }
     } catch (error) {

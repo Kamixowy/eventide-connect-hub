@@ -1,105 +1,149 @@
 
-import { Conversation, ConversationParticipant } from '../types';
-import { supabase } from '@/integrations/supabase/client';
+import { PostgrestSingleResponse, SupabaseClient } from '@supabase/supabase-js';
+import { Conversation, ConversationParticipant, Message } from '../types';
 
-// Helper function to get the other participant in a conversation
-export const getRecipient = (conversation: Conversation, currentUserId: string): ConversationParticipant | undefined => {
-  return conversation.participants?.find(p => p.user_id !== currentUserId);
-};
+/**
+ * Get the recipient of a conversation (the other participant)
+ * 
+ * @param conversation - Conversation object
+ * @param currentUserId - Current user ID
+ * @returns The recipient participant
+ */
+export const getRecipient = (
+  conversation: Conversation,
+  currentUserId: string
+): ConversationParticipant | undefined => {
+  if (!conversation.participants) return undefined;
 
-// Helper function to enhance participants with profile and organization data
-export const enhanceParticipantsWithProfiles = async (
-  participants: any[], 
-  supabaseClient: any
-): Promise<ConversationParticipant[]> => {
-  try {
-    return await Promise.all(
-      participants.map(async (participant) => {
-        // Get profile for this participant
-        const { data: profile, error: profileError } = await supabaseClient
-          .from('profiles')
-          .select('id, name, avatar_url, user_type, email')
-          .eq('id', participant.user_id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-        }
-
-        // Get organization for this participant (if they are an organization)
-        const { data: organization, error: organizationError } = await supabaseClient
-          .from('organizations')
-          .select('id, name, logo_url, category')
-          .eq('user_id', participant.user_id)
-          .maybeSingle();
-
-        if (organizationError && organizationError.code !== 'PGRST116') {
-          console.error('Error fetching organization:', organizationError);
-        }
-
-        // Return enhanced participant
-        return {
-          id: participant.id,
-          conversation_id: participant.conversation_id,
-          user_id: participant.user_id,
-          profile: profile || undefined,
-          organization: organization || undefined
-        } as ConversationParticipant;
-      })
-    );
-  } catch (error) {
-    console.error('Error enhancing participants:', error);
-    return [];
+  // Check if we're an organization
+  const currentUserParticipant = conversation.participants.find(p => p.user_id === currentUserId);
+  
+  if (currentUserParticipant?.is_organization) {
+    // If current user is an organization, find the non-organization participant
+    return conversation.participants.find(p => !p.is_organization);
+  } else {
+    // If current user is a regular user, find either:
+    // 1. The organization participant (if any)
+    const orgParticipant = conversation.participants.find(p => p.is_organization);
+    if (orgParticipant) return orgParticipant;
+    
+    // 2. Or another user that is not the current user
+    return conversation.participants.find(p => p.user_id !== currentUserId);
   }
 };
 
-// Helper function to calculate unread count for a conversation
-export const getUnreadCount = async (
-  conversationId: string, 
-  userId: string,
-  supabaseClient: any
-): Promise<number> => {
-  try {
-    const { data: unreadMessages, error: unreadError } = await supabaseClient
-      .from('direct_messages')
-      .select('id', { count: 'exact' })
-      .eq('conversation_id', conversationId)
-      .eq('read_at', null)
-      .neq('sender_id', userId);
+/**
+ * Enhance conversation participants with profile and organization data
+ * 
+ * @param participants - Array of participants
+ * @param supabase - Supabase client
+ * @returns Enhanced participants with profile/organization data
+ */
+export const enhanceParticipantsWithProfiles = async (
+  participants: any[],
+  supabase: SupabaseClient
+): Promise<ConversationParticipant[]> => {
+  const enhancedParticipants = [];
 
-    if (unreadError) {
-      console.error('Error fetching unread count:', unreadError);
-      throw unreadError;
+  for (const participant of participants) {
+    let enhancedParticipant: ConversationParticipant = { ...participant };
+
+    if (participant.is_organization && participant.organization_id) {
+      // For organization participants, fetch organization data
+      const { data: organizationData, error: orgError } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('id', participant.organization_id)
+        .single();
+
+      if (!orgError && organizationData) {
+        enhancedParticipant.organization = organizationData;
+      }
+    } else if (participant.user_id) {
+      // For user participants, fetch profile data
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', participant.user_id)
+        .single();
+
+      if (!profileError && profileData) {
+        enhancedParticipant.profile = profileData;
+      }
     }
 
-    return unreadMessages ? unreadMessages.length : 0;
-  } catch (error) {
-    console.error('Error getting unread count:', error);
-    return 0;
+    enhancedParticipants.push(enhancedParticipant);
   }
+
+  return enhancedParticipants;
 };
 
-// Helper function to get the last message for a conversation
+/**
+ * Get the last message for a conversation
+ * 
+ * @param conversationId - Conversation ID
+ * @param supabase - Supabase client
+ * @returns The last message, if any
+ */
 export const getLastMessage = async (
   conversationId: string,
-  supabaseClient: any
-) => {
-  try {
-    const { data: messages, error: messagesError } = await supabaseClient
-      .from('direct_messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: false })
-      .limit(1);
+  supabase: SupabaseClient
+): Promise<Message | null> => {
+  const { data, error } = await supabase
+    .from('direct_messages')
+    .select('*')
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
 
-    if (messagesError) {
-      console.error('Error fetching last message:', messagesError);
-      throw messagesError;
+  if (error || !data) {
+    if (!error?.message.includes('No rows found')) {
+      console.error(`Error fetching last message for conversation ${conversationId}:`, error);
     }
-
-    return messages && messages.length > 0 ? messages[0] : null;
-  } catch (error) {
-    console.error('Error getting last message:', error);
     return null;
   }
+
+  return data as Message;
+};
+
+/**
+ * Get unread message count for a conversation
+ * 
+ * @param conversationId - Conversation ID
+ * @param userId - Current user ID
+ * @param supabase - Supabase client
+ * @returns Count of unread messages
+ */
+export const getUnreadCount = async (
+  conversationId: string,
+  userId: string,
+  supabase: SupabaseClient
+): Promise<number> => {
+  // First check if user is participating as themselves or as an organization
+  const { data: participantData } = await supabase
+    .from('conversation_participants')
+    .select('*')
+    .eq('conversation_id', conversationId)
+    .or(`user_id.eq.${userId},organization_id.in.(select id from organizations where user_id='${userId}')`)
+    .single();
+
+  if (!participantData) {
+    return 0; // Not a participant, so no unread messages
+  }
+
+  // Check unread messages based on whether the user participates as themselves or as their organization
+  const { count, error } = await supabase
+    .from('direct_messages')
+    .select('*', { count: 'exact', head: true })
+    .eq('conversation_id', conversationId)
+    .is('read_at', null)
+    .neq('sender_id', userId);
+
+  if (error) {
+    console.error(`Error fetching unread count for conversation ${conversationId}:`, error);
+    return 0;
+  }
+
+  return count || 0;
 };

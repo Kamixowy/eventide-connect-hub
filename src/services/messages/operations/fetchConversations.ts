@@ -25,22 +25,24 @@ export const fetchConversations = async (
     console.log('Typ użytkownika:', userType);
     console.log('ID organizacji:', organizationId);
 
-    // Pobierz ID konwersacji, w których użytkownik jest uczestnikiem
-    const { data: participations, error: participationsError } = await supabase
-      .from('conversation_participants')
-      .select('conversation_id')
-      .eq('user_id', user.id);
+    let conversationIds: string[] = [];
 
-    if (participationsError) {
-      console.error('Błąd podczas pobierania uczestnictw w konwersacjach:', participationsError);
-      return [];
-    }
-
-    // Jeśli użytkownik jest organizacją, pobierz również konwersacje powiązane z organizacją
-    let conversationIds: string[] = participations?.map(p => p.conversation_id) || [];
-    
+    // Różna logika pobierania konwersacji w zależności od typu użytkownika
     if (userType === 'organization' && organizationId) {
-      // Najpierw pobierz współprace związane z tą organizacją
+      // Dla organizacji, pobierz konwersacje, w których organizacja jest uczestnikiem
+      const { data: orgParticipations, error: orgPartError } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('organization_id', organizationId)
+        .eq('is_organization', true);
+
+      if (orgPartError) {
+        console.error('Błąd podczas pobierania uczestnictw organizacji w konwersacjach:', orgPartError);
+      } else if (orgParticipations) {
+        conversationIds = orgParticipations.map(p => p.conversation_id);
+      }
+      
+      // Dodatkowo, wciąż możemy mieć starsze konwersacje powiązane ze współpracami
       const { data: orgCollaborations } = await supabase
         .from('collaborations')
         .select('id')
@@ -49,17 +51,28 @@ export const fetchConversations = async (
       if (orgCollaborations && orgCollaborations.length > 0) {
         const collaborationIds = orgCollaborations.map(c => c.id);
         
-        // Następnie pobierz konwersacje powiązane z tymi współpracami
         const { data: orgConversations } = await supabase
           .from('direct_conversations')
           .select('id')
           .in('collaboration_id', collaborationIds);
         
         if (orgConversations && orgConversations.length > 0) {
-          // Dodaj te ID konwersacji do listy
           const orgIds = orgConversations.map(c => c.id);
           conversationIds = [...new Set([...conversationIds, ...orgIds])];
         }
+      }
+    } else {
+      // Dla sponsorów, pobierz konwersacje, w których użytkownik jest uczestnikiem
+      const { data: participations, error: participationsError } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', user.id)
+        .eq('is_organization', false);
+
+      if (participationsError) {
+        console.error('Błąd podczas pobierania uczestnictw w konwersacjach:', participationsError);
+      } else if (participations) {
+        conversationIds = participations.map(p => p.conversation_id);
       }
     }
 
