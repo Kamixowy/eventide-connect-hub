@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
@@ -23,6 +24,7 @@ const MyEvents = () => {
   const navigate = useNavigate();
   const { viewType, setViewPreference } = useViewPreference('my-events', 'grid');
 
+  // Przykładowe dane dla użytkowników demo
   const demoEvents = [
     {
       id: 'evt-1',
@@ -70,6 +72,7 @@ const MyEvents = () => {
     }
   ];
 
+  // Dostępne filtry dla strony
   const availableFilters = [
     { label: 'Planowane', value: 'Planowane' },
     { label: 'W przygotowaniu', value: 'W przygotowaniu' },
@@ -86,18 +89,17 @@ const MyEvents = () => {
     const fetchMyEvents = async () => {
       setLoading(true);
       
+      // Dla użytkowników demo zwracamy statyczne dane
       if (user && user.id.startsWith('demo-')) {
-        const markedDemoEvents = demoEvents.map(event => ({
-          ...event,
-          isCurrentUserOrg: true
-        }));
-        setEvents(markedDemoEvents);
+        setEvents(demoEvents);
         setLoading(false);
         return;
       }
       
+      // Dla prawdziwych użytkowników pobieramy dane z Supabase
       try {
         if (supabase && user) {
+          // First get the organization ID for this user
           const { data: orgData, error: orgError } = await supabase
             .from('organizations')
             .select('id')
@@ -122,6 +124,7 @@ const MyEvents = () => {
             return;
           }
           
+          // Then fetch events for this organization
           const { data: eventsData, error: eventsError } = await supabase
             .from('events')
             .select('*')
@@ -137,13 +140,7 @@ const MyEvents = () => {
             });
           } else {
             console.log('Events fetched:', eventsData);
-            
-            const formattedEvents = eventsData ? eventsData.map(event => ({
-              ...event,
-              isCurrentUserOrg: true
-            })) : [];
-            
-            setEvents(formattedEvents || []);
+            setEvents(eventsData || []);
           }
         }
       } catch (error) {
@@ -161,10 +158,12 @@ const MyEvents = () => {
     fetchMyEvents();
   }, [user, toast]);
 
+  // Handle event click to navigate to event details
   const handleEventClick = (eventId: string) => {
     navigate(`/wydarzenia/${eventId}`);
   };
 
+  // Sort events based on the current sort option
   const sortEvents = (events: any[]) => {
     return [...events].sort((a, b) => {
       switch (sortOption) {
@@ -186,13 +185,16 @@ const MyEvents = () => {
     });
   };
 
+  // Filter events based on search query and active filters
   const filterEvents = (events: any[]) => {
     return events.filter(event => {
+      // Search filter
       const matchesSearch = 
         event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (event.location && event.location.toLowerCase().includes(searchQuery.toLowerCase()));
       
+      // Category and status filters
       const matchesFilters = activeFilters.length === 0 || activeFilters.every(filter => {
         if (filter.startsWith('category:')) {
           const category = filter.replace('category:', '');
