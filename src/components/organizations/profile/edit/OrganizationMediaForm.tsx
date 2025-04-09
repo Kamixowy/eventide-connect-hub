@@ -17,6 +17,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useOrganizationStorage } from '@/hooks/useOrganizationStorage';
+
+// Type definition for social media object
+interface SocialMedia {
+  facebook?: string | null;
+  twitter?: string | null;
+  instagram?: string | null;
+  linkedin?: string | null;
+}
 
 const formSchema = z.object({
   logo_url: z.string().optional(),
@@ -27,6 +36,8 @@ const formSchema = z.object({
   linkedin: z.string().url().optional().or(z.literal('')),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 const OrganizationMediaForm = () => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -34,8 +45,13 @@ const OrganizationMediaForm = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [logoPreview, setLogoPreview] = useState('');
   const [coverPreview, setCoverPreview] = useState('');
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const { uploadLogo, uploadCover, uploading } = useOrganizationStorage();
+  
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       logo_url: '',
@@ -54,7 +70,7 @@ const OrganizationMediaForm = () => {
       try {
         const { data, error } = await supabase
           .from('organizations')
-          .select('logo_url, cover_url, social_media')
+          .select('id, logo_url, cover_url, social_media')
           .eq('user_id', user.id)
           .single();
 
@@ -64,7 +80,12 @@ const OrganizationMediaForm = () => {
         }
 
         if (data) {
-          const socialMedia = data.social_media || {};
+          // Safely parse social media data, ensuring it's an object
+          const socialMedia: SocialMedia = typeof data.social_media === 'object' && data.social_media !== null 
+            ? data.social_media as SocialMedia 
+            : {};
+          
+          console.log('Social Media:', socialMedia);
           
           form.reset({
             logo_url: data.logo_url || '',
@@ -75,6 +96,7 @@ const OrganizationMediaForm = () => {
             linkedin: socialMedia.linkedin || '',
           });
           
+          setOrganizationId(data.id);
           setLogoPreview(data.logo_url || '');
           setCoverPreview(data.cover_url || '');
         }
@@ -88,17 +110,53 @@ const OrganizationMediaForm = () => {
     fetchOrganizationData();
   }, [user, form]);
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!user) return;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'cover') => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      
+      if (type === 'logo') {
+        setLogoFile(file);
+        setLogoPreview(URL.createObjectURL(file));
+      } else {
+        setCoverFile(file);
+        setCoverPreview(URL.createObjectURL(file));
+      }
+    }
+  };
+
+  const onSubmit = async (values: FormValues) => {
+    if (!user || !organizationId) return;
     
     setLoading(true);
 
     try {
+      // Upload files if selected
+      let logoUrl = values.logo_url;
+      let coverUrl = values.cover_url;
+
+      if (logoFile && organizationId) {
+        try {
+          const result = await uploadLogo(logoFile, organizationId);
+          logoUrl = result.url;
+        } catch (error) {
+          console.error('Error uploading logo:', error);
+        }
+      }
+      
+      if (coverFile && organizationId) {
+        try {
+          const result = await uploadCover(coverFile, organizationId);
+          coverUrl = result.url;
+        } catch (error) {
+          console.error('Error uploading cover:', error);
+        }
+      }
+
       const { error } = await supabase
         .from('organizations')
         .update({
-          logo_url: values.logo_url,
-          cover_url: values.cover_url,
+          logo_url: logoUrl,
+          cover_url: coverUrl,
           social_media: {
             facebook: values.facebook || null,
             twitter: values.twitter || null,
@@ -106,7 +164,7 @@ const OrganizationMediaForm = () => {
             linkedin: values.linkedin || null,
           }
         })
-        .eq('user_id', user.id);
+        .eq('id', organizationId);
 
       if (error) {
         throw error;
@@ -142,16 +200,24 @@ const OrganizationMediaForm = () => {
               name="logo_url"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Logo (URL)</FormLabel>
+                  <FormLabel>Logo</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="URL do logo organizacji" 
-                      {...field}
-                      onChange={(e) => {
-                        field.onChange(e);
-                        setLogoPreview(e.target.value);
-                      }}
-                    />
+                    <div className="space-y-2">
+                      <Input 
+                        placeholder="URL do logo organizacji" 
+                        {...field}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          setLogoPreview(e.target.value);
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground">lub</p>
+                      <Input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => handleFileChange(e, 'logo')}
+                      />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -173,16 +239,24 @@ const OrganizationMediaForm = () => {
               name="cover_url"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Zdjęcie w tle (URL)</FormLabel>
+                  <FormLabel>Zdjęcie w tle</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="URL do zdjęcia w tle" 
-                      {...field}
-                      onChange={(e) => {
-                        field.onChange(e);
-                        setCoverPreview(e.target.value);
-                      }}
-                    />
+                    <div className="space-y-2">
+                      <Input 
+                        placeholder="URL do zdjęcia w tle" 
+                        {...field}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          setCoverPreview(e.target.value);
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground">lub</p>
+                      <Input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => handleFileChange(e, 'cover')}
+                      />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -263,8 +337,8 @@ const OrganizationMediaForm = () => {
           )}
         />
 
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Zapisywanie...' : 'Zapisz zmiany'}
+        <Button type="submit" disabled={loading || uploading}>
+          {loading || uploading ? 'Zapisywanie...' : 'Zapisz zmiany'}
         </Button>
       </form>
     </Form>
