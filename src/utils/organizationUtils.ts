@@ -35,13 +35,11 @@ export const processOrganizations = (
         return a.name.localeCompare(b.name);
       case 'title-desc':
         return b.name.localeCompare(a.name);
-      case 'date-asc': // Sort by creation date if available
-        return (a.created_at ? new Date(a.created_at).getTime() : 0) - 
-               (b.created_at ? new Date(b.created_at).getTime() : 0);
+      case 'date-asc': // Sort by followers count as fallback since created_at isn't available
+        return (a.followers || 0) - (b.followers || 0);
       case 'date-desc':
-        return (b.created_at ? new Date(b.created_at).getTime() : 0) - 
-               (a.created_at ? new Date(a.created_at).getTime() : 0);
-      case 'participants-asc': // Sort by followers count if available
+        return (b.followers || 0) - (a.followers || 0);
+      case 'participants-asc': 
         return (a.followers || 0) - (b.followers || 0);
       case 'participants-desc':
         return (b.followers || 0) - (a.followers || 0);
