@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Heart, MessageSquare, Edit, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -49,7 +48,6 @@ const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
     });
   };
 
-  // Function to generate social media buttons
   const renderSocialMediaButtons = () => {
     const socialLinks = [];
     
@@ -104,7 +102,7 @@ const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
           rel="noopener noreferrer"
           className="text-pink-600 hover:text-pink-800"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M17.5 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.51" x2="17.5" y1="6.5" y2="6.5"/></svg>
         </a>
       );
     }
@@ -120,11 +118,29 @@ const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
     );
   };
 
+  const getUserType = () => {
+    if (typeof window !== 'undefined') {
+      const user = localStorage.getItem('sb-user');
+      if (user) {
+        try {
+          const userData = JSON.parse(user);
+          return userData?.user_metadata?.userType || null;
+        } catch (e) {
+          return null;
+        }
+      }
+    }
+    return null;
+  };
+
+  const userType = getUserType();
+  const isOrganizationUser = userType === 'organization';
+
   return (
     <>
       <div className="relative h-64 md:h-80 w-full overflow-hidden bg-gray-100">
         <img 
-          src={organization.cover || 'https://images.unsplash.com/photo-1560252829-804f1aedf1be?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80'} 
+          src={organization.cover || 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80'} 
           alt={organization.name} 
           className="w-full h-full object-cover"
         />
@@ -150,18 +166,16 @@ const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
                   {organization.location}
                 </div>
                 
-                {/* Followers count */}
                 <div className="flex items-center text-sm text-muted-foreground mt-1">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                   {organization.followers || 0} obserwujących
                 </div>
                 
-                {/* Social media buttons */}
                 {renderSocialMediaButtons()}
               </div>
               
               <div className="mt-4 md:mt-0 flex gap-3">
-                {isLoggedIn && !isOwner && (
+                {isLoggedIn && !isOrganizationUser && !isOwner && (
                   <Button 
                     variant={following ? "default" : "outline"} 
                     onClick={handleFollow}
@@ -179,7 +193,7 @@ const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
                   </Button>
                 )}
                 
-                {isLoggedIn && !isOwner && (
+                {isLoggedIn && !isOrganizationUser && !isOwner && (
                   <Button 
                     variant="outline" 
                     onClick={handleContact}
