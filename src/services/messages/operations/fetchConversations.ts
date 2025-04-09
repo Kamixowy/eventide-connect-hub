@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Conversation } from '../types';
 import { enhanceParticipantsWithProfiles, getUnreadCount, getLastMessage } from '../utils/conversationUtils';

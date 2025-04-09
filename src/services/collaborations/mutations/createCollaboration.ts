@@ -162,14 +162,15 @@ export const createCollaboration = async (
         console.error('Error adding sponsor participant:', sponsorParticipantError);
       }
       
-      // Add organization participant (with NULL user_id now that our schema allows it)
+      // Add organization participant with NULL user_id
+      // We need to specify a null user_id explicitly to match the TypeScript type
       const { error: orgParticipantError } = await supabase
         .from('conversation_participants')
         .insert({
           conversation_id: conversationId, 
           organization_id: collaboration.organization_id, 
-          is_organization: true
-          // No user_id needed since we updated the schema
+          is_organization: true,
+          user_id: null // Explicitly set to null since TypeScript still expects this field
         });
       
       if (orgParticipantError) {
