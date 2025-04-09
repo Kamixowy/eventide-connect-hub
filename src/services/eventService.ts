@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { EventFormValues, SponsorshipOption } from '@/components/events/edit/EventEditSchema';
 
@@ -13,7 +12,6 @@ export const fetchEventById = async (id: string) => {
     throw eventError;
   }
   
-  // Fetch sponsorship options for the event
   const { data: sponsorshipData, error: sponsorshipError } = await supabase
     .from('sponsorship_options')
     .select('*')
@@ -23,7 +21,6 @@ export const fetchEventById = async (id: string) => {
     console.error('Error fetching sponsorship options:', sponsorshipError);
   }
   
-  // Fetch event posts using the "from" method with the any type to bypass type checking
   const { data: postsData, error: postsError } = await supabase
     .from('event_posts')
     .select('*')
@@ -34,7 +31,6 @@ export const fetchEventById = async (id: string) => {
     console.error('Error fetching event posts:', postsError);
   }
   
-  // Add sponsorship options and posts to the event data
   const fullEventData = {
     ...eventData,
     sponsorshipOptions: sponsorshipData || [],
@@ -44,7 +40,6 @@ export const fetchEventById = async (id: string) => {
   return fullEventData;
 };
 
-// Add function to update event status
 export const updateEventStatus = async (eventId: string, newStatus: string) => {
   const { error } = await supabase
     .from('events')
@@ -59,7 +54,6 @@ export const updateEventStatus = async (eventId: string, newStatus: string) => {
   return true;
 };
 
-// Add event post functions
 export const addEventPost = async (eventId: string, title: string, content: string) => {
   const { data, error } = await supabase
     .from('event_posts')
@@ -91,10 +85,8 @@ export const deleteEventPost = async (postId: string) => {
   return true;
 };
 
-// Add function to delete an event
 export const deleteEvent = async (eventId: string) => {
   try {
-    // First delete all sponsorship options
     const { error: sponsorshipError } = await supabase
       .from('sponsorship_options')
       .delete()
@@ -105,7 +97,6 @@ export const deleteEvent = async (eventId: string) => {
       throw sponsorshipError;
     }
     
-    // Then delete all event posts
     const { error: postsError } = await supabase
       .from('event_posts')
       .delete()
@@ -116,7 +107,6 @@ export const deleteEvent = async (eventId: string) => {
       throw postsError;
     }
     
-    // Finally delete the event
     const { error: eventError } = await supabase
       .from('events')
       .delete()
@@ -134,21 +124,18 @@ export const deleteEvent = async (eventId: string) => {
   }
 };
 
-// Update event with sponsorship options
 export const updateEvent = async (
   eventId: string, 
   data: EventFormValues, 
   imageUrl: string | null,
   sponsorshipOptions: SponsorshipOption[]
 ) => {
-  // Prepare social media data
   const socialMedia = {
     facebook: data.facebook || '',
     instagram: data.instagram || '',
     linkedin: data.linkedin || '',
   };
   
-  // Format audience and tags fields (if they are comma-separated strings)
   const audience = typeof data.audience === 'string' 
     ? data.audience.split(',').map(item => item.trim()).filter(Boolean)
     : data.audience || [];
@@ -157,12 +144,10 @@ export const updateEvent = async (
     ? data.tags.split(',').map(item => item.trim()).filter(Boolean)
     : data.tags || [];
   
-  // Convert expected_participants to number
   const expectedParticipants = data.expected_participants 
     ? parseInt(data.expected_participants, 10) 
     : null;
   
-  // Update event
   const { error: eventError } = await supabase
     .from('events')
     .update({
@@ -188,8 +173,6 @@ export const updateEvent = async (
     throw eventError;
   }
   
-  // Handle sponsorship options
-  // First delete existing options
   const { error: deleteError } = await supabase
     .from('sponsorship_options')
     .delete()
@@ -200,7 +183,6 @@ export const updateEvent = async (
     throw deleteError;
   }
   
-  // Add new sponsorship options if any
   if (sponsorshipOptions && sponsorshipOptions.length > 0) {
     const sponsorshipData = sponsorshipOptions.map(option => ({
       event_id: eventId,
@@ -222,4 +204,24 @@ export const updateEvent = async (
   }
   
   return true;
+};
+
+export const fetchRecentEvents = async (limit: number = 4) => {
+  try {
+    const { data, error } = await supabase
+      .from('events')
+      .select('*, organizations(name)')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+      
+    if (error) {
+      console.error('Error fetching recent events:', error);
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Error in fetchRecentEvents:', error);
+    throw error;
+  }
 };

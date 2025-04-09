@@ -1,126 +1,149 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Calendar, MapPin, Users, ArrowRight } from 'lucide-react';
+import { Search, Calendar, MapPin, Users, ArrowRight, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
 import CookieConsent from '@/components/common/CookieConsent';
-
-// Przykładowe dane wydarzeń
-const sampleEvents = [{
-  id: 1,
-  title: 'Bieg Charytatywny "Pomagamy Dzieciom"',
-  organization: 'Fundacja Szczęśliwe Dzieciństwo',
-  date: '15.06.2023',
-  location: 'Warszawa',
-  attendees: 350,
-  category: 'Charytatywne',
-  status: 'Planowane',
-  image: 'https://images.unsplash.com/photo-1533560904424-a0c61dc306fc?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
-}, {
-  id: 2,
-  title: 'Festiwal Kultury Studenckiej',
-  organization: 'Stowarzyszenie Młodych Artystów',
-  date: '22.07.2023 - 25.07.2023',
-  location: 'Kraków',
-  attendees: 1200,
-  category: 'Kulturalne',
-  status: 'W przygotowaniu',
-  image: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
-}, {
-  id: 3,
-  title: 'Eko Piknik Rodzinny',
-  organization: 'Fundacja Zielona Przyszłość',
-  date: '10.08.2023',
-  location: 'Gdańsk',
-  attendees: 500,
-  category: 'Ekologiczne',
-  status: 'Planowane',
-  image: 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
-}, {
-  id: 4,
-  title: 'Międzynarodowy Turniej Siatkówki',
-  organization: 'Stowarzyszenie Sportowe "Volley"',
-  date: '05.09.2023 - 08.09.2023',
-  location: 'Poznań',
-  attendees: 800,
-  category: 'Sportowe',
-  status: 'W przygotowaniu',
-  image: 'https://images.unsplash.com/photo-1588492069485-d05b56b2831d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80'
-}];
-
-// Komponent karty wydarzenia
-const EventCard = ({
-  event
-}: {
-  event: typeof sampleEvents[0];
-}) => {
-  return <Card className="overflow-hidden h-full transition-all hover:shadow-md">
-      <div className="relative h-48 w-full overflow-hidden">
-        <img src={event.image} alt={event.title} className="object-cover w-full h-full" />
-        <div className="absolute top-3 right-3 bg-white rounded-full px-3 py-1 text-xs font-medium">
-          {event.category}
-        </div>
-        <div className={`
-          absolute bottom-3 left-3 rounded-full px-3 py-1 text-xs font-medium
-          ${event.status === 'Planowane' ? 'bg-blue-100 text-blue-700' : event.status === 'W przygotowaniu' ? 'bg-yellow-100 text-yellow-700' : event.status === 'W trakcie' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}
-        `}>
-          {event.status}
-        </div>
-      </div>
-      <CardContent className="p-4">
-        <h3 className="font-semibold text-lg mb-2 line-clamp-1">{event.title}</h3>
-        <p className="text-muted-foreground text-sm mb-3 line-clamp-1">{event.organization}</p>
-        
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center text-sm">
-            <Calendar size={16} className="mr-2 text-ngo" /> 
-            <span>{event.date}</span>
-          </div>
-          <div className="flex items-center text-sm">
-            <MapPin size={16} className="mr-2 text-ngo" /> 
-            <span>{event.location}</span>
-          </div>
-          <div className="flex items-center text-sm">
-            <Users size={16} className="mr-2 text-ngo" /> 
-            <span>Przewidywana liczba uczestników: {event.attendees}</span>
-          </div>
-        </div>
-        
-        <Link to={`/wydarzenia/${event.id}`}>
-          <Button variant="outline" className="w-full">Zobacz szczegóły</Button>
-        </Link>
-      </CardContent>
-    </Card>;
-};
+import { useAuth } from '@/contexts/AuthContext';
+import EventCard from '@/components/common/EventCard';
+import { fetchRecentEvents } from '@/services/eventService';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  return <Layout>
-      {/* Hero Section */}
+  const [recentEvents, setRecentEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const getRecentEvents = async () => {
+      try {
+        setLoading(true);
+        const events = await fetchRecentEvents();
+        setRecentEvents(events);
+      } catch (error) {
+        console.error('Error fetching recent events:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getRecentEvents();
+  }, []);
+
+  const renderEventCards = () => {
+    if (loading) {
+      return Array(4).fill(0).map((_, index) => (
+        <Card key={`skeleton-${index}`} className="overflow-hidden">
+          <div className="h-48 w-full">
+            <Skeleton className="h-full w-full" />
+          </div>
+          <CardContent className="p-4">
+            <Skeleton className="h-6 w-3/4 mb-2" />
+            <Skeleton className="h-4 w-1/2 mb-4" />
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-3/4 mb-4" />
+            <Skeleton className="h-8 w-full" />
+          </CardContent>
+        </Card>
+      ));
+    }
+
+    if (recentEvents.length === 0) {
+      return (
+        <div className="col-span-full text-center py-10">
+          <p className="text-muted-foreground text-lg mb-4">Brak wydarzeń do wyświetlenia.</p>
+          {user && (
+            <Link to="/dodaj-wydarzenie">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Dodaj wydarzenie
+              </Button>
+            </Link>
+          )}
+        </div>
+      );
+    }
+
+    return recentEvents.map(event => (
+      <EventCard 
+        key={event.id} 
+        event={event} 
+        showOrgName={true}
+      />
+    ));
+  };
+
+  return (
+    <Layout>
+      {/* Hero Section - Different for logged in users */}
       <section className="relative py-20 bg-gradient-ngo overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-grid-white/[0.2]" />
         <div className="container relative text-center text-white z-10">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 max-w-3xl mx-auto">
-            Łączymy organizacje z potencjalnymi sponsorami wydarzeń
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto">
-            Stwórz profil, przedstaw swoje wydarzenie i znajdź idealnych partnerów
-          </p>
-          
-          <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 justify-center mb-12">
-            <Link to="/rejestracja?type=organization">
-              <Button size="lg" className="bg-white text-ngo hover:bg-gray-100">
-                Zarejestruj Organizację
-              </Button>
-            </Link>
-            <Link to="/rejestracja?type=sponsor">
-              <Button size="lg" className="bg-white text-ngo hover:bg-gray-100">
-                Zarejestruj się jako Sponsor
-              </Button>
-            </Link>
-          </div>
+          {!user ? (
+            // Content for non-authenticated users
+            <>
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 max-w-3xl mx-auto">
+                Łączymy organizacje z potencjalnymi sponsorami wydarzeń
+              </h1>
+              <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto">
+                Stwórz profil, przedstaw swoje wydarzenie i znajdź idealnych partnerów
+              </p>
+              
+              <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 justify-center mb-12">
+                <Link to="/rejestracja?type=organization">
+                  <Button size="lg" className="bg-white text-ngo hover:bg-gray-100">
+                    Zarejestruj Organizację
+                  </Button>
+                </Link>
+                <Link to="/rejestracja?type=sponsor">
+                  <Button size="lg" className="bg-white text-ngo hover:bg-gray-100">
+                    Zarejestruj się jako Sponsor
+                  </Button>
+                </Link>
+              </div>
+            </>
+          ) : (
+            // Content for authenticated users
+            <>
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 max-w-3xl mx-auto">
+                Witaj, {user.user_metadata?.name || 'użytkowniku'}!
+              </h1>
+              <p className="text-xl md:text-2xl mb-8 max-w-2xl mx-auto">
+                {user.user_metadata?.userType === 'organization' 
+                  ? 'Zarządzaj swoimi wydarzeniami i znajdź sponsorów'
+                  : 'Przeglądaj wydarzenia i wspieraj organizacje'}
+              </p>
+              
+              <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 justify-center mb-12">
+                {user.user_metadata?.userType === 'organization' ? (
+                  <Link to="/dodaj-wydarzenie">
+                    <Button size="lg" className="bg-white text-ngo hover:bg-gray-100">
+                      <Plus className="mr-2 h-5 w-5" />
+                      Dodaj Nowe Wydarzenie
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link to="/wydarzenia">
+                    <Button size="lg" className="bg-white text-ngo hover:bg-gray-100">
+                      Przeglądaj Wydarzenia
+                    </Button>
+                  </Link>
+                )}
+                <Link to={user.user_metadata?.userType === 'organization' ? "/moje-wydarzenia" : "/moje-wsparcia"}>
+                  <Button size="lg" className="bg-white text-ngo hover:bg-gray-100">
+                    {user.user_metadata?.userType === 'organization' 
+                      ? 'Moje Wydarzenia' 
+                      : 'Moje Wsparcia'}
+                  </Button>
+                </Link>
+              </div>
+            </>
+          )}
           
           <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-3 flex items-center">
             <Input placeholder="Szukaj wydarzeń, organizacji..." className="border-0 focus-visible:ring-0 flex-grow" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
@@ -169,13 +192,12 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Events Section */}
+      {/* Recent Events Section */}
       <section className="py-16 bg-gray-50">
         <div className="container">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Przykładowe wydarzenia
-            </h2>
+              <h2 className="text-3xl font-bold mb-2">Ostatnie wydarzenia</h2>
               <p className="text-muted-foreground">
                 Odkryj najnowsze wydarzenia czekające na sponsorów
               </p>
@@ -188,39 +210,42 @@ const Index = () => {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {sampleEvents.map(event => <EventCard key={event.id} event={event} />)}
+            {renderEventCards()}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-ngo text-white">
-        <div className="container text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 max-w-3xl mx-auto">
-            Gotowy, aby zaprezentować swoje wydarzenie lub znaleźć nowe możliwości współpracy?
-          </h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Dołącz do N-GO już dziś i zacznij budować wartościowe partnerstwa
-          </p>
-          
-          <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 justify-center">
-            <Link to="/rejestracja?type=organization">
-              <Button size="lg" className="bg-white text-ngo hover:bg-gray-100">
-                Zarejestruj Organizację
-              </Button>
-            </Link>
-            <Link to="/rejestracja?type=sponsor">
-              <Button size="lg" className="bg-white text-ngo hover:bg-gray-100">
-                Zarejestruj się jako Sponsor
-              </Button>
-            </Link>
+      {!user && (
+        <section className="py-20 bg-gradient-ngo text-white">
+          <div className="container text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 max-w-3xl mx-auto">
+              Gotowy, aby zaprezentować swoje wydarzenie lub znaleźć nowe możliwości współpracy?
+            </h2>
+            <p className="text-xl mb-8 max-w-2xl mx-auto">
+              Dołącz do N-GO już dziś i zacznij budować wartościowe partnerstwa
+            </p>
+            
+            <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 justify-center">
+              <Link to="/rejestracja?type=organization">
+                <Button size="lg" className="bg-white text-ngo hover:bg-gray-100">
+                  Zarejestruj Organizację
+                </Button>
+              </Link>
+              <Link to="/rejestracja?type=sponsor">
+                <Button size="lg" className="bg-white text-ngo hover:bg-gray-100">
+                  Zarejestruj się jako Sponsor
+                </Button>
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Add Cookie Consent */}
       <CookieConsent />
-    </Layout>;
+    </Layout>
+  );
 };
 
 export default Index;
