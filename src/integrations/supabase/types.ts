@@ -110,7 +110,7 @@ export type Database = {
           id: string
           is_organization: boolean | null
           organization_id: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           conversation_id: string
@@ -118,7 +118,7 @@ export type Database = {
           id?: string
           is_organization?: boolean | null
           organization_id?: string | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           conversation_id?: string
@@ -126,7 +126,7 @@ export type Database = {
           id?: string
           is_organization?: boolean | null
           organization_id?: string | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {

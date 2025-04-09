@@ -120,19 +120,19 @@ export const getUnreadCount = async (
   userId: string,
   supabase: SupabaseClient
 ): Promise<number> => {
-  // First check if user is participating directly or via an organization
+  // First check if user is participating as themselves or as an organization
   const { data: participantData } = await supabase
     .from('conversation_participants')
     .select('*')
     .eq('conversation_id', conversationId)
     .or(`user_id.eq.${userId},organization_id.in.(select id from organizations where user_id='${userId}')`)
-    .maybeSingle();
+    .single();
 
   if (!participantData) {
     return 0; // Not a participant, so no unread messages
   }
 
-  // Check unread messages
+  // Check unread messages based on whether the user participates as themselves or as their organization
   const { count, error } = await supabase
     .from('direct_messages')
     .select('*', { count: 'exact', head: true })

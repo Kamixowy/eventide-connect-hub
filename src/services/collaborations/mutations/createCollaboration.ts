@@ -149,7 +149,7 @@ export const createCollaboration = async (
       console.log("Created conversation with ID:", conversationId);
       
       // Now add participants - sponsor as a user, and organization as an organization entity
-      // Add sponsor participant
+      // First insert the sponsor participant
       const { error: sponsorParticipantError } = await supabase
         .from('conversation_participants')
         .insert({
@@ -162,15 +162,15 @@ export const createCollaboration = async (
         console.error('Error adding sponsor participant:', sponsorParticipantError);
       }
       
-      // Add organization participant with NULL user_id
-      // We need to specify a null user_id explicitly to match the TypeScript type
+      // Then insert the organization participant
       const { error: orgParticipantError } = await supabase
         .from('conversation_participants')
         .insert({
           conversation_id: conversationId, 
           organization_id: collaboration.organization_id, 
           is_organization: true,
-          user_id: null // Explicitly set to null since TypeScript still expects this field
+          // We need to provide user_id as it's a required field
+          user_id: '' // Empty string as placeholder since we're using organization_id
         });
       
       if (orgParticipantError) {
