@@ -40,16 +40,6 @@ const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
   const { toast } = useToast();
   const { isOrganizationUser } = useOrganizationHeader();
 
-  const handleFollow = () => {
-    setFollowing(!following);
-    toast({
-      title: following ? "Przestałeś obserwować" : "Obserwujesz organizację",
-      description: following 
-        ? "Nie będziesz już otrzymywać powiadomień o nowościach" 
-        : "Będziesz otrzymywać powiadomienia o nowych wydarzeniach",
-    });
-  };
-
   return (
     <>
       <CoverImage 
@@ -68,12 +58,7 @@ const OrganizationHeader: React.FC<OrganizationHeaderProps> = ({
             <ProfileInfo organization={organization} />
             
             <ActionButtons 
-              isLoggedIn={isLoggedIn}
               isOwner={isOwner}
-              isOrganizationUser={isOrganizationUser}
-              following={following}
-              onFollowClick={handleFollow}
-              onContactClick={handleContact}
             />
           </div>
         </div>
