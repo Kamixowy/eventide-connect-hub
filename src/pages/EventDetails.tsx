@@ -207,7 +207,7 @@ const EventDetails = () => {
           avatar: eventData.organizations?.logo_url || null,
           userId: eventData.organizations?.user_id
         },
-        date: new Date(eventData.start_date).toLocaleDateString('pl-PL'),
+        date: new Date(eventData.start_date).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' }),
         start_date: eventData.start_date,
         end_date: eventData.end_date,
         location: eventData.location || 'Lokalizacja nieznana',

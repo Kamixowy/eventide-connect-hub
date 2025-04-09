@@ -8,9 +8,15 @@ export const formatDate = (date: string | Date) => {
   return format(dateObject, 'd MMMM yyyy', { locale: pl });
 };
 
+// Format date with short format (dd.mm.yyyy)
+export const formatShortDate = (date: string | Date) => {
+  const dateObject = date instanceof Date ? date : new Date(date);
+  return format(dateObject, 'dd.MM.yyyy', { locale: pl });
+};
+
 // Format date range for display (with optional end date)
 export const formatDateRange = (startDate: string | Date, endDate?: string | Date | null) => {
-  const start = formatDate(startDate);
+  const start = formatShortDate(startDate);
   
   // If no end date or end date is the same as start date, just return the start date
   if (!endDate) return start;
@@ -24,7 +30,7 @@ export const formatDateRange = (startDate: string | Date, endDate?: string | Dat
   }
   
   // Different days - show range
-  const end = formatDate(endObj);
+  const end = formatShortDate(endObj);
   return `${start} - ${end}`;
 };
 
