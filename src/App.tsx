@@ -15,6 +15,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Organizations from './pages/Organizations';
 import OrganizationProfile from './pages/OrganizationProfile';
+import OrganizationProfileEdit from './pages/OrganizationProfileEdit';
 import EventsList from './pages/EventsList';
 import EventDetails from './pages/EventDetails';
 import AddEvent from './pages/AddEvent';
@@ -48,6 +49,7 @@ function App() {
               <Route path="/rejestracja" element={<Register />} />
               <Route path="/organizacje" element={<Organizations />} />
               <Route path="/organizacje/:id" element={<OrganizationProfile />} />
+              <Route path="/profil-organizacji" element={<OrganizationProfileEdit />} />
               <Route path="/wydarzenia" element={<EventsList />} />
               <Route path="/wydarzenia/:id" element={<EventDetails />} />
               <Route path="/dodaj-wydarzenie" element={<AddEvent />} />
