@@ -33,6 +33,7 @@ import { updateEventStatus } from '@/services/eventService';
 import EventPostForm from '@/components/events/posts/EventPostForm';
 import EventPostsList from '@/components/events/posts/EventPostsList';
 import SponsorshipTooltip from '@/components/events/SponsorshipTooltip';
+import { formatDateRange } from '@/utils/dateUtils';
 
 const statusOptions = [
   "Planowane",
@@ -207,6 +208,8 @@ const EventDetails = () => {
           userId: eventData.organizations?.user_id
         },
         date: new Date(eventData.start_date).toLocaleDateString('pl-PL'),
+        start_date: eventData.start_date,
+        end_date: eventData.end_date,
         location: eventData.location || 'Lokalizacja nieznana',
         detailed_location: eventData.detailed_location,
         attendees: eventData.expected_participants || 0,
@@ -409,7 +412,9 @@ const EventDetails = () => {
                 <Calendar size={24} className="mr-3 text-ngo" /> 
                 <div>
                   <p className="text-sm text-muted-foreground">Data</p>
-                  <p className="font-medium">{event.date}</p>
+                  <p className="font-medium">
+                    {event.end_date ? formatDateRange(event.start_date, event.end_date) : event.date}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center border rounded-lg p-4">
