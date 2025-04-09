@@ -1,31 +1,21 @@
-
 import { Link } from 'react-router-dom';
 import { LogOut, Calendar, MessageSquare, UserCircle, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
-
 const UserMenu = () => {
-  const { user, signOut } = useAuth();
+  const {
+    user,
+    signOut
+  } = useAuth();
   const isOrganization = user?.user_metadata?.userType === 'organization';
-  
   if (!user) return null;
-  
   const handleSignOut = () => {
     // Call signOut directly without any event parameters
     signOut();
   };
-  
-  return (
-    <div className="flex items-center gap-2">
+  return <div className="flex items-center gap-2">
       <Link to="/wiadomosci" className="hidden md:inline-flex">
         <Button variant="ghost" size="icon">
           <MessageSquare className="h-5 w-5" />
@@ -58,12 +48,11 @@ const UserMenu = () => {
               <span>Mój profil</span>
             </Link>
           </DropdownMenuItem>
-          {isOrganization && (
-            <>
+          {isOrganization && <>
               <DropdownMenuItem asChild>
                 <Link to="/profil" className="cursor-pointer w-full flex">
                   <Edit className="mr-2 h-4 w-4" />
-                  <span>Moja edycja</span>
+                  <span>Moja o</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
@@ -72,8 +61,7 @@ const UserMenu = () => {
                   <span>Moje wydarzenia</span>
                 </Link>
               </DropdownMenuItem>
-            </>
-          )}
+            </>}
           <DropdownMenuItem asChild>
             <Link to="/wiadomosci" className="cursor-pointer w-full flex md:hidden">
               <MessageSquare className="mr-2 h-4 w-4" />
@@ -87,8 +75,6 @@ const UserMenu = () => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </div>
-  );
+    </div>;
 };
-
 export default UserMenu;
