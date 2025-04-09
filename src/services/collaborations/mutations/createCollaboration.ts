@@ -149,24 +149,32 @@ export const createCollaboration = async (
       console.log("Created conversation with ID:", conversationId);
       
       // Now add participants - sponsor as a user, and organization as an organization entity
-      const { error: participantsError } = await supabase
+      // First insert the sponsor participant
+      const { error: sponsorParticipantError } = await supabase
         .from('conversation_participants')
-        .insert([
-          { 
-            conversation_id: conversationId, 
-            user_id: sponsorData.id, 
-            is_organization: false 
-          },
-          { 
-            conversation_id: conversationId, 
-            organization_id: collaboration.organization_id, 
-            is_organization: true 
-          }
-        ]);
+        .insert({
+          conversation_id: conversationId, 
+          user_id: sponsorData.id, 
+          is_organization: false
+        });
       
-      if (participantsError) {
-        console.error('Error adding conversation participants:', participantsError);
-        throw participantsError;
+      if (sponsorParticipantError) {
+        console.error('Error adding sponsor participant:', sponsorParticipantError);
+      }
+      
+      // Then insert the organization participant
+      const { error: orgParticipantError } = await supabase
+        .from('conversation_participants')
+        .insert({
+          conversation_id: conversationId, 
+          organization_id: collaboration.organization_id, 
+          is_organization: true,
+          // We need to provide user_id as it's a required field
+          user_id: '' // Empty string as placeholder since we're using organization_id
+        });
+      
+      if (orgParticipantError) {
+        console.error('Error adding organization participant:', orgParticipantError);
       }
       
       // If there's a message, send it
