@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent } from '@/components/ui/card';
+import CookieConsent from '@/components/common/CookieConsent';
 
 // Przykładowe dane wydarzeń
 const sampleEvents = [{
@@ -93,6 +94,7 @@ const EventCard = ({
       </CardContent>
     </Card>;
 };
+
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   return <Layout>
@@ -215,6 +217,10 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Add Cookie Consent */}
+      <CookieConsent />
     </Layout>;
 };
+
 export default Index;

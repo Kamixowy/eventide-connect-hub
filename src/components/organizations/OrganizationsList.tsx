@@ -1,250 +1,201 @@
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { Button } from '@/components/ui/button';
-import { Grid, List } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import type { SortOption, FilterOption } from '@/components/common/EventsFilter';
+import type { OrganizationCardProps } from './OrganizationCard';
 
-// Przykładowe dane dla użytkowników demo
+// Przykładowe dane dla demonstracji
 const demoOrganizations = [
   {
     id: 'org-1',
-    name: 'Demo Organizacja',
-    description: 'To jest przykładowa organizacja demo, stworzona automatycznie w systemie.',
+    name: 'Fundacja Szczęśliwe Dzieciństwo',
+    description: 'Wspieramy dzieci w trudnej sytuacji życiowej, organizując różne formy pomocy.',
     logo_url: null,
-    cover_url: null,
-    event_count: 4,
-    category: 'Edukacja'
+    category: 'Charytatywne',
+    followers: 120
   },
   {
     id: 'org-2',
-    name: 'Fundacja Pomocy Dzieciom',
-    description: 'Wspieramy dzieci w trudnych sytuacjach życiowych, organizując wydarzenia charytatywne.',
+    name: 'Stowarzyszenie Młodych Artystów',
+    description: 'Promujemy młode talenty i organizujemy warsztaty artystyczne dla dzieci i młodzieży.',
     logo_url: null,
-    cover_url: null,
-    event_count: 3,
-    category: 'Pomoc społeczna'
+    category: 'Kulturalne',
+    followers: 85
   },
   {
     id: 'org-3',
-    name: 'Stowarzyszenie Kulturalne "Artystyczna Przystań"',
-    description: 'Promocja kultury i sztuki poprzez organizację wystaw, koncertów i warsztatów.',
+    name: 'Fundacja Zielona Przyszłość',
+    description: 'Działamy na rzecz ochrony środowiska i edukacji ekologicznej społeczeństwa.',
     logo_url: null,
-    cover_url: null,
-    event_count: 5,
-    category: 'Kultura'
+    category: 'Ekologiczne',
+    followers: 210
+  },
+  {
+    id: 'org-4',
+    name: 'Stowarzyszenie Sportowe "Volley"',
+    description: 'Promujemy aktywność fizyczną wśród młodzieży i organizujemy turnieje sportowe.',
+    logo_url: null,
+    category: 'Sportowe',
+    followers: 150
   }
 ];
 
-// Helper function to extract first sentence
-const getFirstSentence = (text: string): string => {
-  if (!text) return '';
-  const firstSentence = text.split(/[.!?][\s\n]/)[0];
-  return firstSentence + (firstSentence.endsWith('.') ? '' : '.');
-};
+interface OrganizationsListProps {
+  searchQuery?: string;
+  sortOption?: SortOption;
+  activeFilters?: FilterOption[];
+  viewType?: 'grid' | 'list';
+  OrganizationCardComponent: React.ComponentType<OrganizationCardProps>;
+  OrganizationListItemComponent: React.ComponentType<OrganizationCardProps>;
+}
 
-export const OrganizationsList = () => {
+export const OrganizationsList = ({
+  searchQuery = '',
+  sortOption = 'title-asc',
+  activeFilters = [],
+  viewType = 'grid',
+  OrganizationCardComponent,
+  OrganizationListItemComponent
+}: OrganizationsListProps) => {
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { user } = useAuth();
-  
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
   useEffect(() => {
     const fetchOrganizations = async () => {
       setLoading(true);
       
-      // Dla użytkowników demo zwracamy statyczne dane
+      // Demo user or testing environment
       if (user && user.id.startsWith('demo-')) {
         setOrganizations(demoOrganizations);
         setLoading(false);
         return;
       }
       
-      // Dla prawdziwych użytkowników pobieramy dane z Supabase
       try {
-        if (supabase) {
-          const { data, error } = await supabase
-            .from('organizations')
-            .select('*, events(count)')
-            .order('name');
-            
-          if (error) throw error;
-          
-          setOrganizations(data.map(org => ({
-            ...org,
-            event_count: org.events?.[0]?.count || 0
-          })));
-        }
+        const { data, error } = await supabase
+          .from('organizations')
+          .select('*')
+          .order('name');
+        
+        if (error) throw error;
+        
+        setOrganizations(data.length > 0 ? data : demoOrganizations);
       } catch (error) {
         console.error('Error fetching organizations:', error);
+        toast({
+          title: "Błąd",
+          description: "Nie udało się pobrać listy organizacji. Wyświetlamy przykładowe dane.",
+          variant: "destructive"
+        });
+        setOrganizations(demoOrganizations);
       } finally {
         setLoading(false);
       }
     };
     
     fetchOrganizations();
-  }, [user]);
-  
+  }, [user, toast]);
+
+  // Handle organization click
+  const handleOrganizationClick = (orgId: string) => {
+    navigate(`/organizacje/${orgId}`);
+  };
+
+  // Filter and sort organizations
+  const processOrganizations = () => {
+    // Filter by search query
+    let filteredOrgs = organizations.filter(org => 
+      org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (org.description && org.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (org.category && org.category.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+    
+    // Apply category filters
+    if (activeFilters.length > 0) {
+      filteredOrgs = filteredOrgs.filter(org => 
+        activeFilters.some(filter => {
+          if (filter.startsWith('category:')) {
+            const category = filter.replace('category:', '');
+            return org.category === category;
+          }
+          return true;
+        })
+      );
+    }
+    
+    // Sort organizations
+    return [...filteredOrgs].sort((a, b) => {
+      switch (sortOption) {
+        case 'title-asc':
+          return a.name.localeCompare(b.name);
+        case 'title-desc':
+          return b.name.localeCompare(a.name);
+        case 'date-asc': // Sort by creation date if available
+          return (a.created_at ? new Date(a.created_at).getTime() : 0) - 
+                 (b.created_at ? new Date(b.created_at).getTime() : 0);
+        case 'date-desc':
+          return (b.created_at ? new Date(b.created_at).getTime() : 0) - 
+                 (a.created_at ? new Date(a.created_at).getTime() : 0);
+        case 'participants-asc': // Sort by followers count if available
+          return (a.followers || 0) - (b.followers || 0);
+        case 'participants-desc':
+          return (b.followers || 0) - (a.followers || 0);
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
+  };
+
+  const processedOrganizations = processOrganizations();
+
   if (loading) {
     return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <Card key={i} className="overflow-hidden">
-            <div className="h-40 w-full">
-              <Skeleton className="h-full w-full" />
-            </div>
-            <CardContent className="p-6">
-              <div className="flex items-center mb-4">
-                <Skeleton className="h-12 w-12 rounded-full mr-3" />
-                <Skeleton className="h-6 w-32" />
-              </div>
-              <Skeleton className="h-4 w-full mb-2" />
-              <Skeleton className="h-4 w-3/4 mb-4" />
-              <Skeleton className="h-6 w-24" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Ładowanie organizacji...</p>
       </div>
     );
   }
-  
-  if (organizations.length === 0) {
+
+  if (processedOrganizations.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Nie znaleziono organizacji.</p>
+        <h3 className="text-xl font-semibold mb-2">Nie znaleziono żadnych organizacji</h3>
+        <p className="text-muted-foreground">
+          Spróbuj zmienić kryteria wyszukiwania lub wróć później
+        </p>
       </div>
     );
   }
 
-  const toggleViewMode = () => {
-    setViewMode(viewMode === 'grid' ? 'list' : 'grid');
-  };
-  
-  return (
-    <>
-      <div className="flex justify-end mb-4">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={toggleViewMode}
-          className="flex items-center"
+  return viewType === 'grid' ? (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {processedOrganizations.map((org) => (
+        <div 
+          key={org.id} 
+          onClick={() => handleOrganizationClick(org.id)}
+          className="cursor-pointer"
         >
-          {viewMode === 'grid' ? (
-            <>
-              <List className="h-4 w-4 mr-2" /> Widok listy
-            </>
-          ) : (
-            <>
-              <Grid className="h-4 w-4 mr-2" /> Widok siatki
-            </>
-          )}
-        </Button>
-      </div>
-
-      <div className={viewMode === 'grid' 
-        ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
-        : "space-y-4"
-      }>
-        {organizations.map((org) => (
-          <Link to={`/organizacje/${org.id}`} key={org.id}>
-            <Card className={`h-full transition-all hover:shadow-md ${viewMode === 'list' ? 'overflow-hidden' : ''}`}>
-              {viewMode === 'grid' ? (
-                <>
-                  <div className="relative h-40 w-full overflow-hidden bg-gray-100">
-                    {org.cover_url ? (
-                      <img 
-                        src={org.cover_url} 
-                        alt={org.name} 
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.onerror = null;
-                          target.src = '/placeholder.svg';
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-ngo/10 flex items-center justify-center">
-                        <span className="text-ngo/30 text-xl font-semibold">{org.name}</span>
-                      </div>
-                    )}
-                    {org.category && (
-                      <div className="absolute top-3 right-3">
-                        <Badge className="bg-ngo text-white">{org.category}</Badge>
-                      </div>
-                    )}
-                  </div>
-                  <CardContent className="p-6">
-                    <div className="flex items-center mb-4">
-                      <Avatar className="h-12 w-12 mr-3">
-                        <AvatarImage src={org.logo_url} alt={org.name} />
-                        <AvatarFallback className="bg-ngo/20 text-ngo">
-                          {org.name.substring(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <h3 className="font-semibold text-lg">{org.name}</h3>
-                    </div>
-                    
-                    <p className="text-muted-foreground mb-4 line-clamp-2">
-                      {getFirstSentence(org.description) || 'Brak opisu'}
-                    </p>
-                    
-                    <div className="flex justify-between items-center">
-                      <Badge variant="outline" className="bg-ngo/10">
-                        {org.event_count} wydarzeń
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </>
-              ) : (
-                <div className="flex p-0 h-32">
-                  <div className="w-1/3 h-full overflow-hidden bg-gray-100">
-                    {org.cover_url ? (
-                      <img 
-                        src={org.cover_url} 
-                        alt={org.name} 
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.onerror = null;
-                          target.src = '/placeholder.svg';
-                        }}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-ngo/10 flex items-center justify-center">
-                        <Avatar className="h-16 w-16">
-                          <AvatarImage src={org.logo_url} alt={org.name} />
-                          <AvatarFallback className="bg-ngo/20 text-ngo text-xl">
-                            {org.name.substring(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                      </div>
-                    )}
-                  </div>
-                  <div className="w-2/3 p-4">
-                    <div className="flex justify-between mb-1">
-                      <h3 className="font-semibold text-lg">{org.name}</h3>
-                      {org.category && (
-                        <Badge className="bg-ngo text-white">{org.category}</Badge>
-                      )}
-                    </div>
-                    <p className="text-muted-foreground text-sm mb-2 line-clamp-2">
-                      {getFirstSentence(org.description) || 'Brak opisu'}
-                    </p>
-                    <Badge variant="outline" className="bg-ngo/10 mt-auto">
-                      {org.event_count} wydarzeń
-                    </Badge>
-                  </div>
-                </div>
-              )}
-            </Card>
-          </Link>
-        ))}
-      </div>
-    </>
+          <OrganizationCardComponent organization={org} />
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="flex flex-col gap-4">
+      {processedOrganizations.map((org) => (
+        <div 
+          key={org.id} 
+          onClick={() => handleOrganizationClick(org.id)}
+          className="cursor-pointer"
+        >
+          <OrganizationListItemComponent organization={org} />
+        </div>
+      ))}
+    </div>
   );
 };

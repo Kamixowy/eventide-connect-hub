@@ -1,13 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Plus, MessageSquare } from 'lucide-react';
+import { Plus, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { format, isPast } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase';
+import EventCard from '@/components/common/EventCard';
+import EventStatus from '@/components/common/EventStatus';
 
 interface Event {
   id: string;
@@ -16,6 +17,8 @@ interface Event {
   image: string;
   raw_date?: string;
   post_count?: number;
+  status?: string;
+  category?: string;
 }
 
 interface EventsTabProps {
@@ -57,7 +60,7 @@ const EventsTab: React.FC<EventsTabProps> = ({ organization, isOwner }) => {
         // Pobieramy wydarzenia z Supabase dla tej organizacji
         const { data: eventsData, error } = await supabase
           .from('events')
-          .select('id, title, start_date, image_url, description')
+          .select('id, title, start_date, image_url, description, status, category')
           .eq('organization_id', organization.id)
           .order('start_date', { ascending: true });
 
@@ -89,7 +92,9 @@ const EventsTab: React.FC<EventsTabProps> = ({ organization, isOwner }) => {
             date: formatEventDate(event.start_date),
             image: event.image_url || '/placeholder.svg',
             raw_date: event.start_date,
-            post_count: postCount || 0
+            post_count: postCount || 0,
+            status: event.status || 'Planowane',
+            category: event.category
           };
 
           // Sprawdzenie czy wydarzenie jest przeszłe czy przyszłe
@@ -112,6 +117,18 @@ const EventsTab: React.FC<EventsTabProps> = ({ organization, isOwner }) => {
     fetchOrganizationEvents();
   }, [organization.id]);
 
+  const convertEventForCard = (event: Event) => {
+    return {
+      id: event.id,
+      title: event.title,
+      description: "",
+      start_date: event.raw_date || new Date().toISOString(),
+      image_url: event.image,
+      status: event.status,
+      category: event.category
+    };
+  };
+
   return (
     <>
       <div className="mb-8">
@@ -122,36 +139,8 @@ const EventsTab: React.FC<EventsTabProps> = ({ organization, isOwner }) => {
         ) : upcomingEvents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {upcomingEvents.map((event: Event) => (
-              <Link to={`/wydarzenia/${event.id}`} key={event.id}>
-                <Card className="overflow-hidden h-full transition-all hover:shadow-md">
-                  <div className="relative h-48 w-full overflow-hidden">
-                    <img 
-                      src={event.image} 
-                      alt={event.title} 
-                      className="object-cover w-full h-full"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.onerror = null; 
-                        target.src = '/placeholder.svg'; 
-                      }}
-                    />
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg mb-2">{event.title}</h3>
-                    <div className="flex items-center text-sm">
-                      <Calendar size={16} className="mr-2 text-ngo" /> 
-                      <span>{event.date}</span>
-                    </div>
-                  </CardContent>
-                  {typeof event.post_count !== 'undefined' && (
-                    <CardFooter className="p-4 pt-0">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <MessageSquare size={16} className="mr-1" />
-                        <span>{event.post_count} {event.post_count === 1 ? 'post' : 'posty'}</span>
-                      </div>
-                    </CardFooter>
-                  )}
-                </Card>
+              <Link to={`/wydarzenia/${event.id}`} key={event.id} className="block h-full">
+                <EventCard event={convertEventForCard(event)} />
               </Link>
             ))}
           </div>
@@ -180,41 +169,15 @@ const EventsTab: React.FC<EventsTabProps> = ({ organization, isOwner }) => {
         ) : pastEvents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {pastEvents.map((event: Event) => (
-              <Link to={`/wydarzenia/${event.id}`} key={event.id}>
-                <Card className="overflow-hidden h-full transition-all hover:shadow-md">
-                  <div className="relative h-48 w-full overflow-hidden">
-                    <img 
-                      src={event.image} 
-                      alt={event.title} 
-                      className="object-cover w-full h-full"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.onerror = null; 
-                        target.src = '/placeholder.svg'; 
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <Badge variant="outline" className="bg-white text-black">
-                        Zakończone
-                      </Badge>
-                    </div>
+              <Link to={`/wydarzenia/${event.id}`} key={event.id} className="block h-full">
+                <div className="relative h-full">
+                  <EventCard event={{...convertEventForCard(event), status: 'Zakończone'}} />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <Badge variant="outline" className="bg-white text-black">
+                      Zakończone
+                    </Badge>
                   </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg mb-2">{event.title}</h3>
-                    <div className="flex items-center text-sm">
-                      <Calendar size={16} className="mr-2 text-ngo" /> 
-                      <span>{event.date}</span>
-                    </div>
-                  </CardContent>
-                  {typeof event.post_count !== 'undefined' && (
-                    <CardFooter className="p-4 pt-0">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <MessageSquare size={16} className="mr-1" />
-                        <span>{event.post_count} {event.post_count === 1 ? 'post' : 'posty'}</span>
-                      </div>
-                    </CardFooter>
-                  )}
-                </Card>
+                </div>
               </Link>
             ))}
           </div>

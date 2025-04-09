@@ -1,13 +1,27 @@
 
 import { useState } from 'react';
-import { Search, Filter } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Layout from '@/components/layout/Layout';
+import { useViewPreference } from '@/hooks/useViewPreference';
+import EventsFilter, { SortOption, FilterOption } from '@/components/common/EventsFilter';
 import { OrganizationsList } from '@/components/organizations/OrganizationsList';
+import OrganizationCard from '@/components/organizations/OrganizationCard';
+import OrganizationListItem from '@/components/organizations/OrganizationListItem';
+import CookieConsent from '@/components/common/CookieConsent';
 
 const Organizations = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState<SortOption>('title-asc');
+  const [activeFilters, setActiveFilters] = useState<FilterOption[]>([]);
+  const { viewType, setViewPreference } = useViewPreference('organizations', 'grid');
+
+  // Dostępne filtry dla strony organizacji
+  const availableFilters = [
+    { label: 'Sportowe', value: 'category:Sportowe' },
+    { label: 'Kulturalne', value: 'category:Kulturalne' },
+    { label: 'Charytatywne', value: 'category:Charytatywne' },
+    { label: 'Edukacyjne', value: 'category:Edukacyjne' },
+    { label: 'Społeczne', value: 'category:Społeczne' }
+  ];
   
   return (
     <Layout>
@@ -19,25 +33,31 @@ const Organizations = () => {
               Przeglądaj organizacje i ich wydarzenia
             </p>
           </div>
-          
-          <div className="mt-4 md:mt-0 flex w-full md:w-auto">
-            <div className="relative w-full md:w-80">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-              <Input
-                placeholder="Szukaj organizacji..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Button variant="outline" size="icon" className="ml-2">
-              <Filter size={18} />
-            </Button>
-          </div>
         </div>
         
-        <OrganizationsList />
+        <EventsFilter 
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          viewType={viewType}
+          setViewType={setViewPreference}
+          sortOption={sortOption}
+          setSortOption={setSortOption}
+          availableFilters={availableFilters}
+          activeFilters={activeFilters}
+          setActiveFilters={setActiveFilters}
+        />
+        
+        <OrganizationsList 
+          searchQuery={searchQuery}
+          sortOption={sortOption}
+          activeFilters={activeFilters}
+          viewType={viewType}
+          OrganizationCardComponent={OrganizationCard}
+          OrganizationListItemComponent={OrganizationListItem}
+        />
       </div>
+      
+      <CookieConsent />
     </Layout>
   );
 };
