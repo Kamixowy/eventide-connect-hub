@@ -33,17 +33,17 @@ const CollaborationInfo = ({ collaboration, userType }: CollaborationInfoProps) 
     partnerName = 'Ty';
   }
   
-  // Format dates
+  // Format dates - now passing directly with updated formatDate function
   const eventDate = collaboration.events?.start_date ? 
-    formatDate(new Date(collaboration.events.start_date)) : 
+    formatDate(collaboration.events.start_date) : 
     (collaboration.event?.date || 'Nie określono');
   
   const createdDate = collaboration.created_at ? 
-    formatDate(new Date(collaboration.created_at)) : 
+    formatDate(collaboration.created_at) : 
     'Nie określono';
   
   const updatedDate = collaboration.updated_at ? 
-    formatDate(new Date(collaboration.updated_at)) : 
+    formatDate(collaboration.updated_at) : 
     'Nie określono';
   
   return (
