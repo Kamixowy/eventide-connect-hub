@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
@@ -18,7 +19,7 @@ const UserProfile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(user?.user_metadata?.avatar_url || null);
   
   const [name, setName] = useState(user?.user_metadata?.name || '');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -179,11 +180,61 @@ const UserProfile = () => {
         return;
       }
       
-      toast({
-        title: 'Funkcjonalność w przygotowaniu',
-        description: 'Możliwość zmiany avatara będzie dostępna wkrótce',
-        variant: 'default',
+      // Implement real avatar upload to Supabase Storage
+      const fileName = `avatar-${user.id}-${Date.now()}.${file.name.split('.').pop()}`;
+      
+      // Check if 'avatars' bucket exists, if not create one (normally this should be done on backend setup)
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const avatarBucket = buckets?.find(bucket => bucket.name === 'avatars');
+      
+      if (!avatarBucket) {
+        // Create avatars bucket if it doesn't exist
+        const { error: bucketError } = await supabase.storage.createBucket('avatars', {
+          public: true,
+          fileSizeLimit: 2 * 1024 * 1024, // 2MB
+        });
+        
+        if (bucketError) {
+          console.error('Error creating bucket:', bucketError);
+          throw new Error('Nie można utworzyć miejsca na avatary');
+        }
+      }
+      
+      // Upload the file to storage
+      const { error: uploadError, data } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { 
+          upsert: true,
+          contentType: file.type 
+        });
+        
+      if (uploadError) {
+        console.error('Error uploading file:', uploadError);
+        throw uploadError;
+      }
+      
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+      
+      setAvatarUrl(publicUrl);
+        
+      // Update user metadata with the new avatar URL
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { avatar_url: publicUrl }
       });
+      
+      if (updateError) {
+        console.error('Error updating user metadata:', updateError);
+        throw updateError;
+      }
+      
+      toast({
+        title: 'Avatar zaktualizowany',
+        description: 'Twój avatar został pomyślnie zaktualizowany',
+      });
+      
     } catch (error: any) {
       console.error('Error uploading avatar:', error);
       toast({

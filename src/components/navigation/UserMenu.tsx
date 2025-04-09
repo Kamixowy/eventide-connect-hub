@@ -1,6 +1,6 @@
 
 import { Link } from 'react-router-dom';
-import { LogOut, User, Calendar, MessageSquare, Briefcase, ListChecks, UserCircle } from 'lucide-react';
+import { LogOut, Calendar, MessageSquare, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -58,22 +58,10 @@ const UserMenu = () => {
               <span>Mój profil</span>
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link to="/profil" className="cursor-pointer w-full flex">
-              <User className="mr-2 h-4 w-4" />
-              <span>Profil</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link to="/wydarzenia" className="cursor-pointer w-full flex">
-              <Calendar className="mr-2 h-4 w-4" />
-              <span>Wydarzenia</span>
-            </Link>
-          </DropdownMenuItem>
           {isOrganization && (
             <DropdownMenuItem asChild>
               <Link to="/moje-wydarzenia" className="cursor-pointer w-full flex">
-                <ListChecks className="mr-2 h-4 w-4" />
+                <Calendar className="mr-2 h-4 w-4" />
                 <span>Moje wydarzenia</span>
               </Link>
             </DropdownMenuItem>
@@ -82,12 +70,6 @@ const UserMenu = () => {
             <Link to="/wiadomosci" className="cursor-pointer w-full flex md:hidden">
               <MessageSquare className="mr-2 h-4 w-4" />
               <span>Wiadomości</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link to="/wspolprace" className="cursor-pointer w-full flex">
-              <Briefcase className="mr-2 h-4 w-4" />
-              <span>Współprace</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
