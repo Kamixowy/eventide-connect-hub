@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
@@ -21,13 +20,11 @@ const UserProfile = () => {
   const [loading, setLoading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   
-  // Form states
   const [name, setName] = useState(user?.user_metadata?.name || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   
-  // Error states
   const [nameError, setNameError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [generalError, setGeneralError] = useState('');
@@ -104,7 +101,6 @@ const UserProfile = () => {
     setLoading(true);
     
     try {
-      // For demo users, just show a success message
       if (localStorage.getItem('demoUser')) {
         toast({
           title: 'Tryb demo',
@@ -123,7 +119,6 @@ const UserProfile = () => {
         throw error;
       }
       
-      // Clear form
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -150,7 +145,6 @@ const UserProfile = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Check file type
     if (!file.type.startsWith('image/')) {
       toast({
         title: 'Nieprawidłowy format pliku',
@@ -160,7 +154,6 @@ const UserProfile = () => {
       return;
     }
     
-    // Check file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast({
         title: 'Plik jest za duży',
@@ -173,9 +166,7 @@ const UserProfile = () => {
     setLoading(true);
     
     try {
-      // For demo users, just show a success message with no actual upload
       if (localStorage.getItem('demoUser')) {
-        // Create a temporary avatar URL
         const tempUrl = URL.createObjectURL(file);
         setAvatarUrl(tempUrl);
         
@@ -188,41 +179,11 @@ const UserProfile = () => {
         return;
       }
       
-      // Real upload implementation would go here
-      // This is a placeholder for when we have storage bucket setup
       toast({
         title: 'Funkcjonalność w przygotowaniu',
         description: 'Możliwość zmiany avatara będzie dostępna wkrótce',
         variant: 'default',
       });
-      
-      /* Implementation for later
-      const fileName = `avatar-${user.id}-${Date.now()}.${file.name.split('.').pop()}`;
-      
-      const { error: uploadError, data } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file, { upsert: true });
-        
-      if (uploadError) {
-        throw uploadError;
-      }
-      
-      const avatarUrl = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName).data.publicUrl;
-      
-      setAvatarUrl(avatarUrl);
-        
-      // Update user metadata with the new avatar URL
-      const { error: updateError } = await supabase.auth.updateUser({
-        data: { avatar_url: avatarUrl }
-      });
-      
-      if (updateError) {
-        throw updateError;
-      }
-      */
-      
     } catch (error: any) {
       console.error('Error uploading avatar:', error);
       toast({
