@@ -119,7 +119,7 @@ export const createCollaboration = async (
     console.log("Creating conversation for collaboration:", collaborationId);
     
     try {
-      // Fetch sponsor and organization information
+      // Fetch sponsor information
       const { data: sponsorData, error: sponsorError } = await supabase
         .from('profiles')
         .select('id')
@@ -143,11 +143,11 @@ export const createCollaboration = async (
         throw orgError;
       }
       
-      // Create conversation
+      // Create conversation between sponsor and organization owner (not organization itself)
       const { data: conversationData, error: conversationError } = await supabase
         .rpc('create_conversation_and_participants', {
           user_one: sponsorData.id,
-          user_two: orgData.user_id
+          user_two: orgData.user_id  // Use organization owner's user_id, not the organization_id
         });
       
       if (conversationError) {
