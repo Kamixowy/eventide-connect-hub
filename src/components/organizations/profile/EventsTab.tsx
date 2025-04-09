@@ -97,8 +97,8 @@ const EventsTab: React.FC<EventsTabProps> = ({ organization, isOwner }) => {
             category: event.category
           };
 
-          // Sprawdzenie czy wydarzenie jest przeszłe czy przyszłe
-          if (isPast(new Date(event.start_date))) {
+          // Sprawdzenie czy wydarzenie ma status "Zakończone" lub jest przeszłe
+          if (event.status === 'Zakończone' || isPast(new Date(event.start_date))) {
             past.push(formattedEvent);
           } else {
             upcoming.push(formattedEvent);
