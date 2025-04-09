@@ -4,7 +4,10 @@
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider } from "next-themes"
 
-// Use a different approach to get the ThemeProviderProps type
+// Define the Attribute type to match what next-themes expects
+type Attribute = "class" | "data-theme" | "data-mode" | "style" | "media";
+
+// Define our own ThemeProviderProps type with the correct attribute type
 type ThemeProviderProps = {
   children: React.ReactNode;
   defaultTheme?: string;
@@ -12,7 +15,7 @@ type ThemeProviderProps = {
   enableSystem?: boolean;
   disableTransitionOnChange?: boolean;
   forcedTheme?: string;
-  attribute?: string;
+  attribute?: Attribute | Attribute[];
 }
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
