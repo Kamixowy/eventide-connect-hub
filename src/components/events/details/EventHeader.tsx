@@ -38,7 +38,7 @@ const EventHeader: React.FC<EventHeaderProps> = ({
       <img 
         src={banner || '/placeholder.svg'} 
         alt={title} 
-        className="w-full h-full object-contain md:object-cover"
+        className="w-full h-full object-cover"
         onError={(e) => {
           const target = e.target as HTMLImageElement;
           target.onerror = null; 
