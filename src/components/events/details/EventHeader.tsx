@@ -35,18 +35,42 @@ const EventHeader: React.FC<EventHeaderProps> = ({
 
   return (
     <div className="relative h-64 md:h-80 w-full overflow-hidden bg-gray-100">
-      <img 
-        src={banner || '/placeholder.svg'} 
-        alt={title} 
-        className="w-full h-full object-cover"
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          target.onerror = null; 
-          target.src = '/placeholder.svg'; 
+      <div className="absolute inset-0 bg-gray-100 backdrop-blur-md">
+        <img 
+          src={banner || '/placeholder.svg'} 
+          alt={title} 
+          className="w-full h-full object-contain"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.onerror = null; 
+            target.src = '/placeholder.svg'; 
+          }}
+        />
+      </div>
+      <div className="absolute inset-0" 
+        style={{
+          backgroundImage: `url(${banner || '/placeholder.svg'})`,
+          backgroundPosition: 'center',
+          backgroundSize: 'cover',
+          filter: 'blur(8px)',
+          opacity: '0.3',
+          transform: 'scale(1.1)',
         }}
       />
-      <div className="absolute inset-0 bg-black/30" />
-      <div className="absolute bottom-6 left-6 md:left-12">
+      <div className="absolute inset-0 flex items-center justify-center">
+        <img 
+          src={banner || '/placeholder.svg'} 
+          alt={title} 
+          className="max-w-full max-h-full object-contain z-10"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.onerror = null; 
+            target.src = '/placeholder.svg'; 
+          }}
+        />
+      </div>
+      <div className="absolute inset-0 bg-black/30 z-20" />
+      <div className="absolute bottom-6 left-6 md:left-12 z-30">
         <div className={`
           inline-block rounded-full px-3 py-1 text-xs font-medium mb-2 bg-white
           ${status === 'Planowane' ? 'text-blue-700' : 
@@ -64,7 +88,7 @@ const EventHeader: React.FC<EventHeaderProps> = ({
       </div>
       
       {isOwner && (
-        <div className="absolute top-6 right-6 flex gap-2">
+        <div className="absolute top-6 right-6 flex gap-2 z-30">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
