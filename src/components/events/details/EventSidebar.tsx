@@ -57,7 +57,7 @@ const EventSidebar: React.FC<EventSidebarProps> = ({
                   <p className="text-sm text-muted-foreground mb-3">{option.description}</p>
                   
                   {isLoggedIn && option.price && <p className="text-sm font-medium">
-                      Budżet: {option.price.from}
+                      Wycena: {option.price.from}
                       {option.price.to && option.price.to !== option.price.from ? ` - ${option.price.to}` : ''} PLN
                     </p>}
                   
