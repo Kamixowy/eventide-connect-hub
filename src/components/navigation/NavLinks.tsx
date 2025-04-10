@@ -1,4 +1,3 @@
-
 import { Info, Calendar, Briefcase, ContactIcon, Users, ListChecks, MessageSquare, PlusCircle } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,14 +36,16 @@ const NavLinks = ({ mobileView = false }: NavLinksProps) => {
       
       {user && isOrganization && (
         <>
-          <NavLink 
-            to="/dodaj-wydarzenie" 
-            isActive={isActive('/dodaj-wydarzenie')}
-            mobileView={mobileView}
-          >
-            {mobileView && <PlusCircle className="mr-2 h-5 w-5" />}
-            Dodaj wydarzenie
-          </NavLink>
+          {mobileView && (
+            <NavLink 
+              to="/dodaj-wydarzenie" 
+              isActive={isActive('/dodaj-wydarzenie')}
+              mobileView={true}
+            >
+              <PlusCircle className="mr-2 h-5 w-5" />
+              Dodaj wydarzenie
+            </NavLink>
+          )}
           
           <NavLink 
             to="/moje-wydarzenia" 
