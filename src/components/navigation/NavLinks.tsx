@@ -35,14 +35,14 @@ const NavLinks = ({ mobileView = false }: NavLinksProps) => {
         Organizacje
       </NavLink>
       
-      {user && isOrganization && mobileView && (
+      {user && isOrganization && (
         <>
           <NavLink 
             to="/dodaj-wydarzenie" 
             isActive={isActive('/dodaj-wydarzenie')}
-            mobileView={true}
+            mobileView={mobileView}
           >
-            <PlusCircle className="mr-2 h-5 w-5" />
+            {mobileView && <PlusCircle className="mr-2 h-5 w-5" />}
             Dodaj wydarzenie
           </NavLink>
           
