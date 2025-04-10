@@ -47,12 +47,12 @@ const EventHeader: React.FC<EventHeaderProps> = ({
         }}
       />
       
-      {/* Single main image with object-fit: contain to avoid cropping */}
+      {/* Main image stretched to fit height while maintaining aspect ratio */}
       <div className="absolute inset-0 flex items-center justify-center">
         <img 
           src={banner || '/placeholder.svg'} 
           alt={title} 
-          className="max-w-full max-h-full object-contain"
+          className="w-auto h-full max-w-none object-cover"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.onerror = null; 
