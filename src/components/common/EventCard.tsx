@@ -83,7 +83,7 @@ const EventCard = ({ event, showOrgName = false }: EventCardProps) => {
           {event.expected_participants && (
             <div className="flex items-center text-sm">
               <Users size={16} className="mr-2 text-ngo" /> 
-              <span>Planowana liczba uczestników: {formatParticipants(event.expected_participants)}</span>
+              <span>Planowani uczestnicy: {formatParticipants(event.expected_participants)}</span>
             </div>
           )}
         </div>
