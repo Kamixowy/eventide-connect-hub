@@ -129,6 +129,7 @@ const EventDetails = () => {
               userType={userType}
               onContactOrganization={handleContactOrganization}
               onCopyLink={handleCopyLink}
+              socialMedia={event.socialMedia}
             />
           </div>
         </div>
