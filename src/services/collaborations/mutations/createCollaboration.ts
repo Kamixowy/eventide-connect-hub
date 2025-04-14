@@ -114,11 +114,9 @@ export const createCollaboration = async (
       }
     }
 
-    // Conversation creation is now disabled 
-    console.log("Conversation creation is disabled - skipping this step");
+    // Module tworzenia konwersacji wyłączony - informacja
+    console.log("Moduł tworzenia konwersacji jest obecnie wyłączony - zostanie aktywowany w przyszłości");
     
-    // Note: In the future, this will create a conversation between the sponsor and organization
-
     // Return the collaboration ID
     return collaborationId;
   } catch (error: any) {

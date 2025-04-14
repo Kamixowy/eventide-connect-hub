@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Tworzy nową konwersację lub zwraca ID istniejącej
+ * 
+ * UWAGA: Ta funkcjonalność jest tymczasowo wyłączona w kontekście tworzenia współprac
+ * Wrócimy do niej w przyszłości
  */
 export const createOrGetConversation = async (recipientUserId: string): Promise<string | null> => {
   try {
@@ -42,18 +45,20 @@ export const createOrGetConversation = async (recipientUserId: string): Promise<
           // Utwórz tablicę identyfikatorów konwersacji
           const conversationIds = orgConversations.map(item => item.conversation_id);
           
-          // Teraz wyszukaj, czy użytkownik jest uczestnikiem którejś z tych konwersacji
-          const { data: userConversations, error: userError } = await supabase
-            .from('conversation_participants')
-            .select('conversation_id')
-            .eq('user_id', user.id)
-            .eq('is_organization', false)
-            .in('conversation_id', conversationIds);
-          
-          if (userError) throw userError;
-          
-          if (userConversations && Array.isArray(userConversations) && userConversations.length > 0) {
-            conversationId = userConversations[0].conversation_id;
+          if (conversationIds.length > 0) {
+            // Teraz wyszukaj, czy użytkownik jest uczestnikiem którejś z tych konwersacji
+            const { data: userConversations, error: userError } = await supabase
+              .from('conversation_participants')
+              .select('conversation_id')
+              .eq('user_id', user.id)
+              .eq('is_organization', false)
+              .in('conversation_id', conversationIds);
+            
+            if (userError) throw userError;
+            
+            if (userConversations && Array.isArray(userConversations) && userConversations.length > 0) {
+              conversationId = userConversations[0].conversation_id;
+            }
           }
         }
       } catch (err) {

@@ -1,8 +1,9 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -23,7 +24,7 @@ const CollaborationMessages = ({ collaboration, userType }: CollaborationMessage
   
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -35,11 +36,16 @@ const CollaborationMessages = ({ collaboration, userType }: CollaborationMessage
       
       try {
         setIsLoading(true);
-        const fetchedMessages = await getCollaborationMessages(collaboration.id);
-        setMessages(fetchedMessages);
         
-        // Mark messages as read
-        await markCollaborationMessagesAsRead(collaboration.id);
+        // Funkcjonalność wiadomości jest tymczasowo wyłączona
+        setMessages([]);
+        
+        // Komentujemy wywołanie do pobierania wiadomości
+        // const fetchedMessages = await getCollaborationMessages(collaboration.id);
+        // setMessages(fetchedMessages);
+        
+        // Komentujemy oznaczanie wiadomości jako przeczytanych
+        // await markCollaborationMessagesAsRead(collaboration.id);
       } catch (error: any) {
         console.error('Error fetching collaboration messages:', error);
         toast({
@@ -53,8 +59,6 @@ const CollaborationMessages = ({ collaboration, userType }: CollaborationMessage
     };
     
     fetchMessages();
-    
-    // Set up real-time updates if needed - future enhancement
   }, [collaboration?.id, toast]);
   
   // Scroll to bottom when messages change
@@ -72,11 +76,18 @@ const CollaborationMessages = ({ collaboration, userType }: CollaborationMessage
     try {
       setIsSending(true);
       
-      await sendCollaborationMessage(collaboration.id, newMessage);
+      // Funkcjonalność wiadomości jest tymczasowo wyłączona
+      toast({
+        title: 'Informacja',
+        description: 'Funkcjonalność wiadomości jest tymczasowo wyłączona i zostanie włączona wkrótce.',
+      });
       
-      // Fetch updated messages
-      const updatedMessages = await getCollaborationMessages(collaboration.id);
-      setMessages(updatedMessages);
+      // Komentujemy wysyłanie wiadomości
+      // await sendCollaborationMessage(collaboration.id, newMessage);
+      
+      // Komentujemy aktualizowanie listy wiadomości
+      // const updatedMessages = await getCollaborationMessages(collaboration.id);
+      // setMessages(updatedMessages);
       
       // Clear input
       setNewMessage('');
@@ -102,41 +113,18 @@ const CollaborationMessages = ({ collaboration, userType }: CollaborationMessage
   
   return (
     <div className="flex flex-col h-[500px]">
-      <div className="flex-grow overflow-y-auto mb-4 p-2">
-        {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            Brak wiadomości. Rozpocznij konwersację!
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {messages.map((msg) => {
-              const isMine = msg.sender_id === user?.id;
-              
-              return (
-                <div 
-                  key={msg.id} 
-                  className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div 
-                    className={`max-w-[80%] rounded-lg p-3 ${
-                      isMine
-                        ? 'bg-primary text-white rounded-tr-none' 
-                        : 'bg-gray-100 text-gray-800 rounded-tl-none'
-                    }`}
-                  >
-                    <p className="text-sm">{msg.content}</p>
-                    <p className={`text-xs mt-1 ${
-                      isMine ? 'text-primary-foreground/70' : 'text-gray-500'
-                    }`}>
-                      {formatMessageDate(msg.created_at)}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-            <div ref={messagesEndRef} />
-          </div>
-        )}
+      <Alert variant="info" className="mb-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Funkcjonalność tymczasowo wyłączona</AlertTitle>
+        <AlertDescription>
+          Możliwość przesyłania wiadomości w ramach współpracy jest obecnie wyłączona i zostanie aktywowana w przyszłości.
+        </AlertDescription>
+      </Alert>
+      
+      <div className="flex-grow overflow-y-auto mb-4 p-2 bg-gray-50 rounded-md">
+        <div className="flex items-center justify-center h-full text-gray-500">
+          Funkcjonalność wiadomości jest tymczasowo wyłączona.
+        </div>
       </div>
       
       <div className="flex items-center gap-2 mt-auto">
@@ -145,24 +133,13 @@ const CollaborationMessages = ({ collaboration, userType }: CollaborationMessage
           className="flex-grow"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          onKeyPress={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSendMessage();
-            }
-          }}
-          disabled={isSending}
+          disabled={true}
         />
         <Button 
           onClick={handleSendMessage}
-          disabled={!newMessage.trim() || isSending}
+          disabled={true}
         >
-          {isSending ? (
-            <>
-              <Loader2 size={16} className="mr-2 animate-spin" />
-              Wysyłanie...
-            </>
-          ) : 'Wyślij'}
+          Wyślij
         </Button>
       </div>
     </div>
