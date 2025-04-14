@@ -16,21 +16,38 @@ const PersonalDataForm = ({ user }: PersonalDataFormProps) => {
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState(user?.user_metadata?.name || '');
   const [nameError, setNameError] = useState('');
+  const [companyName, setCompanyName] = useState(user?.user_metadata?.companyName || '');
+  const [companyError, setCompanyError] = useState('');
+  
+  const isSponsor = user?.user_metadata?.userType === 'sponsor';
 
-  const handleNameUpdate = async (e: React.FormEvent) => {
+  const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setNameError('');
+    setCompanyError('');
     
     if (!name.trim()) {
       setNameError('Imię i nazwisko nie może być puste');
       return;
     }
     
+    if (isSponsor && !companyName.trim()) {
+      setCompanyError('Nazwa firmy nie może być pusta');
+      return;
+    }
+    
     setLoading(true);
     
     try {
+      const metadata: Record<string, any> = { name: name.trim() };
+      
+      // Add company name to metadata for sponsors
+      if (isSponsor) {
+        metadata.companyName = companyName.trim();
+      }
+      
       const { error } = await supabase.auth.updateUser({
-        data: { name: name.trim() }
+        data: metadata
       });
       
       if (error) {
@@ -56,7 +73,7 @@ const PersonalDataForm = ({ user }: PersonalDataFormProps) => {
 
   return (
     <Card>
-      <form onSubmit={handleNameUpdate}>
+      <form onSubmit={handleUpdate}>
         <CardHeader>
           <CardTitle>Dane osobowe</CardTitle>
           <CardDescription>
@@ -74,6 +91,19 @@ const PersonalDataForm = ({ user }: PersonalDataFormProps) => {
             />
             {nameError && <p className="text-sm text-destructive mt-1">{nameError}</p>}
           </div>
+          
+          {isSponsor && (
+            <div className="space-y-2">
+              <Label htmlFor="companyName">Nazwa firmy</Label>
+              <Input 
+                id="companyName" 
+                value={companyName} 
+                onChange={(e) => setCompanyName(e.target.value)} 
+                placeholder="Wprowadź nazwę swojej firmy"
+              />
+              {companyError && <p className="text-sm text-destructive mt-1">{companyError}</p>}
+            </div>
+          )}
         </CardContent>
         <CardFooter>
           <Button type="submit" disabled={loading}>

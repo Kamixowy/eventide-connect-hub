@@ -44,6 +44,7 @@ const UserMenu = () => {
   // Use avatar_url from profile if available, otherwise from user metadata
   const avatarUrl = profileData?.avatar_url || user.user_metadata?.avatar_url || '';
   const userName = user.user_metadata?.name || profileData?.name || 'Użytkownik';
+  const companyName = user.user_metadata?.companyName || '';
   
   const handleSignOut = () => {
     // Call signOut directly without any event parameters
@@ -70,7 +71,11 @@ const UserMenu = () => {
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium leading-none">{userName}</p>
-              <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+              {isSponsor ? (
+                <p className="text-xs leading-none text-muted-foreground">{companyName || 'Nazwa firmy nie ustawiona'}</p>
+              ) : (
+                <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+              )}
               <p className="text-xs leading-none text-muted-foreground mt-1">
                 {user.user_metadata?.userType === 'organization' ? 'Organizacja' : 'Sponsor'}
               </p>
