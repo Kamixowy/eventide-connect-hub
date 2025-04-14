@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,8 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const Register = () => {
   const [searchParams] = useSearchParams();
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -57,14 +55,12 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      // Prepare user metadata
       const metadata = {
-        name: `${firstName} ${lastName}`,
+        name: name,
         userType: accountType,
         companyName
       };
       
-      // Register the user using our AuthContext
       const { error } = await signUp(email, password, metadata);
       
       if (error) {
@@ -74,7 +70,6 @@ const Register = () => {
           variant: "destructive",
         });
       } else {
-        // Registration and auto-login successful, redirect to home
         navigate('/');
       }
     } catch (error: any) {
@@ -134,25 +129,14 @@ const Register = () => {
                 </div>
               </RadioGroup>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">Imię</Label>
-                  <Input
-                    id="firstName"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Nazwisko</Label>
-                  <Input
-                    id="lastName"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    required
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="name">Nazwa</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
               </div>
               
               <div className="space-y-2">
