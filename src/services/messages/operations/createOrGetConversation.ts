@@ -29,24 +29,32 @@ export const createOrGetConversation = async (recipientUserId: string): Promise<
     if (isOrganizationRecipient) {
       // Szukaj konwersacji między użytkownikiem a organizacją
       try {
-        // Zamiast używać RPC, użyjemy bezpośredniego zapytania do bazy danych
-        const { data, error } = await supabase
+        // Najpierw pobierz konwersacje organizacji
+        const { data: orgConversations, error: orgError } = await supabase
           .from('conversation_participants')
           .select('conversation_id')
-          .eq('user_id', user.id)
-          .eq('is_organization', false)
-          .in('conversation_id', 
-            supabase
-              .from('conversation_participants')
-              .select('conversation_id')
-              .eq('organization_id', recipientUserId)
-              .eq('is_organization', true)
-          );
+          .eq('organization_id', recipientUserId)
+          .eq('is_organization', true);
         
-        if (error) throw error;
+        if (orgError) throw orgError;
         
-        if (data && Array.isArray(data) && data.length > 0) {
-          conversationId = data[0].conversation_id;
+        if (orgConversations && Array.isArray(orgConversations) && orgConversations.length > 0) {
+          // Utwórz tablicę identyfikatorów konwersacji
+          const conversationIds = orgConversations.map(item => item.conversation_id);
+          
+          // Teraz wyszukaj, czy użytkownik jest uczestnikiem którejś z tych konwersacji
+          const { data: userConversations, error: userError } = await supabase
+            .from('conversation_participants')
+            .select('conversation_id')
+            .eq('user_id', user.id)
+            .eq('is_organization', false)
+            .in('conversation_id', conversationIds);
+          
+          if (userError) throw userError;
+          
+          if (userConversations && Array.isArray(userConversations) && userConversations.length > 0) {
+            conversationId = userConversations[0].conversation_id;
+          }
         }
       } catch (err) {
         console.error("Error finding conversation with organization:", err);
