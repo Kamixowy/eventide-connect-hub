@@ -7,8 +7,9 @@ export * from './queries';
 // Mutations 
 export * from './mutations';
 
-// Utils
-export * from './utils';
+// Utils - fix the ambiguous exports by not re-exporting from here
+// We already export these from ./utils.ts
+// export * from './utils';
 
 // Messages
 export * from './messages';

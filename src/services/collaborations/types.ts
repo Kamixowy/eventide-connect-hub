@@ -23,6 +23,16 @@ export interface CollaborationOption {
 
 export interface CollaborationDetailsResponse extends CollaborationType {}
 
+// Add Message interface for collaboration messages
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  read_at: string | null;
+}
+
 // Export this symbol to avoid circular references
 export const COLLABORATION_STATUSES = {
   PENDING: 'pending',

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -28,28 +27,25 @@ export const createOrGetConversation = async (recipientUserId: string): Promise<
     
     if (isOrganizationRecipient) {
       // Szukaj konwersacji między użytkownikiem a organizacją
-      const { data, error } = await supabase
-        .from('direct_conversations')
-        .select('id')
-        .eq('id', supabase.rpc('find_conversation_with_organization', { 
+      const { data: conversationData } = await supabase
+        .rpc('find_conversation_with_organization', { 
           p_user_id: user.id, 
           p_organization_id: recipientUserId 
-        }))
-        .limit(1);
+        });
       
-      if (!error && data && data.length > 0) {
-        conversationId = data[0].id;
+      if (conversationData && conversationData.length > 0) {
+        conversationId = conversationData[0].conversation_id;
       }
     } else {
       // Szukaj konwersacji między dwoma użytkownikami
-      const { data, error } = await supabase
+      const { data: conversationData } = await supabase
         .rpc('find_conversation_between_users', { 
           user_one: user.id, 
           user_two: recipientUserId 
         });
       
-      if (!error && data && data.length > 0) {
-        conversationId = data[0].conversation_id;
+      if (conversationData && conversationData.length > 0) {
+        conversationId = conversationData[0].conversation_id;
       }
     }
     

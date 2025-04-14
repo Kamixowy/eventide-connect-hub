@@ -1,7 +1,5 @@
-
 import { supabase } from '@/lib/supabase';
-import { Collaboration, CollaborationOption } from '../types';
-import { COLLABORATION_STATUSES } from '../utils';
+import { Collaboration, CollaborationOption, COLLABORATION_STATUSES } from '../types';
 
 /**
  * Create a new collaboration
@@ -28,7 +26,7 @@ export const createCollaboration = async (
     }
 
     // Ensure the status value is valid - it must be one of the values accepted by the database check constraint
-    const validatedStatus = COLLABORATION_STATUS_NAMES.PENDING;
+    const validatedStatus = COLLABORATION_STATUSES.PENDING;
 
     // First, create collaboration record using the first event (we'll link to others later)
     const { data: collaborationData, error: collaborationError } = await supabase
