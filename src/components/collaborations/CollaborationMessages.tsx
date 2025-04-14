@@ -113,7 +113,7 @@ const CollaborationMessages = ({ collaboration, userType }: CollaborationMessage
   
   return (
     <div className="flex flex-col h-[500px]">
-      <Alert variant="info" className="mb-4">
+      <Alert variant="default" className="mb-4">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Funkcjonalność tymczasowo wyłączona</AlertTitle>
         <AlertDescription>
