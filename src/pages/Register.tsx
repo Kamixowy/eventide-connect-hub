@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -70,6 +71,11 @@ const Register = () => {
           variant: "destructive",
         });
       } else {
+        // Show email verification toast
+        toast({
+          title: "Rejestracja udana",
+          description: "Sprawdź swoją skrzynkę odbiorczą i potwierdź adres email, aby aktywować konto.",
+        });
         navigate('/');
       }
     } catch (error: any) {
