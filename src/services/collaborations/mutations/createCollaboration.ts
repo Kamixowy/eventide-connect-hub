@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { Collaboration, CollaborationOption, COLLABORATION_STATUSES } from '../types';
 
@@ -113,73 +114,10 @@ export const createCollaboration = async (
       }
     }
 
-    // Create a conversation related to the collaboration
-    console.log("Creating conversation for collaboration:", collaborationId);
+    // Conversation creation is now disabled 
+    console.log("Conversation creation is disabled - skipping this step");
     
-    try {
-      // First, create the conversation
-      const { data: conversationData, error: conversationError } = await supabase
-        .from('direct_conversations')
-        .insert({
-          collaboration_id: collaborationId
-        })
-        .select()
-        .single();
-      
-      if (conversationError) {
-        console.error('Error creating conversation:', conversationError);
-        throw conversationError;
-      }
-      
-      const conversationId = conversationData.id;
-      console.log("Created conversation with ID:", conversationId);
-      
-      // Add sponsor as participant (this is a user)
-      const { error: sponsorParticipantError } = await supabase
-        .from('conversation_participants')
-        .insert({
-          conversation_id: conversationId, 
-          user_id: collaboration.sponsor_id,
-          is_organization: false
-        });
-      
-      if (sponsorParticipantError) {
-        console.error('Error adding sponsor participant:', sponsorParticipantError);
-      }
-      
-      // Add organization as an organization participant
-      // IMPORTANT FIX: Don't set user_id for organization participants
-      const { error: orgParticipantError } = await supabase
-        .from('conversation_participants')
-        .insert({
-          conversation_id: conversationId, 
-          organization_id: collaboration.organization_id, 
-          is_organization: true,
-          user_id: null // Explicitly set user_id to null for organization participants
-        });
-      
-      if (orgParticipantError) {
-        console.error('Error adding organization participant:', orgParticipantError);
-      }
-      
-      // If there's a message, send it
-      if (collaboration.message && collaboration.message.trim() !== '') {
-        const { error: messageError } = await supabase
-          .from('direct_messages')
-          .insert({
-            conversation_id: conversationId,
-            sender_id: collaboration.sponsor_id,
-            content: collaboration.message
-          });
-        
-        if (messageError) {
-          console.error('Error sending initial message:', messageError);
-        }
-      }
-    } catch (error) {
-      console.error('Error in conversation creation:', error);
-      // We don't throw here to allow collaboration to be created even if conversation fails
-    }
+    // Note: In the future, this will create a conversation between the sponsor and organization
 
     // Return the collaboration ID
     return collaborationId;

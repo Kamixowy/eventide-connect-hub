@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -27,25 +28,33 @@ export const createOrGetConversation = async (recipientUserId: string): Promise<
     
     if (isOrganizationRecipient) {
       // Szukaj konwersacji między użytkownikiem a organizacją
-      const { data: conversationData } = await supabase
-        .rpc('find_conversation_with_organization', { 
-          p_user_id: user.id, 
-          p_organization_id: recipientUserId 
-        });
-      
-      if (conversationData && conversationData.length > 0) {
-        conversationId = conversationData[0].conversation_id;
+      try {
+        const { data } = await supabase
+          .rpc('find_conversation_with_organization', { 
+            p_user_id: user.id, 
+            p_organization_id: recipientUserId 
+          });
+        
+        if (data && Array.isArray(data) && data.length > 0) {
+          conversationId = data[0].conversation_id;
+        }
+      } catch (err) {
+        console.error("Error finding conversation with organization:", err);
       }
     } else {
       // Szukaj konwersacji między dwoma użytkownikami
-      const { data: conversationData } = await supabase
-        .rpc('find_conversation_between_users', { 
-          user_one: user.id, 
-          user_two: recipientUserId 
-        });
-      
-      if (conversationData && conversationData.length > 0) {
-        conversationId = conversationData[0].conversation_id;
+      try {
+        const { data } = await supabase
+          .rpc('find_conversation_between_users', { 
+            user_one: user.id, 
+            user_two: recipientUserId 
+          });
+        
+        if (data && Array.isArray(data) && data.length > 0) {
+          conversationId = data[0].conversation_id;
+        }
+      } catch (err) {
+        console.error("Error finding conversation between users:", err);
       }
     }
     
