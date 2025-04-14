@@ -42,11 +42,16 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
   } = useCollaborationForm(eventId, organizationId);
   
   const handleSubmit = async () => {
-    const collaborationId = await createNewCollaboration();
-    
-    if (collaborationId) {
-      setOpen(false);
-      navigate(`/wspolprace/${collaborationId}`);
+    try {
+      const collaborationId = await createNewCollaboration();
+      
+      if (collaborationId) {
+        setOpen(false);
+        navigate(`/wspolprace/${collaborationId}`);
+      }
+    } catch (error) {
+      console.error('Error creating collaboration:', error);
+      // Error handling is done in useCollaborationForm
     }
   };
   

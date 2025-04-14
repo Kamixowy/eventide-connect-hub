@@ -113,9 +113,8 @@ export const createCollaboration = async (
         console.error('Error linking options to collaboration:', linkError);
       }
     }
-
-    // Module tworzenia konwersacji wyłączony - informacja
-    console.log("Moduł tworzenia konwersacji jest obecnie wyłączony - zostanie aktywowany w przyszłości");
+    
+    console.log("Moduł tworzenia konwersacji jest wyłączony");
     
     // Return the collaboration ID
     return collaborationId;

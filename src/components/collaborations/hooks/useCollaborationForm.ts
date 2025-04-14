@@ -223,7 +223,7 @@ export const useCollaborationForm = (initialEventId?: string, initialOrganizatio
       console.error('Błąd podczas tworzenia współpracy:', error);
       toast({
         title: "Błąd",
-        description: error.message,
+        description: error.message || "Nie udało się utworzyć współpracy",
         variant: "destructive"
       });
       return null;
