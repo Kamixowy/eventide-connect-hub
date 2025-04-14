@@ -23,84 +23,95 @@ export const createOrGetConversation = async (recipientUserId: string): Promise<
     
     const isOrganizationRecipient = !!organizationData;
     
-    // Użyj funkcji Supabase do utworzenia lub pobrania konwersacji
-    const { data, error } = await supabase.rpc(
-      'create_conversation_and_participants',
-      { user_one: user.id, user_two: recipientUserId }
-    );
-
-    if (error) {
-      console.error('Błąd podczas tworzenia konwersacji:', error);
-      throw error;
-    }
-
-    if (!data || data.length === 0) {
-      console.error('Nie otrzymano ID konwersacji');
-      return null;
-    }
-
-    console.log('Znaleziono lub utworzono konwersację:', data[0].conversation_id);
+    // Sprawdź, czy konwersacja już istnieje
+    let conversationId = null;
     
-    // Sprawdź czy aktualny użytkownik jest już uczestnikiem konwersacji
-    const { count: userParticipantCount, error: countUserError } = await supabase
-      .from('conversation_participants')
-      .select('*', { count: 'exact', head: true })
-      .eq('conversation_id', data[0].conversation_id)
-      .eq('user_id', user.id);
-    
-    if (countUserError) {
-      console.error('Błąd podczas sprawdzania uczestnictwa użytkownika:', countUserError);
-    } else if (userParticipantCount === 0) {
-      console.log('Dodawanie użytkownika jako uczestnika...');
+    if (isOrganizationRecipient) {
+      // Szukaj konwersacji między użytkownikiem a organizacją
+      const { data, error } = await supabase
+        .from('direct_conversations')
+        .select('id')
+        .eq('id', supabase.rpc('find_conversation_with_organization', { 
+          p_user_id: user.id, 
+          p_organization_id: recipientUserId 
+        }))
+        .limit(1);
       
-      // Sprawdź czy użytkownik istnieje w bazie auth.users
-      const { data: authUserData, error: authUserError } = await supabase.auth.getUser(user.id);
+      if (!error && data && data.length > 0) {
+        conversationId = data[0].id;
+      }
+    } else {
+      // Szukaj konwersacji między dwoma użytkownikami
+      const { data, error } = await supabase
+        .rpc('find_conversation_between_users', { 
+          user_one: user.id, 
+          user_two: recipientUserId 
+        });
       
-      if (!authUserError && authUserData.user) {
-        const { error: insertError } = await supabase
-          .from('conversation_participants')
-          .insert({
-            conversation_id: data[0].conversation_id,
-            user_id: user.id,
-            is_organization: false
-          });
-        
-        if (insertError) {
-          console.error('Błąd podczas dodawania uczestnika-użytkownika:', insertError);
-        }
-      } else {
-        console.error('Użytkownik nie istnieje w bazie auth.users:', authUserError);
+      if (!error && data && data.length > 0) {
+        conversationId = data[0].conversation_id;
       }
     }
     
-    // Sprawdź czy organizacja jest już uczestnikiem konwersacji
-    if (isOrganizationRecipient) {
-      const { count: orgParticipantCount, error: countOrgError } = await supabase
-        .from('conversation_participants')
-        .select('*', { count: 'exact', head: true })
-        .eq('conversation_id', data[0].conversation_id)
-        .eq('organization_id', recipientUserId);
+    // Jeśli konwersacja nie istnieje, utwórz nową
+    if (!conversationId) {
+      // Utwórz nową konwersację
+      const { data: newConversation, error: conversationError } = await supabase
+        .from('direct_conversations')
+        .insert({})
+        .select()
+        .single();
       
-      if (countOrgError) {
-        console.error('Błąd podczas sprawdzania uczestnictwa organizacji:', countOrgError);
-      } else if (orgParticipantCount === 0) {
-        console.log('Dodawanie organizacji jako uczestnika...');
-        const { error: insertError } = await supabase
+      if (conversationError) {
+        console.error('Błąd podczas tworzenia konwersacji:', conversationError);
+        throw conversationError;
+      }
+      
+      conversationId = newConversation.id;
+      
+      // Dodaj aktualnego użytkownika jako uczestnika
+      const { error: userParticipantError } = await supabase
+        .from('conversation_participants')
+        .insert({
+          conversation_id: conversationId,
+          user_id: user.id,
+          is_organization: false
+        });
+      
+      if (userParticipantError) {
+        console.error('Błąd podczas dodawania uczestnika-użytkownika:', userParticipantError);
+      }
+      
+      // Dodaj odbiorcę jako uczestnika (użytkownik lub organizacja)
+      if (isOrganizationRecipient) {
+        const { error: orgParticipantError } = await supabase
           .from('conversation_participants')
           .insert({
-            conversation_id: data[0].conversation_id,
+            conversation_id: conversationId,
             organization_id: recipientUserId,
             is_organization: true,
             user_id: null // Explicitly set user_id to null for organization participants
           });
         
-        if (insertError) {
-          console.error('Błąd podczas dodawania uczestnika-organizacji:', insertError);
+        if (orgParticipantError) {
+          console.error('Błąd podczas dodawania uczestnika-organizacji:', orgParticipantError);
+        }
+      } else {
+        const { error: recipientParticipantError } = await supabase
+          .from('conversation_participants')
+          .insert({
+            conversation_id: conversationId,
+            user_id: recipientUserId,
+            is_organization: false
+          });
+        
+        if (recipientParticipantError) {
+          console.error('Błąd podczas dodawania uczestnika-odbiorcy:', recipientParticipantError);
         }
       }
     }
 
-    return data[0].conversation_id;
+    return conversationId;
   } catch (error) {
     console.error('Błąd w createOrGetConversation:', error);
     throw error;

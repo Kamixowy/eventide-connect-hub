@@ -28,7 +28,7 @@ export const createCollaboration = async (
     }
 
     // Ensure the status value is valid - it must be one of the values accepted by the database check constraint
-    const validatedStatus = COLLABORATION_STATUSES.PENDING;
+    const validatedStatus = COLLABORATION_STATUS_NAMES.PENDING;
 
     // First, create collaboration record using the first event (we'll link to others later)
     const { data: collaborationData, error: collaborationError } = await supabase
@@ -119,18 +119,6 @@ export const createCollaboration = async (
     console.log("Creating conversation for collaboration:", collaborationId);
     
     try {
-      // Fetch sponsor information
-      const { data: sponsorData, error: sponsorError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', collaboration.sponsor_id)
-        .single();
-      
-      if (sponsorError) {
-        console.error('Error fetching sponsor data:', sponsorError);
-        throw sponsorError;
-      }
-      
       // First, create the conversation
       const { data: conversationData, error: conversationError } = await supabase
         .from('direct_conversations')
@@ -148,27 +136,21 @@ export const createCollaboration = async (
       const conversationId = conversationData.id;
       console.log("Created conversation with ID:", conversationId);
       
-      // Verify sponsor user exists in auth.users
-      const { data: authUserData, error: authUserError } = await supabase.auth.getUser(sponsorData.id);
+      // Add sponsor as participant (this is a user)
+      const { error: sponsorParticipantError } = await supabase
+        .from('conversation_participants')
+        .insert({
+          conversation_id: conversationId, 
+          user_id: collaboration.sponsor_id,
+          is_organization: false
+        });
       
-      if (!authUserError && authUserData.user) {
-        // Add sponsor as a user participant
-        const { error: sponsorParticipantError } = await supabase
-          .from('conversation_participants')
-          .insert({
-            conversation_id: conversationId, 
-            user_id: sponsorData.id, 
-            is_organization: false
-          });
-        
-        if (sponsorParticipantError) {
-          console.error('Error adding sponsor participant:', sponsorParticipantError);
-        }
-      } else {
-        console.error('Sponsor user does not exist in auth.users:', authUserError);
+      if (sponsorParticipantError) {
+        console.error('Error adding sponsor participant:', sponsorParticipantError);
       }
       
       // Add organization as an organization participant
+      // IMPORTANT FIX: Don't set user_id for organization participants
       const { error: orgParticipantError } = await supabase
         .from('conversation_participants')
         .insert({

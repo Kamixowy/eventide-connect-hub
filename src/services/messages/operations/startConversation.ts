@@ -14,41 +14,78 @@ export const startConversation = async (organizationUserId: string, initialMessa
 
     console.log('ID bieżącego użytkownika:', user.id);
 
-    // Sprawdź, czy obaj użytkownicy istnieją
-    const { data: users, error: usersError } = await supabase
-      .from('profiles')
+    // Check if the recipient is an organization
+    const { data: orgData } = await supabase
+      .from('organizations')
       .select('id')
-      .in('id', [user.id, organizationUserId]);
-      
-    if (usersError) {
-      console.error('Błąd podczas sprawdzania użytkowników:', usersError);
-      throw usersError;
-    }
-    
-    if (!users || users.length !== 2) {
-      console.error('Jeden lub obaj użytkownicy nie istnieją');
-      throw new Error('Jeden lub obaj użytkownicy nie istnieją');
-    }
+      .eq('id', organizationUserId)
+      .single();
 
-    // Użyj funkcji create_conversation_and_participants w bazie danych, aby utworzyć konwersację
-    // Obsługuje ona znalezienie istniejącej konwersacji lub utworzenie nowej z uczestnikami
-    const { data, error } = await supabase.rpc('create_conversation_and_participants', {
-      user_one: user.id,
-      user_two: organizationUserId
-    });
+    const isOrganization = !!orgData;
+
+    // Create new conversation
+    const { data: conversationData, error: conversationError } = await supabase
+      .from('direct_conversations')
+      .insert({})
+      .select()
+      .single();
     
-    if (error) {
-      console.error('Błąd podczas tworzenia konwersacji:', error);
-      throw new Error('Nie udało się utworzyć konwersacji: ' + error.message);
+    if (conversationError) {
+      console.error('Błąd podczas tworzenia konwersacji:', conversationError);
+      throw new Error('Nie udało się utworzyć konwersacji: ' + conversationError.message);
     }
     
-    if (!data || data.length === 0) {
+    if (!conversationData) {
       console.error('Nie zwrócono ID konwersacji');
       throw new Error('Nie udało się utworzyć konwersacji: Nie zwrócono ID');
     }
     
-    const conversationId = data[0].conversation_id;
-    console.log('Utworzono lub znaleziono konwersację z ID:', conversationId);
+    const conversationId = conversationData.id;
+    console.log('Utworzono konwersację z ID:', conversationId);
+
+    // Add current user as participant
+    const { error: userParticipantError } = await supabase
+      .from('conversation_participants')
+      .insert({
+        conversation_id: conversationId,
+        user_id: user.id,
+        is_organization: false
+      });
+
+    if (userParticipantError) {
+      console.error('Błąd podczas dodawania użytkownika jako uczestnika:', userParticipantError);
+      throw userParticipantError;
+    }
+
+    // Add recipient as participant (either organization or user)
+    if (isOrganization) {
+      const { error: orgParticipantError } = await supabase
+        .from('conversation_participants')
+        .insert({
+          conversation_id: conversationId,
+          organization_id: organizationUserId,
+          is_organization: true,
+          user_id: null // Explicitly set user_id to null for organization participants
+        });
+
+      if (orgParticipantError) {
+        console.error('Błąd podczas dodawania organizacji jako uczestnika:', orgParticipantError);
+        throw orgParticipantError;
+      }
+    } else {
+      const { error: recipientParticipantError } = await supabase
+        .from('conversation_participants')
+        .insert({
+          conversation_id: conversationId,
+          user_id: organizationUserId,
+          is_organization: false
+        });
+
+      if (recipientParticipantError) {
+        console.error('Błąd podczas dodawania odbiorcy jako uczestnika:', recipientParticipantError);
+        throw recipientParticipantError;
+      }
+    }
     
     // Wyślij początkową wiadomość, jeśli została podana
     if (initialMessage.trim() && conversationId) {

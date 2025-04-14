@@ -1,16 +1,16 @@
 
-import { Message as MessageType } from '@/services/messages/types';
+import { CollaborationType } from '@/types/collaboration';
 
 export interface Collaboration {
   id: string;
+  event_id: string;
   sponsor_id: string;
   organization_id: string;
-  event_id: string;
   status: string;
-  message?: string;
+  message: string | null;
   total_amount: number;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CollaborationOption {
@@ -21,80 +21,32 @@ export interface CollaborationOption {
   sponsorship_option_id?: string;
 }
 
-export interface SponsorshipOptionWithSelection extends SponsorshipOption {
-  selected?: boolean;
-}
+export interface CollaborationDetailsResponse extends CollaborationType {}
 
-export interface CollaborationFilters {
-  status?: string;
-  organization?: string;
-  dateRange?: {
-    from: Date | undefined;
-    to: Date | undefined;
-  };
-}
+// Export this symbol to avoid circular references
+export const COLLABORATION_STATUSES = {
+  PENDING: 'pending',
+  ACCEPTED: 'accepted',
+  REJECTED: 'rejected',
+  COMPLETED: 'completed',
+  NEGOTIATION: 'negotiation',
+  CANCELED: 'canceled'
+};
 
-// Add this to make the existing Message component work with collaborations
-export interface Message {
-  id: string;
-  conversation_id: string;
-  sender_id: string;
-  content: string;
-  created_at: string;
-  read_at?: string | null;
-  sender?: {
-    id: string;
-    name?: string;
-    avatar_url?: string;
-  };
-}
+export const COLLABORATION_STATUS_NAMES = {
+  [COLLABORATION_STATUSES.PENDING]: 'Oczekująca',
+  [COLLABORATION_STATUSES.ACCEPTED]: 'Zaakceptowana',
+  [COLLABORATION_STATUSES.REJECTED]: 'Odrzucona',
+  [COLLABORATION_STATUSES.COMPLETED]: 'Zakończona',
+  [COLLABORATION_STATUSES.NEGOTIATION]: 'W negocjacji',
+  [COLLABORATION_STATUSES.CANCELED]: 'Anulowana'
+};
 
-// Import SponsorshipOption from components/collaborations/types
-export interface SponsorshipOption {
-  id: string;
-  title: string;
-  description: string | null;
-  price: number;
-  benefits: string[] | null;
-}
-
-// Add the missing CollaborationDetailsResponse interface
-export interface CollaborationDetailsResponse {
-  id: string;
-  status: string;
-  message?: string;
-  total_amount: number;
-  created_at: string;
-  updated_at: string;
-  sponsor_id: string;
-  organization_id: string;
-  events: {
-    id: string;
-    title: string;
-    start_date: string;
-    date: string; // Added for compatibility
-    image_url?: string;
-    [key: string]: any;
-  };
-  sponsor: {
-    id: string;
-    name: string;
-    avatar: string;
-  };
-  organization: {
-    id: string;
-    name: string;
-    description: string;
-    logo_url: string;
-    [key: string]: any;
-  };
-  options?: Array<{
-    id: string;
-    sponsorship_options: SponsorshipOption;
-  }>;
-  profiles?: Array<{
-    name?: string;
-    avatar_url?: string;
-    [key: string]: any;
-  }>;
-}
+export const COLLABORATION_STATUS_COLORS = {
+  [COLLABORATION_STATUSES.PENDING]: 'yellow',
+  [COLLABORATION_STATUSES.ACCEPTED]: 'green',
+  [COLLABORATION_STATUSES.REJECTED]: 'red',
+  [COLLABORATION_STATUSES.COMPLETED]: 'blue',
+  [COLLABORATION_STATUSES.NEGOTIATION]: 'orange',
+  [COLLABORATION_STATUSES.CANCELED]: 'gray'
+};
