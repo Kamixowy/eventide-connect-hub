@@ -29,11 +29,21 @@ export const createOrGetConversation = async (recipientUserId: string): Promise<
     if (isOrganizationRecipient) {
       // Szukaj konwersacji między użytkownikiem a organizacją
       try {
-        const { data } = await supabase
-          .rpc('find_conversation_with_organization', { 
-            p_user_id: user.id, 
-            p_organization_id: recipientUserId 
-          });
+        // Zamiast używać RPC, użyjemy bezpośredniego zapytania do bazy danych
+        const { data, error } = await supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', user.id)
+          .eq('is_organization', false)
+          .in('conversation_id', 
+            supabase
+              .from('conversation_participants')
+              .select('conversation_id')
+              .eq('organization_id', recipientUserId)
+              .eq('is_organization', true)
+          );
+        
+        if (error) throw error;
         
         if (data && Array.isArray(data) && data.length > 0) {
           conversationId = data[0].conversation_id;
