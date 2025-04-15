@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { Collaboration, CollaborationOption, COLLABORATION_STATUSES } from '../types';
 
 /**
@@ -34,7 +34,7 @@ export const createCollaboration = async (
       .from('collaborations')
       .insert({
         sponsor_id: collaboration.sponsor_id,
-        organization_id: collaboration.organization_id,
+        organization_id: collaboration.organization_id, // This should be the organization ID, not user ID
         event_id: selectedEventIds[0], // Use the first selected event as primary
         status: validatedStatus, // Use validated status value
         message: collaboration.message || null, // Make message optional

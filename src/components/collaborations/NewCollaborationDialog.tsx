@@ -14,6 +14,7 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   
+  // Pass initialEventId and initialOrganizationId to useCollaborationForm
   const collaborationFormProps = useCollaborationForm(eventId, organizationId);
   
   const handleSubmit = async () => {

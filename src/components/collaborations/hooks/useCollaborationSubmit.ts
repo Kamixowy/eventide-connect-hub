@@ -60,10 +60,19 @@ export const useCollaborationSubmit = () => {
     try {
       setIsLoading(true);
       
+      // Make sure we're using the correct IDs:
+      // - For sponsor: use the current user ID
+      // - For organization: use the organization ID (not user ID)
+      const currentUserId = user?.id;
+      
+      if (!currentUserId) {
+        throw new Error("Użytkownik nie jest zalogowany");
+      }
+      
       const collaborationId = await createCollaboration(
         {
-          sponsor_id: sponsorId || user?.id || '',
-          organization_id: organizationId,
+          sponsor_id: currentUserId, // Always use the current user ID for sponsor
+          organization_id: organizationId, // Use the organization ID, not user ID
           event_id: selectedEventIds[0],
           status: COLLABORATION_STATUSES.PENDING,
           message: message,
