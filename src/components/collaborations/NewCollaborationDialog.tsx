@@ -19,6 +19,7 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
   
   const handleSubmit = async () => {
     try {
+      // Create a new collaboration using the form props
       const collaborationId = await collaborationFormProps.createNewCollaboration();
       
       if (collaborationId) {

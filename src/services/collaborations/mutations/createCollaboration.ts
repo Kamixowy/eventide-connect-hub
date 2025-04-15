@@ -34,9 +34,9 @@ export const createCollaboration = async (
       .from('collaborations')
       .insert({
         sponsor_id: collaboration.sponsor_id,
-        organization_id: collaboration.organization_id, // This should be the organization ID, not user ID
+        organization_id: collaboration.organization_id,
         event_id: selectedEventIds[0], // Use the first selected event as primary
-        status: validatedStatus, // Use validated status value
+        status: validatedStatus,
         message: collaboration.message || null, // Make message optional
         total_amount: collaboration.total_amount
       })
@@ -114,8 +114,7 @@ export const createCollaboration = async (
       }
     }
     
-    // Removed automatic conversation creation since it's causing foreign key constraint errors
-    console.log("Collaboration created successfully, skipping conversation creation");
+    console.log("Collaboration created successfully, no automatic conversation creation");
     
     // Return the collaboration ID
     return collaborationId;

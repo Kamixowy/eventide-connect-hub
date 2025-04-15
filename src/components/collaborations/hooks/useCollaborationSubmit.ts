@@ -22,9 +22,7 @@ export const useCollaborationSubmit = () => {
   const [isLoading, setIsLoading] = useState(false);
   
   const submitCollaboration = async ({
-    sponsorId,
     organizationId,
-    eventId,
     message,
     totalAmount,
     selectedOptions,
@@ -60,20 +58,24 @@ export const useCollaborationSubmit = () => {
     try {
       setIsLoading(true);
       
-      // Make sure we're using the correct IDs:
-      // - For sponsor: use the current user ID
-      // - For organization: use the organization ID (not user ID)
+      // Get current user ID
       const currentUserId = user?.id;
       
       if (!currentUserId) {
         throw new Error("Użytkownik nie jest zalogowany");
       }
       
+      console.log("Creating collaboration with:", {
+        sponsor_id: currentUserId,
+        organization_id: organizationId,
+        selectedEventIds,
+        selectedOptions
+      });
+      
       const collaborationId = await createCollaboration(
         {
-          sponsor_id: currentUserId, // Always use the current user ID for sponsor
-          organization_id: organizationId, // Use the organization ID, not user ID
-          event_id: selectedEventIds[0],
+          sponsor_id: currentUserId, // Use current user ID as sponsor_id
+          organization_id: organizationId, // Use organization ID from parameter
           status: COLLABORATION_STATUSES.PENDING,
           message: message,
           total_amount: totalAmount
