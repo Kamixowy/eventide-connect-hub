@@ -114,7 +114,8 @@ export const createCollaboration = async (
       }
     }
     
-    console.log("Moduł tworzenia konwersacji jest wyłączony");
+    // Removed automatic conversation creation since it's causing foreign key constraint errors
+    console.log("Collaboration created successfully, skipping conversation creation");
     
     // Return the collaboration ID
     return collaborationId;
