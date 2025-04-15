@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -45,7 +44,7 @@ const Navbar = () => {
             <span className="text-xl font-bold text-ngo">N-GO</span>
           </Link>
           
-          <nav className="hidden md:flex items-center space-x-6">
+          <nav className="hidden md:flex items-center justify-center space-x-6">
             <NavLinks />
           </nav>
           
