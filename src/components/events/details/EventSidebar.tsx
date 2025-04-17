@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Mail, Share2, MessageSquare } from 'lucide-react';
 import NewCollaborationDialog from '@/components/collaborations/NewCollaborationDialog';
 import SocialMediaLinks from '@/components/common/SocialMediaLinks';
 import EmailGenerator from './EmailGenerator';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface EventSidebarProps {
   sponsorshipOptions: any[];
@@ -31,6 +32,32 @@ const EventSidebar: React.FC<EventSidebarProps> = ({
   event,
   isOwner = false
 }) => {
+  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const { user } = useAuth();
+  
+  const handleOptionSelect = (optionId: string) => {
+    if (!isLoggedIn || userType !== 'sponsor') return;
+    
+    setSelectedOptions(prev => {
+      if (prev.includes(optionId)) {
+        return prev.filter(id => id !== optionId);
+      } else {
+        return [...prev, optionId];
+      }
+    });
+  };
+  
+  const handleCollaborationStart = () => {
+    setDialogOpen(true);
+  };
+  
+  // When dialog closes, reset selected options
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+    setSelectedOptions([]);
+  };
+  
   return (
     <div className="space-y-6">
       {/* Sponsorship Options */}
@@ -40,25 +67,38 @@ const EventSidebar: React.FC<EventSidebarProps> = ({
           {sponsorshipOptions && sponsorshipOptions.length > 0 ? (
             <div className="space-y-4">
               {sponsorshipOptions.map((option, index) => (
-                <SponsorshipOption key={index} option={option} />
+                <SponsorshipOption 
+                  key={index} 
+                  option={option} 
+                  isSelected={selectedOptions.includes(option.id)}
+                  onSelect={isLoggedIn && userType === 'sponsor' ? () => handleOptionSelect(option.id) : undefined}
+                  showPrice={isLoggedIn}
+                />
               ))}
               
               {/* Collaboration dialog visible only to sponsors */}
               {isLoggedIn && userType === 'sponsor' && event && (
-                <NewCollaborationDialog
-                  eventId={event.id}
-                  organizationId={event.organization?.id}
-                >
-                  <Button className="w-full btn-gradient">
-                    <MessageSquare size={16} className="mr-2" /> Nawiąż współpracę
-                  </Button>
-                </NewCollaborationDialog>
+                <div className="mt-4">
+                  <NewCollaborationDialog
+                    eventId={event.id}
+                    organizationId={event.organization?.id}
+                    open={dialogOpen}
+                    onOpenChange={setDialogOpen}
+                  >
+                    <Button className="w-full btn-gradient" onClick={handleCollaborationStart}>
+                      <MessageSquare size={16} className="mr-2" /> 
+                      {selectedOptions.length > 0 
+                        ? `Wyślij propozycję współpracy (${selectedOptions.length})` 
+                        : 'Nawiąż współpracę'}
+                    </Button>
+                  </NewCollaborationDialog>
+                </div>
               )}
 
               {/* Login CTA for non-logged in users */}
               {!isLoggedIn && (
                 <Link to="/login">
-                  <Button className="w-full">
+                  <Button className="w-full mt-4">
                     Zaloguj się, aby nawiązać współpracę
                   </Button>
                 </Link>

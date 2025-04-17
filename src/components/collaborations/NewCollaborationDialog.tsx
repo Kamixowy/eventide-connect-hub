@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useCollaborationForm } from './hooks/useCollaborationForm';
@@ -9,10 +9,17 @@ import { NewCollaborationDialogProps } from './types';
 const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
   eventId,
   organizationId,
-  children
+  children,
+  open,
+  onOpenChange
 }) => {
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  // Sync external state if provided
+  const isControlled = open !== undefined && onOpenChange !== undefined;
+  const isOpen = isControlled ? open : internalOpen;
+  const setIsOpen = isControlled ? onOpenChange : setInternalOpen;
   
   // Pass initialEventId and initialOrganizationId to useCollaborationForm
   const collaborationFormProps = useCollaborationForm(eventId, organizationId);
@@ -23,7 +30,7 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
       const collaborationId = await collaborationFormProps.createNewCollaboration();
       
       if (collaborationId) {
-        setOpen(false);
+        setIsOpen(false);
         navigate(`/wspolprace/${collaborationId}`);
       }
     } catch (error) {
@@ -33,7 +40,7 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
   };
   
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>

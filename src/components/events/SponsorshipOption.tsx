@@ -1,6 +1,8 @@
 
 import React from 'react';
 import { Check } from 'lucide-react';
+import SponsorshipTooltip from './SponsorshipTooltip';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SponsorshipOptionProps {
   option: {
@@ -12,34 +14,50 @@ interface SponsorshipOptionProps {
     };
     benefits: string[];
   };
+  isSelected?: boolean;
+  onSelect?: () => void;
+  showPrice?: boolean;
 }
 
-const SponsorshipOption: React.FC<SponsorshipOptionProps> = ({ option }) => {
+const SponsorshipOption: React.FC<SponsorshipOptionProps> = ({ 
+  option, 
+  isSelected = false,
+  onSelect,
+  showPrice = true
+}) => {
   return (
-    <div className="border rounded-md p-4 space-y-3">
-      <h4 className="font-semibold">{option.title}</h4>
-      
-      <div className="flex justify-between items-center">
-        <span className="text-sm text-muted-foreground">{option.description}</span>
-        <span className="font-medium">
-          {option.price.from}{option.price.from !== option.price.to && ` - ${option.price.to}`} PLN
-        </span>
+    <SponsorshipTooltip benefits={option.benefits}>
+      <div 
+        className={`border rounded-md p-4 space-y-3 ${onSelect ? 'cursor-pointer hover:border-ngo/50' : ''} ${isSelected ? 'border-ngo bg-ngo/5' : ''}`}
+        onClick={onSelect}
+      >
+        <h4 className="font-semibold">{option.title}</h4>
+        
+        <p className="text-sm text-muted-foreground">
+          {option.description}
+        </p>
+        
+        {showPrice && (
+          <div className="mt-1">
+            <p className="text-sm">
+              <span className="text-muted-foreground">Wartość współpracy: </span>
+              <span className="font-medium">
+                {option.price.from === option.price.to 
+                  ? `${option.price.from} PLN` 
+                  : `${option.price.from} - ${option.price.to} PLN`
+                }
+              </span>
+            </p>
+          </div>
+        )}
+        
+        {!showPrice && (
+          <p className="text-sm italic text-muted-foreground">
+            Cena dostępna po zalogowaniu
+          </p>
+        )}
       </div>
-      
-      {option.benefits && option.benefits.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs text-muted-foreground">Korzyści:</p>
-          <ul className="text-sm space-y-1">
-            {option.benefits.map((benefit, i) => (
-              <li key={i} className="flex items-start">
-                <Check size={16} className="text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                <span>{benefit}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
+    </SponsorshipTooltip>
   );
 };
 

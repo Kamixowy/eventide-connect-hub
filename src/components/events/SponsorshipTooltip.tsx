@@ -22,9 +22,11 @@ const SponsorshipTooltip: React.FC<SponsorshipTooltipProps> = ({ benefits, child
     <TooltipProvider>
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>
-          {children}
+          <div className="w-full">
+            {children}
+          </div>
         </TooltipTrigger>
-        <TooltipContent className="p-0 max-w-[300px]">
+        <TooltipContent className="p-0 w-[280px] max-w-[90vw]">
           <div className="bg-background border rounded-md overflow-hidden">
             <div className="bg-muted/50 p-2 border-b flex items-center gap-2">
               <Award size={16} className="text-ngo" />
