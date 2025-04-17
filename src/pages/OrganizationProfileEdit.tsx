@@ -52,10 +52,10 @@ const OrganizationProfileEdit = () => {
         <h1 className="text-3xl font-bold mb-6">Edytuj profil organizacji</h1>
 
         <Tabs defaultValue="basic" className="space-y-4">
-          <TabsList>
+          <TabsList className="w-full grid grid-cols-3">
             <TabsTrigger value="basic">Podstawowe informacje</TabsTrigger>
             <TabsTrigger value="contact">Kontakt</TabsTrigger>
-            <TabsTrigger value="media">Media</TabsTrigger>
+            <TabsTrigger value="media">Media i zdjęcia</TabsTrigger>
           </TabsList>
           
           <TabsContent value="basic" className="space-y-4">

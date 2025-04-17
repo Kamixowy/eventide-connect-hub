@@ -90,7 +90,7 @@ const UserMenu = () => {
           </DropdownMenuItem>
           {isOrganization && <>
               <DropdownMenuItem asChild>
-                <Link to="/profil" className="cursor-pointer w-full flex">
+                <Link to="/organizacja/edycja" className="cursor-pointer w-full flex">
                   <Edit className="mr-2 h-4 w-4" />
                   <span>Moja organizacja</span>
                 </Link>

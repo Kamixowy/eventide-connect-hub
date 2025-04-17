@@ -14,7 +14,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   return (
     <div className="mt-4 md:mt-0 flex gap-3">
       {isOwner && (
-        <Link to="/profil">
+        <Link to="/organizacja/edycja">
           <Button>
             <Edit size={16} className="mr-2" /> Edytuj profil
           </Button>
