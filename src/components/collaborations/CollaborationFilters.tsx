@@ -86,7 +86,7 @@ export const CollaborationFilters = ({
                 <SelectValue placeholder="Wszystkie statusy" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Wszystkie statusy</SelectItem>
+                <SelectItem value="all">Wszystkie statusy</SelectItem>
                 <SelectItem value="Przesłana">Przesłana</SelectItem>
                 <SelectItem value="Negocjacje">Negocjacje</SelectItem>
                 <SelectItem value="W trakcie">W trakcie</SelectItem>
