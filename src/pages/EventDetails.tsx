@@ -130,6 +130,8 @@ const EventDetails = () => {
               onContactOrganization={handleContactOrganization}
               onCopyLink={handleCopyLink}
               socialMedia={event.socialMedia}
+              event={event}
+              isOwner={isOwner}
             />
           </div>
         </div>
