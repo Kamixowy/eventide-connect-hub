@@ -11,7 +11,6 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, metadata: any) => Promise<{ error: any; data: any }>;
   signOut: () => Promise<void>;
-  demoLogin: (type: 'organization' | 'sponsor') => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,21 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const checkAuth = async () => {
       setLoading(true);
       
-      // First check for demo user
-      const storedDemoUser = localStorage.getItem('demoUser');
-      if (storedDemoUser) {
-        try {
-          setUser(JSON.parse(storedDemoUser) as User);
-          setSession(null); // Demo users don't have a session
-          setLoading(false);
-          return;
-        } catch (e) {
-          console.error('Error parsing demo user:', e);
-          localStorage.removeItem('demoUser');
-        }
-      }
-
-      // Then check for real Supabase authenticated users
+      // Check for real Supabase authenticated users
       if (isSupabaseConfigured()) {
         try {
           const { data } = await supabase.auth.getSession();
@@ -76,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured()) {
       toast({
         title: "Uwaga: Wersja demo",
-        description: "Supabase nie jest skonfigurowane. Użyj opcji logowania demo.",
+        description: "Supabase nie jest skonfigurowane. Proszę skonfigurować Supabase.",
         variant: "destructive",
       });
       return { error: new Error('Supabase not configured') };
@@ -118,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured()) {
       toast({
         title: "Uwaga: Wersja demo",
-        description: "Supabase nie jest skonfigurowane. Użyj opcji logowania demo.",
+        description: "Supabase nie jest skonfigurowane. Proszę skonfigurować Supabase.",
         variant: "destructive",
       });
       return { error: new Error('Supabase not configured'), data: null };
@@ -183,22 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('Signing out...');
     
     try {
-      // First check if we have a demo user
-      if (localStorage.getItem('demoUser')) {
-        console.log('Signing out demo user');
-        localStorage.removeItem('demoUser');
-        setUser(null);
-        
-        toast({
-          title: "Wylogowano pomyślnie z trybu demo",
-        });
-        
-        // Redirect to home page
-        window.location.href = '/';
-        return;
-      }
-      
-      // Then try to sign out a regular Supabase user
+      // Try to sign out a regular Supabase user
       if (isSupabaseConfigured()) {
         console.log('Signing out Supabase user');
         const { error } = await supabase.auth.signOut();
@@ -234,39 +204,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const demoLogin = async (type: 'organization' | 'sponsor') => {
-    const demoUser = {
-      id: type === 'organization' ? 'demo-organization' : 'demo-sponsor',
-      email: type === 'organization' ? 'demo-org@n-go.pl' : 'demo-sponsor@n-go.pl',
-      app_metadata: {},
-      aud: 'authenticated',
-      created_at: new Date().toISOString(),
-      user_metadata: {
-        name: type === 'organization' ? 'Demo Organizacja' : 'Demo Sponsor',
-        userType: type
-      }
-    } as User;
-    
-    localStorage.setItem('demoUser', JSON.stringify(demoUser));
-    
-    toast({
-      title: `Zalogowano jako demo ${type === 'organization' ? 'organizacji' : 'sponsora'}`,
-      description: "Przekierowujemy Cię do panelu...",
-    });
-    
-    setUser(demoUser);
-    
-    return Promise.resolve();
-  };
-
   const value = {
     session,
     user,
     loading,
     signIn,
     signUp,
-    signOut,
-    demoLogin
+    signOut
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

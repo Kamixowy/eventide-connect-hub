@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,7 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { signIn, demoLogin } = useAuth();
+  const { signIn } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -43,24 +44,6 @@ const Login = () => {
       toast({
         title: "Wystąpił błąd",
         description: "Nie można połączyć się z serwerem. Spróbuj ponownie później.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDemoLogin = async (type: 'organization' | 'sponsor') => {
-    setIsLoading(true);
-    
-    try {
-      await demoLogin(type);
-      // Przekierowanie do strony głównej po zalogowaniu demo
-      navigate('/');
-    } catch (err) {
-      toast({
-        title: "Wystąpił błąd",
-        description: "Nie można zalogować się jako demo. Spróbuj ponownie później.",
         variant: "destructive",
       });
     } finally {
@@ -128,36 +111,6 @@ const Login = () => {
                 {isLoading ? 'Logowanie...' : 'Zaloguj się'}
               </Button>
             </form>
-            
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    Lub użyj konta demo
-                  </span>
-                </div>
-              </div>
-              
-              <div className="mt-6 grid grid-cols-2 gap-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleDemoLogin('organization')}
-                  disabled={isLoading}
-                >
-                  Demo Organizacji
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleDemoLogin('sponsor')}
-                  disabled={isLoading}
-                >
-                  Demo Sponsora
-                </Button>
-              </div>
-            </div>
             
             <div className="mt-6 text-center text-sm">
               Nie masz jeszcze konta?{' '}
