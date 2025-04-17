@@ -1,14 +1,11 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import SponsorshipOption from '@/components/events/SponsorshipOption';
-import UserTypeGuard from '@/components/common/UserTypeGuard';
 import { Mail, Share2, MessageSquare } from 'lucide-react';
 import NewCollaborationDialog from '@/components/collaborations/NewCollaborationDialog';
 import SocialMediaLinks from '@/components/common/SocialMediaLinks';
-import EmailGenerator from './EmailGenerator';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface EventSidebarProps {
@@ -52,7 +49,6 @@ const EventSidebar: React.FC<EventSidebarProps> = ({
     setDialogOpen(true);
   };
   
-  // When dialog closes, reset selected options
   const handleDialogClose = () => {
     setDialogOpen(false);
     setSelectedOptions([]);
@@ -60,7 +56,6 @@ const EventSidebar: React.FC<EventSidebarProps> = ({
   
   return (
     <div className="space-y-6">
-      {/* Sponsorship Options */}
       <Card>
         <CardContent className="p-6">
           <h3 className="text-xl font-bold mb-4">Opcje Sponsoringu</h3>
@@ -76,7 +71,6 @@ const EventSidebar: React.FC<EventSidebarProps> = ({
                 />
               ))}
               
-              {/* Collaboration dialog visible only to sponsors */}
               {isLoggedIn && userType === 'sponsor' && event && (
                 <div className="mt-4">
                   <NewCollaborationDialog
@@ -95,9 +89,8 @@ const EventSidebar: React.FC<EventSidebarProps> = ({
                 </div>
               )}
 
-              {/* Login CTA for non-logged in users */}
               {!isLoggedIn && (
-                <Link to="/login">
+                <Link to="/logowanie">
                   <Button className="w-full mt-4">
                     Zaloguj się, aby nawiązać współpracę
                   </Button>
@@ -112,12 +105,10 @@ const EventSidebar: React.FC<EventSidebarProps> = ({
         </CardContent>
       </Card>
 
-      {/* Email Generator for Organization Owners */}
       {isOwner && event && (
         <EmailGenerator event={event} />
       )}
 
-      {/* Contact & Social Media */}
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="text-xl font-bold">Kontakt</h3>
