@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import SponsorshipOption from '@/components/events/SponsorshipOption';
 import UserTypeGuard from '@/components/common/UserTypeGuard';
 import { Mail, Share2, MessageSquare } from 'lucide-react';
-import { NewCollaborationDialog } from '@/components/collaborations/NewCollaborationDialog';
+import NewCollaborationDialog from '@/components/collaborations/NewCollaborationDialog';
 import SocialMediaLinks from '@/components/common/SocialMediaLinks';
 import EmailGenerator from './EmailGenerator';
 
