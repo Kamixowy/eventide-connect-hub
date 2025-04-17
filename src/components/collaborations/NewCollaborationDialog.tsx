@@ -11,7 +11,8 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
   organizationId,
   children,
   open,
-  onOpenChange
+  onOpenChange,
+  selectedOptions
 }) => {
   const navigate = useNavigate();
   const [internalOpen, setInternalOpen] = useState(false);
@@ -23,6 +24,8 @@ const NewCollaborationDialog: React.FC<NewCollaborationDialogProps> = ({
   
   // Pass initialEventId and initialOrganizationId to useCollaborationForm
   const collaborationFormProps = useCollaborationForm(eventId, organizationId);
+  
+  // If selectedOptions are provided, we could handle them here in the future
   
   const handleSubmit = async () => {
     try {
