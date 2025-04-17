@@ -7,6 +7,7 @@ import { Mail, Share2, MessageSquare } from 'lucide-react';
 import NewCollaborationDialog from '@/components/collaborations/NewCollaborationDialog';
 import SocialMediaLinks from '@/components/common/SocialMediaLinks';
 import { useAuth } from '@/contexts/AuthContext';
+import EmailGenerator from './EmailGenerator';
 
 interface EventSidebarProps {
   sponsorshipOptions: any[];
