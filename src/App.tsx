@@ -15,6 +15,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Organizations from './pages/Organizations';
 import OrganizationProfile from './pages/OrganizationProfile';
+import OrganizationProfileEdit from './pages/OrganizationProfileEdit';
 import EventsList from './pages/EventsList';
 import EventDetails from './pages/EventDetails';
 import AddEvent from './pages/AddEvent';
@@ -123,6 +124,13 @@ function AppRoutes() {
         <ProtectedRoute>
           <Collaborations />
         </ProtectedRoute>
+      } />
+      
+      {/* Dodajemy nową trasę dla edycji profilu organizacji */}
+      <Route path="/organizacja/edycja" element={
+        <OrganizationRoute>
+          <OrganizationProfileEdit />
+        </OrganizationRoute>
       } />
       
       {/* Legal pages */}
