@@ -16,9 +16,10 @@ export interface CollaborationType {
     [key: string]: any;
   };
   sponsor?: {
-    id: number | string;
-    name: string;
-    avatar: string;
+    id: string;
+    name?: string;
+    avatar_url?: string;
+    [key: string]: any;
   };
   organization?: {
     id: string;
@@ -28,8 +29,9 @@ export interface CollaborationType {
     [key: string]: any;
   };
   profiles?: {
-    name: string;
-    avatar_url: string;
+    id?: string;
+    name?: string;
+    avatar_url?: string;
     [key: string]: any;
   }[];
   status: string;
@@ -52,6 +54,14 @@ export interface CollaborationType {
     date: string;
   }[];
   collaboration_options?: {
+    id: string;
+    title: string;
+    description?: string | null;
+    amount: number;
+    is_custom: boolean;
+    sponsorship_option_id?: string;
+  }[];
+  options?: {
     id: string;
     title: string;
     description?: string | null;

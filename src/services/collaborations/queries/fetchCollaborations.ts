@@ -41,11 +41,6 @@ export const fetchCollaborations = async (userType: 'organization' | 'sponsor') 
             name,
             logo_url,
             description
-          ),
-          profiles (
-            id,
-            name,
-            avatar_url
           )
         `)
         .eq('sponsor_id', currentUserId)
@@ -56,12 +51,19 @@ export const fetchCollaborations = async (userType: 'organization' | 'sponsor') 
         throw error;
       }
 
+      // Get current user profile for sponsor info
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id, name, avatar_url')
+        .eq('id', currentUserId)
+        .single();
+
       return data?.map(collab => ({
         ...collab,
         events: collab.collaboration_events?.map(ce => ce.events) || [],
         options: collab.collaboration_options || [],
         organization: collab.organizations,
-        sponsor: collab.profiles
+        sponsor: profileData || { id: currentUserId }
       })) || [];
     } else {
       // First get the organization ID for the current user
@@ -98,11 +100,6 @@ export const fetchCollaborations = async (userType: 'organization' | 'sponsor') 
             amount,
             is_custom,
             sponsorship_option_id
-          ),
-          profiles:sponsor_id (
-            id,
-            name,
-            avatar_url
           )
         `)
         .eq('organization_id', orgData.id)
@@ -113,18 +110,31 @@ export const fetchCollaborations = async (userType: 'organization' | 'sponsor') 
         throw error;
       }
       
-      return data?.map(collab => ({
-        ...collab,
-        events: collab.collaboration_events?.map(ce => ce.events) || [],
-        options: collab.collaboration_options || [],
-        organization: { 
-          id: orgData.id,
-          name: orgData.name,
-          logo_url: orgData.logo_url,
-          description: orgData.description
-        },
-        sponsor: collab.profiles
-      })) || [];
+      // For each collaboration, fetch sponsor profiles separately
+      const collaborationsWithProfiles = await Promise.all(data?.map(async (collab) => {
+        // Get sponsor profile information
+        const { data: sponsorData } = await supabase
+          .from('profiles')
+          .select('id, name, avatar_url')
+          .eq('id', collab.sponsor_id)
+          .single();
+          
+        return {
+          ...collab,
+          events: collab.collaboration_events?.map(ce => ce.events) || [],
+          options: collab.collaboration_options || [],
+          organization: { 
+            id: orgData.id,
+            name: orgData.name,
+            logo_url: orgData.logo_url,
+            description: orgData.description
+          },
+          sponsor: sponsorData || { id: collab.sponsor_id },
+          profiles: sponsorData ? [sponsorData] : []
+        };
+      }) || []);
+      
+      return collaborationsWithProfiles;
     }
   } catch (error) {
     console.error('Error fetching collaborations:', error);

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/layout/Layout';
@@ -9,7 +10,6 @@ import { Plus } from 'lucide-react';
 import NewCollaborationDialog from '@/components/collaborations/NewCollaborationDialog';
 import { fetchCollaborations } from '@/services/collaborations';
 import { COLLABORATION_STATUS_NAMES } from '@/services/collaborations/types';
-import { supabase } from '@/lib/supabase';
 
 const Collaborations = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -18,39 +18,12 @@ const Collaborations = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [collaborations, setCollaborations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [organizationData, setOrganizationData] = useState<any>(null);
   
   const { user } = useAuth();
   const { toast } = useToast();
   
   // Determine user type from authentication context
   const userType = user?.user_metadata?.userType === 'organization' ? 'organization' : 'sponsor';
-
-  // Fetch organization data if user is of type organization
-  useEffect(() => {
-    const getOrganizationData = async () => {
-      if (user && userType === 'organization') {
-        try {
-          const { data, error } = await supabase
-            .from('organizations')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-            
-          if (error) {
-            console.error('Error fetching organization:', error);
-          } else {
-            console.log('Organization data:', data);
-            setOrganizationData(data);
-          }
-        } catch (err) {
-          console.error('Failed to fetch organization data:', err);
-        }
-      }
-    };
-    
-    getOrganizationData();
-  }, [user, userType]);
 
   // Fetch user collaborations
   useEffect(() => {
@@ -60,131 +33,7 @@ const Collaborations = () => {
       try {
         setIsLoading(true);
         console.log('Fetching collaborations with user type:', userType);
-        console.log('Current user ID:', user.id);
-
-        // For sponsors, we need to fetch collaborations where they are the sponsor
-        if (userType === 'sponsor') {
-          const { data, error } = await supabase
-            .from('collaborations')
-            .select(`
-              *,
-              collaboration_events (
-                events:event_id (
-                  id,
-                  title,
-                  start_date,
-                  image_url
-                )
-              ),
-              collaboration_options (
-                id,
-                title,
-                description,
-                amount,
-                is_custom,
-                sponsorship_option_id
-              ),
-              organizations (
-                id,
-                name,
-                logo_url,
-                description
-              )
-            `)
-            .eq('sponsor_id', user.id)
-            .order('created_at', { ascending: false });
-            
-          if (error) {
-            console.error('Error fetching collaborations for sponsor:', error);
-            throw error;
-          }
-          
-          setCollaborations(data?.map(collab => ({
-            ...collab,
-            events: collab.collaboration_events?.map(ce => ce.events)[0] || [],
-            options: collab.collaboration_options || [],
-            organization: collab.organizations,
-            profiles: [{
-              name: user.user_metadata?.name || 'Unknown',
-              avatar_url: user.user_metadata?.avatar_url
-            }]
-          })) || []);
-        } 
-        // For organizations, we fetch collaborations where they are the organization
-        else if (userType === 'organization' && organizationData?.id) {
-          const { data, error } = await supabase
-            .from('collaborations')
-            .select(`
-              *,
-              collaboration_events (
-                events:event_id (
-                  id,
-                  title,
-                  start_date,
-                  image_url
-                )
-              ),
-              collaboration_options (
-                id,
-                title,
-                description,
-                amount,
-                is_custom,
-                sponsorship_option_id
-              ),
-              profiles:sponsor_id (
-                id,
-                name,
-                avatar_url
-              )
-            `)
-            .eq('organization_id', organizationData.id)
-            .order('created_at', { ascending: false });
-            
-          if (error) {
-            console.error('Error fetching collaborations for organization:', error);
-            throw error;
-          }
-          
-          setCollaborations(data?.map(collab => ({
-            ...collab,
-            events: collab.collaboration_events?.map(ce => ce.events)[0] || [],
-            options: collab.collaboration_options || [],
-            organization: organizationData,
-            profiles: collab.profiles ? [collab.profiles] : []
-          })) || []);
-        }
         
-        console.log('Fetched collaborations:', collaborations);
-        
-        // Setup real-time updates subscription
-        // if (userType === 'organization' && organizationData?.id) {
-        //   const subscription = subscribeToUserCollaborations(
-        //     'organization', 
-        //     organizationData.id,
-        //     () => {
-        //       // Refresh collaborations data when changes are detected
-        //       getCollaborations();
-        //     }
-        //   );
-          
-        //   return () => {
-        //     subscription.unsubscribe();
-        //   };
-        // } else if (userType === 'sponsor' && user.id) {
-        //   const subscription = subscribeToUserCollaborations(
-        //     'sponsor', 
-        //     user.id,
-        //     () => {
-        //       // Refresh collaborations data when changes are detected
-        //       getCollaborations();
-        //     }
-        //   );
-          
-        //   return () => {
-        //     subscription.unsubscribe();
-        //   };
-        // }
         const collabData = await fetchCollaborations(userType);
         setCollaborations(collabData);
         
@@ -202,7 +51,7 @@ const Collaborations = () => {
     };
     
     getCollaborations();
-  }, [user, toast, userType, organizationData]);
+  }, [user, toast, userType]);
   
   // Filtering collaborations
   const filteredCollaborations = collaborations.filter((collaboration) => {
