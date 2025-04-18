@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 
 export const fetchCollaborations = async (userType: 'organization' | 'sponsor') => {
   try {
-    // First get the current user session - we need to await this
+    // First get the current user session
     const { data: sessionData } = await supabase.auth.getSession();
     const currentUserId = sessionData.session?.user.id;
     
@@ -46,13 +46,23 @@ export const fetchCollaborations = async (userType: 'organization' | 'sponsor') 
       `)
       .order('created_at', { ascending: false });
 
-    // Apply filters based on user type
     if (userType === 'sponsor') {
       // If user is a sponsor, filter collaborations by sponsor_id
       query = query.eq('sponsor_id', currentUserId);
     } else if (userType === 'organization') {
-      // If user is an organization, filter collaborations by organization_id
-      query = query.eq('organization_id', currentUserId);
+      // First get the organization ID for the current user
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('user_id', currentUserId)
+        .single();
+        
+      if (orgError || !orgData) {
+        throw new Error('Could not find organization for current user');
+      }
+      
+      // Filter collaborations by organization_id
+      query = query.eq('organization_id', orgData.id);
     }
 
     const { data, error } = await query;
