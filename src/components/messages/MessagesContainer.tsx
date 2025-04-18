@@ -58,6 +58,8 @@ const MessagesContainer = () => {
           isRefetching: false,
           isStale: false,
           isSuccess: true,
+          isPending: false,      // Add missing property
+          isInitialLoading: false, // Add missing property
           refetch: async () => mockRefetch(),
           status: 'success'
         };
@@ -129,8 +131,37 @@ const MessagesContainer = () => {
               conversationsCount={conversations.length}
               isError={isConversationsError}
               onRefetch={() => {
-                refetchConversations();
-                return Promise.resolve();
+                // Create a proper mock for the refetch function
+                const mockRefetch = async (): Promise<QueryObserverResult<Conversation[], Error>> => {
+                  await refetchConversations();
+                  return {
+                    data: conversations,
+                    dataUpdatedAt: Date.now(),
+                    error: null,
+                    errorUpdateCount: 0,
+                    errorUpdatedAt: 0,
+                    failureCount: 0,
+                    failureReason: null,
+                    fetchStatus: 'idle',
+                    isError: false,
+                    isFetched: true,
+                    isFetchedAfterMount: true,
+                    isFetching: false,
+                    isLoading: false,
+                    isLoadingError: false,
+                    isPaused: false,
+                    isPlaceholderData: false,
+                    isRefetchError: false,
+                    isRefetching: false,
+                    isStale: false,
+                    isSuccess: true,
+                    isPending: false,      // Add missing property
+                    isInitialLoading: false, // Add missing property
+                    refetch: async () => mockRefetch(),
+                    status: 'success'
+                  };
+                };
+                return mockRefetch();
               }}
             />
           )}
