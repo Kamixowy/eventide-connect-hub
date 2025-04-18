@@ -65,7 +65,7 @@ const CollaborationDetails = () => {
     try {
       await updateCollaborationStatus(id, newStatus);
       
-      setCollaboration(prev => ({
+      setCollaboration((prev: any) => ({
         ...prev,
         status: newStatus
       }));

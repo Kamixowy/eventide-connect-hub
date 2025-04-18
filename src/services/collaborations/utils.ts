@@ -1,5 +1,5 @@
 
-import { CollaborationStatus } from './types';
+import { CollaborationStatus, COLLABORATION_STATUS_NAMES, COLLABORATION_STATUS_COLORS } from './types';
 
 export const getAvailableActions = (
   status: CollaborationStatus,
@@ -36,9 +36,6 @@ export const getAvailableActions = (
   return actions;
 };
 
-// Re-export these from types to maintain compatibility with existing imports
-export { 
-  COLLABORATION_STATUS_NAMES, 
-  COLLABORATION_STATUS_COLORS,
-} from './types';
-
+// Export types and constants
+export type { CollaborationStatus };
+export { COLLABORATION_STATUS_NAMES, COLLABORATION_STATUS_COLORS };
