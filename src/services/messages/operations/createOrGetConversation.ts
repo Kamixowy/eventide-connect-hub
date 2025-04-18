@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -8,6 +7,11 @@ import { supabase } from '@/integrations/supabase/client';
  * Wrócimy do niej w przyszłości
  */
 export const createOrGetConversation = async (recipientUserId: string): Promise<string | null> => {
+  console.log('createOrGetConversation is temporarily disabled');
+  return null;
+  
+  // This code is temporarily disabled as the tables are not defined in the schema
+  /*
   try {
     // Sprawdź czy mamy zalogowanego użytkownika
     const { data: { user } } = await supabase.auth.getUser();
@@ -144,4 +148,5 @@ export const createOrGetConversation = async (recipientUserId: string): Promise<
     console.error('Błąd w createOrGetConversation:', error);
     throw error;
   }
+  */
 };

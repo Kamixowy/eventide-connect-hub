@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus } from 'lucide-react';
-import { CollaborationOption } from '@/services/collaborations';
+import { CollaborationOption } from '@/services/collaborations/types';
 
 interface SponsorshipOption {
   id: string;

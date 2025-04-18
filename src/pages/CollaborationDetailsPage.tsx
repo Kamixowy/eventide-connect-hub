@@ -13,7 +13,11 @@ import CollaborationActions from '@/components/collaborations/CollaborationActio
 import CollaborationInfo from '@/components/collaborations/CollaborationInfo';
 import CollaborationMessages from '@/components/collaborations/CollaborationMessages';
 import { getCollaborationById, updateCollaborationStatus } from '@/services/collaborations';
-import { COLLABORATION_STATUS_NAMES, COLLABORATION_STATUS_COLORS } from '@/services/collaborations/utils';
+import { 
+  COLLABORATION_STATUS_NAMES, 
+  COLLABORATION_STATUS_COLORS, 
+  CollaborationStatus 
+} from '@/services/collaborations/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const CollaborationDetailsPage = () => {
@@ -56,7 +60,7 @@ const CollaborationDetailsPage = () => {
     loadCollaboration();
   }, [id, user, toast]);
   
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = async (newStatus: CollaborationStatus) => {
     if (!collaboration?.id) return;
     
     try {

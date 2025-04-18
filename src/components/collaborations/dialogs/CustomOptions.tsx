@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { MinusCircle } from 'lucide-react';
-import { CollaborationOption } from '@/services/collaborations';
+import { CollaborationOption } from '@/services/collaborations/types';
 
 interface CustomOptionsProps {
   selectedOptions: CollaborationOption[];

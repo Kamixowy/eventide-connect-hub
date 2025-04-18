@@ -3,7 +3,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { CollaborationOption } from '@/services/collaborations';
+import { CollaborationOption } from '@/services/collaborations/types';
 
 interface CollaborationSummaryProps {
   organizations: any[];

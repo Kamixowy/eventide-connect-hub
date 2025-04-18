@@ -3,11 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CheckCircle, Edit, XCircle } from 'lucide-react';
 import { getAvailableActions } from '@/services/collaborations/utils';
+import { CollaborationStatus } from '@/services/collaborations/types';
 
 interface CollaborationActionsProps {
   collaboration: any;
   userType: 'organization' | 'sponsor';
-  onStatusChange: (newStatus: string) => void;
+  onStatusChange: (newStatus: CollaborationStatus) => void;
 }
 
 const CollaborationActions = ({ 
