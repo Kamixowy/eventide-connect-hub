@@ -7,19 +7,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  CheckCircle, 
-  XCircle, 
-  MessageSquare, 
-  Clock,
-  AlertCircle
-} from "lucide-react";
 import { CollaborationType } from "@/types/collaboration";
 import { updateCollaborationStatus } from "@/services/collaborations";
 import { CollaborationStatus } from "@/services/collaborations/types";
+import CollaborationDialogActions from "./dialog/CollaborationDialogActions";
+import CollaborationPartnerInfo from "./dialog/CollaborationPartnerInfo";
+import CollaborationOptionsList from "./dialog/CollaborationOptionsList";
 
 interface ManageCollaborationDialogProps {
   collaboration: CollaborationType;
@@ -56,120 +51,6 @@ export const ManageCollaborationDialog = ({
     }
   };
 
-  const getStatusActions = () => {
-    if (userType === 'organization') {
-      switch (collaboration.status) {
-        case 'pending':
-          return (
-            <div className="flex gap-2 justify-end">
-              <Button 
-                variant="outline" 
-                onClick={() => handleStatusChange('rejected')}
-                className="text-red-600"
-              >
-                <XCircle className="w-4 h-4 mr-2" />
-                Odrzuć
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => handleStatusChange('negotiation')}
-              >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Negocjuj
-              </Button>
-              <Button 
-                className="btn-gradient"
-                onClick={() => handleStatusChange('accepted')}
-              >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Zaakceptuj
-              </Button>
-            </div>
-          );
-        case 'negotiation':
-          return (
-            <div className="space-y-4">
-              <Textarea
-                placeholder="Wpisz swoją kontrofertę..."
-                value={counterOfferMessage}
-                onChange={(e) => setCounterOfferMessage(e.target.value)}
-                className="min-h-[100px]"
-              />
-              <div className="flex gap-2 justify-end">
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleStatusChange('rejected')}
-                  className="text-red-600"
-                >
-                  <XCircle className="w-4 h-4 mr-2" />
-                  Odrzuć
-                </Button>
-                <Button 
-                  className="btn-gradient"
-                  onClick={() => handleStatusChange('accepted')}
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Zaakceptuj warunki
-                </Button>
-              </div>
-            </div>
-          );
-      }
-    } else if (userType === 'sponsor') {
-      switch (collaboration.status) {
-        case 'negotiation':
-          return (
-            <div className="space-y-4">
-              <Textarea
-                placeholder="Wpisz swoją odpowiedź..."
-                value={counterOfferMessage}
-                onChange={(e) => setCounterOfferMessage(e.target.value)}
-                className="min-h-[100px]"
-              />
-              <div className="flex gap-2 justify-end">
-                <Button 
-                  variant="outline"
-                  onClick={() => handleStatusChange('canceled')}
-                  className="text-red-600"
-                >
-                  Anuluj współpracę
-                </Button>
-                <Button 
-                  className="btn-gradient"
-                  onClick={() => handleStatusChange('pending')}
-                >
-                  Wyślij odpowiedź
-                </Button>
-              </div>
-            </div>
-          );
-        case 'pending':
-          return (
-            <div className="flex justify-end">
-              <Button 
-                variant="outline"
-                onClick={() => handleStatusChange('canceled')}
-                className="text-red-600"
-              >
-                Anuluj propozycję
-              </Button>
-            </div>
-          );
-      }
-    }
-    
-    // For completed/rejected/canceled statuses
-    return (
-      <div className="flex items-center justify-center p-4 bg-gray-50 rounded-lg">
-        <AlertCircle className="w-5 h-5 mr-2 text-gray-500" />
-        <span className="text-gray-600">
-          Ta współpraca została {collaboration.status === 'completed' ? 'zakończona' : 
-            collaboration.status === 'rejected' ? 'odrzucona' : 'anulowana'}
-        </span>
-      </div>
-    );
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -202,52 +83,28 @@ export const ManageCollaborationDialog = ({
           </div>
 
           {/* Organization & Sponsor Info */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <h3 className="text-sm font-medium mb-2">Organizacja</h3>
-              <div className="p-4 border rounded-lg">
-                <p className="font-medium">{collaboration.organization?.name || 'Brak nazwy'}</p>
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {collaboration.organization?.description || 'Brak opisu'}
-                </p>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium mb-2">Sponsor</h3>
-              <div className="p-4 border rounded-lg">
-                <p className="font-medium">
-                  {collaboration.profiles?.[0]?.name || collaboration.sponsor?.name || 'Brak nazwy'}
-                </p>
-              </div>
-            </div>
-          </div>
+          <CollaborationPartnerInfo 
+            collaboration={collaboration} 
+            userType={userType} 
+          />
 
           {/* Sponsorship Options */}
-          <div>
-            <h3 className="text-sm font-medium mb-2">Wybrane opcje sponsoringu</h3>
-            <div className="space-y-2">
-              {collaboration.collaboration_options?.map((option: any, index: number) => (
-                <div key={index} className="p-4 border rounded-lg">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium">{option.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {option.description || 'Brak opisu'}
-                      </p>
-                    </div>
-                    <p className="font-bold">{option.amount} PLN</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <CollaborationOptionsList collaboration={collaboration} />
 
           {/* Actions */}
           <div className="pt-4 border-t">
-            {getStatusActions()}
+            <CollaborationDialogActions
+              status={collaboration.status}
+              userType={userType}
+              onStatusChange={handleStatusChange}
+              counterOfferMessage={counterOfferMessage}
+              onCounterOfferChange={setCounterOfferMessage}
+            />
           </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 };
+
+export default ManageCollaborationDialog;
