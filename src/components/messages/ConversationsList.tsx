@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Conversation } from '@/services/messages';
+import { Conversation } from '@/services/messages/types';
 
 interface ConversationsListProps {
   conversations: Conversation[];
@@ -132,18 +132,18 @@ const ConversationsList = ({
                           <p className="text-sm font-medium truncate">
                             {recipientName}
                           </p>
-                          {conversation.lastMessage && (
+                          {conversation.last_message && (
                             <p className="text-xs text-muted-foreground">
-                              {formatDate(conversation.lastMessage.created_at)}
+                              {formatDate(conversation.last_message.created_at)}
                             </p>
                           )}
                         </div>
-                        {conversation.lastMessage && (
+                        {conversation.last_message && (
                           <div className="flex items-center">
-                            <p className={`text-xs truncate ${conversation.unreadCount ? 'font-semibold' : 'text-muted-foreground'}`}>
-                              {conversation.lastMessage.content}
+                            <p className={`text-xs truncate ${conversation.unread_count ? 'font-semibold' : 'text-muted-foreground'}`}>
+                              {conversation.last_message.content}
                             </p>
-                            {conversation.unreadCount > 0 && (
+                            {conversation.unread_count > 0 && (
                               <span className="ml-2 h-2 w-2 rounded-full bg-ngo"></span>
                             )}
                           </div>

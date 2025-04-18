@@ -1,3 +1,4 @@
+
 import { useRef, useEffect, useState } from 'react';
 import { Loader2, Send } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -6,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Message, ConversationParticipant, Conversation } from '@/services/messages';
+import { Message, Conversation, ConversationParticipant } from '@/services/messages/types';
 
 interface MessageViewProps {
   conversation: Conversation | undefined;

@@ -4,13 +4,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { fetchMessages } from '@/services/messages/operations/fetchMessages';
 import { sendMessageToConversation, startConversationWithMessage } from '@/services/messages/operations/sendMessageService';
-import { Message } from '@/services/messages/types';
+import { Message, Conversation } from '@/services/messages/types';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useMessagesData = (selectedConversationId: string | null) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [conversations, setConversations] = useState<any[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [isConversationsError, setIsConversationsError] = useState(false);
   const { user } = useAuth();
@@ -57,7 +58,7 @@ export const useMessagesData = (selectedConversationId: string | null) => {
       // Return a mock response since the functionality is temporarily disabled
       console.log("startConversation is temporarily disabled");
       return {
-        conversationId: "mock-id-" + Date.now(),
+        conversationId: "mock-id-" + uuidv4(),
         message: null
       };
     } catch (error: any) {
@@ -130,3 +131,4 @@ export const useMessagesData = (selectedConversationId: string | null) => {
     sendMessageMutation
   };
 };
+
