@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { COLLABORATION_STATUSES } from '../utils';
+import { COLLABORATION_STATUSES } from '../types';
 
 /**
  * Updates collaboration status
@@ -9,13 +9,8 @@ import { COLLABORATION_STATUSES } from '../utils';
  * @param status - New status
  * @returns Promise with updated collaboration
  */
-export const updateCollaborationStatus = async (id: string, status: string) => {
+export const updateCollaborationStatus = async (id: string, status: keyof typeof COLLABORATION_STATUSES) => {
   try {
-    // Validate that the status is one of the allowed values
-    if (!Object.values(COLLABORATION_STATUSES).includes(status)) {
-      throw new Error(`Invalid status value: ${status}`);
-    }
-    
     const { data, error } = await supabase
       .from('collaborations')
       .update({ status })

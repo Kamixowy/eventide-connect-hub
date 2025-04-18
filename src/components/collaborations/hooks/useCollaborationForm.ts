@@ -11,24 +11,20 @@ export const useCollaborationForm = (initialEventId?: string, initialOrganizatio
   const { user } = useAuth();
   const [message, setMessage] = useState('');
   
-  // Use organization data hook with initial value if provided
   const {
     organizations,
     selectedOrganizationId,
     handleOrganizationChange
   } = useOrganizationsData(initialOrganizationId);
   
-  // Use events data hook with initial value if provided
   const {
     events,
     selectedEventIds,
     toggleEvent
   } = useEventsData(selectedOrganizationId, initialEventId);
   
-  // Use sponsorship options hook based on selected events
   const { sponsorshipOptions } = useSponsorshipOptions(selectedEventIds);
   
-  // Use collaboration options hook to manage selected options
   const {
     selectedOptions,
     toggleOption,
@@ -38,13 +34,10 @@ export const useCollaborationForm = (initialEventId?: string, initialOrganizatio
     calculateTotalAmount
   } = useCollaborationOptions();
   
-  // Use collaboration submission hook for submitting the collaboration
   const { isLoading, submitCollaboration } = useCollaborationSubmit();
   
-  // Calculate total amount from selected options
   const totalAmount = calculateTotalAmount();
   
-  // Function to create a new collaboration
   const createNewCollaboration = async () => {
     console.log("Creating new collaboration with organization:", selectedOrganizationId);
     
