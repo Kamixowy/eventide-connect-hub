@@ -1,19 +1,9 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { createCollaboration } from '@/services/collaborations';
-import { COLLABORATION_STATUSES } from '@/services/collaborations/utils';
 import { CollaborationOption } from '../types';
-
-export interface SubmitCollaborationParams {
-  sponsorId: string;
-  organizationId: string;
-  eventId: string;
-  message: string;
-  totalAmount: number;
-  selectedOptions: CollaborationOption[];
-  selectedEventIds: string[];
-}
 
 export const useCollaborationSubmit = () => {
   const { user } = useAuth();
@@ -26,59 +16,39 @@ export const useCollaborationSubmit = () => {
     totalAmount,
     selectedOptions,
     selectedEventIds
-  }: SubmitCollaborationParams) => {
-    if (!organizationId) {
+  }: {
+    organizationId: string;
+    message: string;
+    totalAmount: number;
+    selectedOptions: CollaborationOption[];
+    selectedEventIds: string[];
+  }) => {
+    if (!user?.id) {
       toast({
         title: "Błąd",
-        description: "Wybierz organizację",
+        description: "Musisz być zalogowany aby wysłać propozycję współpracy",
         variant: "destructive"
       });
       return null;
     }
-    
-    if (selectedOptions.length === 0) {
+
+    if (!organizationId || selectedEventIds.length === 0 || selectedOptions.length === 0) {
       toast({
         title: "Błąd",
-        description: "Wybierz przynajmniej jedną opcję współpracy",
+        description: "Wypełnij wszystkie wymagane pola",
         variant: "destructive"
       });
       return null;
     }
-    
-    if (selectedEventIds.length === 0) {
-      toast({
-        title: "Błąd",
-        description: "Wybierz przynajmniej jedno wydarzenie",
-        variant: "destructive"
-      });
-      return null;
-    }
-    
+
     try {
       setIsLoading(true);
       
-      // Get current user ID
-      const currentUserId = user?.id;
-      
-      if (!currentUserId) {
-        throw new Error("Użytkownik nie jest zalogowany");
-      }
-      
-      console.log("Creating collaboration with:", {
-        sponsor_id: currentUserId,
-        organization_id: organizationId,
-        selectedEventIds,
-        selectedOptions
-      });
-      
       const collaborationId = await createCollaboration(
-        {
-          sponsor_id: currentUserId, // Use current user ID as sponsor_id
-          organization_id: organizationId, // Use organization ID from parameter
-          status: COLLABORATION_STATUSES.PENDING,
-          message: message,
-          total_amount: totalAmount
-        },
+        user.id,
+        organizationId,
+        message,
+        totalAmount,
         selectedOptions,
         selectedEventIds
       );
@@ -90,10 +60,10 @@ export const useCollaborationSubmit = () => {
       
       return collaborationId;
     } catch (error: any) {
-      console.error('Błąd podczas tworzenia współpracy:', error);
+      console.error('Error submitting collaboration:', error);
       toast({
         title: "Błąd",
-        description: error.message || "Nie udało się utworzyć współpracy",
+        description: error.message || "Nie udało się wysłać propozycji współpracy",
         variant: "destructive"
       });
       return null;

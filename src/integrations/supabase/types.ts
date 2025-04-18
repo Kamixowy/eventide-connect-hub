@@ -9,24 +9,107 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      collaboration_options: {
+      collaboration_events: {
         Row: {
           collaboration_id: string
           created_at: string
+          event_id: string
           id: string
-          sponsorship_option_id: string
         }
         Insert: {
           collaboration_id: string
           created_at?: string
+          event_id: string
           id?: string
-          sponsorship_option_id: string
         }
         Update: {
           collaboration_id?: string
           created_at?: string
+          event_id?: string
           id?: string
-          sponsorship_option_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaboration_events_collaboration_id_fkey"
+            columns: ["collaboration_id"]
+            isOneToOne: false
+            referencedRelation: "collaborations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaboration_events_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collaboration_messages: {
+        Row: {
+          collaboration_id: string
+          content: string
+          created_at: string
+          id: string
+          read_at: string | null
+          sender_id: string
+        }
+        Insert: {
+          collaboration_id: string
+          content: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id: string
+        }
+        Update: {
+          collaboration_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaboration_messages_collaboration_id_fkey"
+            columns: ["collaboration_id"]
+            isOneToOne: false
+            referencedRelation: "collaborations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collaboration_options: {
+        Row: {
+          amount: number
+          collaboration_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_custom: boolean
+          sponsorship_option_id: string | null
+          title: string
+        }
+        Insert: {
+          amount?: number
+          collaboration_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_custom?: boolean
+          sponsorship_option_id?: string | null
+          title: string
+        }
+        Update: {
+          amount?: number
+          collaboration_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_custom?: boolean
+          sponsorship_option_id?: string | null
+          title?: string
         }
         Relationships: [
           {
@@ -48,163 +131,40 @@ export type Database = {
       collaborations: {
         Row: {
           created_at: string
-          event_id: string
           id: string
           message: string | null
           organization_id: string
           sponsor_id: string
-          status: string
+          status: Database["public"]["Enums"]["collaboration_status"]
           total_amount: number
           updated_at: string
         }
         Insert: {
           created_at?: string
-          event_id: string
           id?: string
           message?: string | null
           organization_id: string
           sponsor_id: string
-          status: string
-          total_amount: number
+          status?: Database["public"]["Enums"]["collaboration_status"]
+          total_amount?: number
           updated_at?: string
         }
         Update: {
           created_at?: string
-          event_id?: string
           id?: string
           message?: string | null
           organization_id?: string
           sponsor_id?: string
-          status?: string
+          status?: Database["public"]["Enums"]["collaboration_status"]
           total_amount?: number
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "collaborations_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "collaborations_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_organization"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      conversation_participants: {
-        Row: {
-          conversation_id: string
-          created_at: string
-          id: string
-          is_organization: boolean | null
-          organization_id: string | null
-          user_id: string | null
-        }
-        Insert: {
-          conversation_id: string
-          created_at?: string
-          id?: string
-          is_organization?: boolean | null
-          organization_id?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          conversation_id?: string
-          created_at?: string
-          id?: string
-          is_organization?: boolean | null
-          organization_id?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "conversation_participants_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "direct_conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "conversation_participants_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      direct_conversations: {
-        Row: {
-          collaboration_id: string | null
-          created_at: string
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          collaboration_id?: string | null
-          created_at?: string
-          id?: string
-          updated_at?: string
-        }
-        Update: {
-          collaboration_id?: string | null
-          created_at?: string
-          id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "direct_conversations_collaboration_id_fkey"
-            columns: ["collaboration_id"]
-            isOneToOne: false
-            referencedRelation: "collaborations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      direct_messages: {
-        Row: {
-          content: string
-          conversation_id: string
-          created_at: string
-          id: string
-          read_at: string | null
-          sender_id: string
-        }
-        Insert: {
-          content: string
-          conversation_id: string
-          created_at?: string
-          id?: string
-          read_at?: string | null
-          sender_id: string
-        }
-        Update: {
-          content?: string
-          conversation_id?: string
-          created_at?: string
-          id?: string
-          read_at?: string | null
-          sender_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "direct_messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "direct_conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -491,7 +451,13 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      collaboration_status:
+        | "pending"
+        | "accepted"
+        | "rejected"
+        | "negotiation"
+        | "completed"
+        | "canceled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -606,6 +572,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      collaboration_status: [
+        "pending",
+        "accepted",
+        "rejected",
+        "negotiation",
+        "completed",
+        "canceled",
+      ],
+    },
   },
 } as const
