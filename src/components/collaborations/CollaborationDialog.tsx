@@ -1,5 +1,4 @@
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   Dialog, 
@@ -9,7 +8,7 @@ import {
   DialogTitle,
   DialogTrigger 
 } from "@/components/ui/dialog";
-import { Loader2, CheckCircle, Edit, XCircle } from 'lucide-react';
+import { CheckCircle, Edit, XCircle } from 'lucide-react';
 import { CollaborationType } from '@/types/collaboration';
 import { ReactNode } from 'react';
 
@@ -20,8 +19,6 @@ interface CollaborationDialogProps {
 }
 
 export const CollaborationDialog = ({ collaboration, userType, children }: CollaborationDialogProps) => {
-  // Removed message-related state and handlers
-
   // Get event details, accounting for different data structures
   const eventTitle = collaboration.events?.title || 
     (collaboration.event ? collaboration.event.title : 'Bez tytułu');

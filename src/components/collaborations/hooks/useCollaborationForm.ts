@@ -9,7 +9,6 @@ import { useCollaborationSubmit } from './useCollaborationSubmit';
 
 export const useCollaborationForm = (initialEventId?: string, initialOrganizationId?: string) => {
   const { user } = useAuth();
-  const [message, setMessage] = useState('');
   
   const {
     organizations,
@@ -43,7 +42,6 @@ export const useCollaborationForm = (initialEventId?: string, initialOrganizatio
     
     return await submitCollaboration({
       organizationId: selectedOrganizationId,
-      message,
       totalAmount,
       selectedOptions,
       selectedEventIds
@@ -58,7 +56,6 @@ export const useCollaborationForm = (initialEventId?: string, initialOrganizatio
     events,
     selectedEventIds,
     selectedOrganizationId,
-    message,
     totalAmount,
     toggleOption,
     addCustomOption,
@@ -66,7 +63,6 @@ export const useCollaborationForm = (initialEventId?: string, initialOrganizatio
     updateCustomOption,
     toggleEvent,
     handleOrganizationChange,
-    setMessage,
     createNewCollaboration
   };
 };

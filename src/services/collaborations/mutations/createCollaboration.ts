@@ -5,7 +5,6 @@ import { CollaborationOption } from '../types';
 export const createCollaboration = async (
   sponsorId: string,
   organizationId: string,
-  message: string | null,
   totalAmount: number,
   selectedOptions: CollaborationOption[],
   selectedEventIds: string[]
@@ -17,7 +16,6 @@ export const createCollaboration = async (
       .insert({
         sponsor_id: sponsorId,
         organization_id: organizationId,
-        message,
         total_amount: totalAmount,
         status: 'pending'
       })

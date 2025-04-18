@@ -1,6 +1,6 @@
 
 import { Card } from '@/components/ui/card';
-import { Calendar, Clock, Building, User, MessageSquare } from 'lucide-react';
+import { Calendar, Clock, Building, User } from 'lucide-react';
 import { formatDate } from '@/utils/dateUtils';
 
 interface CollaborationInfoProps {
@@ -90,16 +90,6 @@ const CollaborationInfo = ({ collaboration, userType }: CollaborationInfoProps) 
             <p className="font-medium">{partnerName}</p>
           </div>
         </div>
-        
-        {collaboration.message && (
-          <div className="flex items-start gap-3">
-            <MessageSquare size={20} className="text-gray-500 mt-0.5" />
-            <div>
-              <p className="text-sm text-gray-500">Wiadomość</p>
-              <p className="font-medium">{collaboration.message}</p>
-            </div>
-          </div>
-        )}
       </div>
     </Card>
   );

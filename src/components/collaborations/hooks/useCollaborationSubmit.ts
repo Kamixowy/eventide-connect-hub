@@ -12,13 +12,11 @@ export const useCollaborationSubmit = () => {
   
   const submitCollaboration = async ({
     organizationId,
-    message,
     totalAmount,
     selectedOptions,
     selectedEventIds
   }: {
     organizationId: string;
-    message: string;
     totalAmount: number;
     selectedOptions: CollaborationOption[];
     selectedEventIds: string[];
@@ -47,7 +45,6 @@ export const useCollaborationSubmit = () => {
       const collaborationId = await createCollaboration(
         user.id,
         organizationId,
-        message,
         totalAmount,
         selectedOptions,
         selectedEventIds

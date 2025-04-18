@@ -4,7 +4,6 @@ import OrganizationSelector from '../dialogs/OrganizationSelector';
 import EventSelector from '../dialogs/EventSelector';
 import SponsorshipOptions from '../dialogs/SponsorshipOptions';
 import CustomOptions from '../dialogs/CustomOptions';
-import MessageInput from '../dialogs/MessageInput';
 import CollaborationSummary from '../dialogs/CollaborationSummary';
 import { CollaborationDialogContentProps } from './types';
 
@@ -16,7 +15,6 @@ const CollaborationDialogContent: React.FC<CollaborationDialogContentProps> = ({
   events,
   selectedEventIds,
   selectedOrganizationId,
-  message,
   totalAmount,
   toggleOption,
   addCustomOption,
@@ -24,7 +22,6 @@ const CollaborationDialogContent: React.FC<CollaborationDialogContentProps> = ({
   updateCustomOption,
   toggleEvent,
   handleOrganizationChange,
-  setMessage,
   handleSubmit,
   eventId
 }) => {
@@ -58,12 +55,6 @@ const CollaborationDialogContent: React.FC<CollaborationDialogContentProps> = ({
           selectedOptions={selectedOptions}
           removeCustomOption={removeCustomOption}
           updateCustomOption={updateCustomOption}
-        />
-        
-        <MessageInput 
-          message={message}
-          setMessage={setMessage}
-          required={false}
         />
       </div>
       
