@@ -1,92 +1,58 @@
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, Building, User } from 'lucide-react';
+
 import { CollaborationType } from '@/types/collaboration';
-import { CollaborationDialog } from './CollaborationDialog';
-import { COLLABORATION_STATUS_NAMES, COLLABORATION_STATUS_COLORS } from '@/services/collaborations/types';
+import { Card } from '@/components/ui/card';
+import { ManageCollaborationDialog } from './ManageCollaborationDialog';
 
 interface CollaborationCardListProps {
-  collaboration: CollaborationType;
+  collaborations: CollaborationType[];
   userType: 'organization' | 'sponsor';
 }
 
-export const CollaborationCardList = ({ collaboration, userType }: CollaborationCardListProps) => {
-  // Safely get event title
-  const eventTitle = collaboration.events?.title || 
-    (collaboration.event ? collaboration.event.title : 'Bez tytułu');
-  
-  // Safely get event date
-  const eventDate = collaboration.events?.start_date || 
-    (collaboration.event ? collaboration.event.date : null);
-  
-  // Safely get organization name
-  const organizationName = collaboration.organization?.name || 
-    (collaboration.event ? collaboration.event.organization : 'Nieznana organizacja');
-  
-  // Safely get sponsor name
-  let sponsorName = 'Nieznany sponsor';
-  if (collaboration.profiles && Array.isArray(collaboration.profiles) && collaboration.profiles.length > 0) {
-    sponsorName = collaboration.profiles[0].name || 'Nieznany sponsor';
-  } else if (collaboration.sponsor) {
-    sponsorName = collaboration.sponsor.name || 'Nieznany sponsor';
-  }
-  
-  // Get badge color for status
-  const statusColor = COLLABORATION_STATUS_COLORS[collaboration.status] || 'gray';
-  
+export const CollaborationCardList = ({ collaborations, userType }: CollaborationCardListProps) => {
   return (
-    <Card>
-      <CardContent className="p-5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Badge className={`bg-${statusColor}-100 text-${statusColor}-700 border-${statusColor}-300`}>
-                {COLLABORATION_STATUS_NAMES[collaboration.status] || 'Nieznany status'}
-              </Badge>
-              <h3 className="text-lg font-medium">{eventTitle}</h3>
-            </div>
-            
-            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-500">
-              {eventDate && (
-                <div className="flex items-center">
-                  <Calendar size={14} className="mr-2" />
-                  {eventDate}
-                </div>
-              )}
-              
-              <div className="flex items-center">
-                <Building size={14} className="mr-2" />
-                {organizationName}
+    <div className="space-y-4">
+      {collaborations.map((collaboration) => (
+        <ManageCollaborationDialog 
+          key={collaboration.id}
+          collaboration={collaboration}
+          userType={userType}
+        >
+          <Card className="p-4 hover:shadow-lg transition-shadow cursor-pointer">
+            <div className="flex justify-between items-start">
+              <div className="space-y-1">
+                <h3 className="font-medium">
+                  {collaboration.events?.title || 'Brak nazwy wydarzenia'}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {collaboration.organization?.name || 'Brak organizacji'}
+                </p>
               </div>
               
-              <div className="flex items-center">
-                <User size={14} className="mr-2" />
-                {sponsorName}
+              <div className="flex items-center gap-4">
+                <span className="font-medium">
+                  {collaboration.total_amount || collaboration.totalAmount || 0} PLN
+                </span>
+                <span className={`text-sm px-2 py-1 rounded-full 
+                  ${collaboration.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    collaboration.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                    collaboration.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                    collaboration.status === 'negotiation' ? 'bg-blue-100 text-blue-800' :
+                    collaboration.status === 'completed' ? 'bg-gray-100 text-gray-800' :
+                    'bg-gray-100 text-gray-800'}`}
+                >
+                  {collaboration.status === 'pending' ? 'Oczekująca' :
+                   collaboration.status === 'negotiation' ? 'W negocjacji' :
+                   collaboration.status === 'accepted' ? 'Zaakceptowana' :
+                   collaboration.status === 'rejected' ? 'Odrzucona' :
+                   collaboration.status === 'completed' ? 'Zakończona' :
+                   collaboration.status === 'canceled' ? 'Anulowana' : 
+                   'Nieznany'}
+                </span>
               </div>
             </div>
-            
-            {collaboration.message && (
-              <p className="text-sm text-gray-600 line-clamp-1">{collaboration.message}</p>
-            )}
-          </div>
-          
-          <div className="flex space-x-3 mt-4 md:mt-0">
-            <CollaborationDialog collaboration={collaboration} userType={userType}>
-              <Button variant="outline" size="sm">
-                Dialog
-              </Button>
-            </CollaborationDialog>
-            
-            <Link to={`/wspolprace/${collaboration.id}`}>
-              <Button className="btn-gradient" size="sm">
-                Szczegóły
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          </Card>
+        </ManageCollaborationDialog>
+      ))}
+    </div>
   );
 };
