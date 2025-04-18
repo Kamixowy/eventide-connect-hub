@@ -31,8 +31,6 @@ const CollaborationActions = ({
           </Button>
         )}
         
-        {/* Removed the 'send' action as it's not defined in the status types */}
-        
         {availableActions.includes('accept') && (
           <Button 
             className="w-full btn-gradient"

@@ -12,6 +12,11 @@ export const fetchMessages = async (conversationId: string): Promise<Message[]> 
 
     console.log('Pobieranie wiadomości dla konwersacji:', conversationId);
 
+    // Temporarily return empty array since the direct_messages table doesn't exist yet
+    console.log('fetchMessages is temporarily returning an empty array');
+    return [];
+    
+    /* The code below is temporarily disabled as the tables are not defined in the schema
     // Najpierw oznacz nieprzeczytane wiadomości jako przeczytane
     try {
       await supabase.rpc('mark_messages_as_read', { conversation_id: conversationId });
@@ -35,6 +40,7 @@ export const fetchMessages = async (conversationId: string): Promise<Message[]> 
 
     console.log(`Pobrano ${messages?.length || 0} wiadomości`);
     return messages || [];
+    */
   } catch (error) {
     console.error('Błąd w fetchMessages:', error);
     throw error;

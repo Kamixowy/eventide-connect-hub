@@ -15,9 +15,9 @@ import {
 import { 
   COLLABORATION_STATUS_NAMES, 
   COLLABORATION_STATUS_COLORS,
-  getAvailableActions,
   CollaborationStatus 
 } from '@/services/collaborations/types';
+import { getAvailableActions } from '@/services/collaborations/utils';
 
 const CollaborationDetails = () => {
   const { id } = useParams();
@@ -198,21 +198,6 @@ const CollaborationDetails = () => {
                 <h3 className="text-xl font-semibold mb-4">Akcje</h3>
                 
                 <div className="space-y-3">
-                  {availableActions.includes('edit') && (
-                    <Button className="w-full" variant="outline">
-                      Edytuj
-                    </Button>
-                  )}
-                  
-                  {availableActions.includes('send') && (
-                    <Button 
-                      className="w-full" 
-                      onClick={() => handleStatusChange('sent')}
-                    >
-                      Wyślij
-                    </Button>
-                  )}
-                  
                   {availableActions.includes('accept') && (
                     <Button 
                       className="w-full" 
@@ -257,15 +242,9 @@ const CollaborationDetails = () => {
                     <Button 
                       className="w-full" 
                       variant="destructive"
-                      onClick={() => handleStatusChange('cancelled')}
+                      onClick={() => handleStatusChange('canceled')}
                     >
                       Anuluj
-                    </Button>
-                  )}
-                  
-                  {availableActions.includes('delete') && (
-                    <Button className="w-full" variant="destructive">
-                      Usuń
                     </Button>
                   )}
                 </div>

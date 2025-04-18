@@ -41,4 +41,3 @@ export {
   COLLABORATION_STATUS_NAMES, 
   COLLABORATION_STATUS_COLORS 
 } from './types';
-

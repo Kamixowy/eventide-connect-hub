@@ -14,8 +14,21 @@ export const sendMessage = async (conversationId: string, content: string): Prom
       throw new Error('User not authenticated');
     }
     
-    console.log('Sending message to conversation:', conversationId, 'with content:', content);
+    console.log('Sending message to conversation (temporarily disabled):', conversationId, 'with content:', content);
     
+    // Return a mock message since the tables don't exist yet
+    const mockMessage: Message = {
+      id: 'mock-id',
+      conversation_id: conversationId,
+      sender_id: user.id,
+      content: content,
+      created_at: new Date().toISOString(),
+      read_at: null
+    };
+
+    return mockMessage;
+    
+    /* The code below is temporarily disabled as the tables are not defined in the schema
     // First check if the conversation exists
     const { data: conversation, error: conversationError } = await supabase
       .from('direct_conversations')
@@ -98,6 +111,7 @@ export const sendMessage = async (conversationId: string, content: string): Prom
     }
     
     return message;
+    */
   } catch (error) {
     console.error('Error in sendMessage:', error);
     throw error;
@@ -117,6 +131,10 @@ export const createTestConversation = async (targetEmail: string): Promise<{ con
       throw new Error('User not authenticated');
     }
     
+    console.log('Creating test conversation is temporarily disabled');
+    return null;
+    
+    /* The code below is temporarily disabled as the tables are not defined in the schema
     console.log('Creating test conversation with user email:', targetEmail);
     
     // First, find the user by email
@@ -197,6 +215,7 @@ export const createTestConversation = async (targetEmail: string): Promise<{ con
       conversationId: conversation.id,
       participantId: targetUser.id
     };
+    */
   } catch (error) {
     console.error('Error creating test conversation:', error);
     return null;

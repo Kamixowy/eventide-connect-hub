@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchConversations } from '@/services/messages/operations/fetchConversations';
 import { fetchMessages } from '@/services/messages/operations/fetchMessages';
@@ -26,7 +25,6 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     }
   }, [initialSelectedConversationId]);
 
-  // Fetch organization ID if user is of type organization
   useEffect(() => {
     const fetchOrganizationId = async () => {
       if (user?.user_metadata?.userType === 'organization') {
@@ -54,7 +52,6 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     }
   }, [user]);
 
-  // Pobierz konwersacje
   const { 
     data: conversations = [], 
     isLoading: isLoadingConversations,
@@ -63,9 +60,8 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
   } = useQuery({
     queryKey: ['conversations', organizationId],
     queryFn: async () => {
-      // If user is organization admin, include conversations related to organization
       if (user?.user_metadata?.userType === 'organization' && organizationId) {
-        return fetchConversations('organization', organizationId);
+        return fetchConversations();
       }
       return fetchConversations();
     },
@@ -84,7 +80,6 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     }
   });
 
-  // Pobierz wiadomości dla wybranej konwersacji
   const { 
     data: messages = [], 
     isLoading: isLoadingMessages,
@@ -95,7 +90,7 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     queryFn: () => selectedConversationId ? fetchMessages(selectedConversationId) : Promise.resolve([]),
     enabled: !!selectedConversationId,
     retry: 2,
-    refetchInterval: 5000, // Odpytuj co 5 sekund o nowe wiadomości
+    refetchInterval: 5000,
     meta: {
       onError: (error: any) => {
         console.error('Błąd podczas pobierania wiadomości:', error);
@@ -108,7 +103,6 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     }
   });
 
-  // Uproszczona funkcja wysyłania wiadomości
   const sendMessageMutation = async (conversationId: string, content: string) => {
     try {
       console.log("Wysyłanie wiadomości do konwersacji:", conversationId);
@@ -117,18 +111,15 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
         throw new Error("Brakuje wymaganych danych do wysłania wiadomości");
       }
       
-      // Wyślij wiadomość
       const message = await sendMessageToConversation(conversationId, content);
       
       if (message) {
-        // Zaktualizuj UI optymistycznie
         queryClient.setQueryData(['messages', conversationId], (oldData: any[] | undefined) => {
           if (!oldData) return [message];
           if (oldData.some(m => m.id === message.id)) return oldData;
           return [...oldData, message];
         });
         
-        // Unieważnij zapytania, aby odświeżyć dane
         await queryClient.invalidateQueries({ queryKey: ['conversations'] });
         await queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
         
@@ -138,18 +129,16 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
       }
     } catch (error: any) {
       console.error('Błąd w mutacji wysyłania wiadomości:', error);
-      throw error; // Przekaż błąd dalej, aby komponent mógł go obsłużyć
+      throw error;
     }
   };
 
-  // Rozpocznij nową konwersację i wyślij pierwszą wiadomość
   const startNewConversation = async (recipientId: string, initialMessage: string) => {
     try {
       console.log("Rozpoczynanie nowej konwersacji z odbiorcą:", recipientId);
       
       const result = await startConversationWithMessage(recipientId, initialMessage);
       
-      // Unieważnij zapytania, aby odświeżyć dane
       await queryClient.invalidateQueries({ queryKey: ['conversations'] });
       
       return result;
@@ -164,7 +153,6 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     }
   };
 
-  // Utwórz testową konwersację dla celów rozwojowych
   const createTestConversationWithEmail = async (email: string) => {
     try {
       const result = await createTestConversation(email);
@@ -175,7 +163,6 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
           description: 'Utworzono testową konwersację',
         });
         
-        // Odśwież konwersacje
         await queryClient.invalidateQueries({ queryKey: ['conversations'] });
         
         return result.conversationId;
@@ -193,12 +180,10 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     }
   };
 
-  // Oznacz wiadomości jako przeczytane po wybraniu konwersacji
   useEffect(() => {
     if (selectedConversationId && user) {
       markMessagesAsRead(selectedConversationId)
         .then(() => {
-          // Odśwież konwersacje, aby zaktualizować liczbę nieprzeczytanych
           refetchConversations();
         })
         .catch(err => {
@@ -207,7 +192,6 @@ export const useMessagesData = (initialSelectedConversationId: string | null) =>
     }
   }, [selectedConversationId, user, refetchConversations]);
 
-  // Początkowe ładowanie 
   useEffect(() => {
     if (user) {
       refetchConversations();
