@@ -9,7 +9,6 @@ export interface CollaborationDialogContentProps {
   events: any[];
   selectedEventIds: string[];
   selectedOrganizationId: string;
-  message?: string;
   totalAmount: number;
   toggleOption: (option: SponsorshipOption) => void;
   addCustomOption: () => void;
@@ -17,7 +16,6 @@ export interface CollaborationDialogContentProps {
   updateCustomOption: (index: number, field: keyof CollaborationOption, value: any) => void;
   toggleEvent: (eventId: string) => void;
   handleOrganizationChange: (value: string) => void;
-  setMessage?: (message: string) => void;
   handleSubmit: () => void;
   eventId?: string;
 }

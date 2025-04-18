@@ -7,8 +7,7 @@ export const createCollaboration = async (
   organizationId: string,
   totalAmount: number,
   selectedOptions: CollaborationOption[],
-  selectedEventIds: string[],
-  message?: string
+  selectedEventIds: string[]
 ) => {
   try {
     // Start a Postgres transaction
@@ -18,8 +17,7 @@ export const createCollaboration = async (
         sponsor_id: sponsorId,
         organization_id: organizationId,
         total_amount: totalAmount,
-        status: 'pending',
-        message: message || null
+        status: 'pending'
       })
       .select()
       .single();

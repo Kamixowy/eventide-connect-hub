@@ -63,17 +63,107 @@ const Collaborations = () => {
         console.log('Fetching collaborations with user type:', userType);
         console.log('Current user ID:', user.id);
 
-        const data = await fetchCollaborations(userType);
-        console.log('Fetched collaborations:', data); 
-        setCollaborations(data);
+        // For sponsors, we need to fetch collaborations where they are the sponsor
+        if (userType === 'sponsor') {
+          const { data, error } = await supabase
+            .from('collaborations')
+            .select(`
+              *,
+              collaboration_events (
+                events:event_id (
+                  id,
+                  title,
+                  start_date,
+                  image_url
+                )
+              ),
+              collaboration_options (
+                id,
+                title,
+                description,
+                amount,
+                is_custom,
+                sponsorship_option_id
+              ),
+              organizations (
+                id,
+                name,
+                logo_url,
+                description
+              )
+            `)
+            .eq('sponsor_id', user.id)
+            .order('created_at', { ascending: false });
+            
+          if (error) {
+            console.error('Error fetching collaborations for sponsor:', error);
+            throw error;
+          }
+          
+          setCollaborations(data?.map(collab => ({
+            ...collab,
+            events: collab.collaboration_events?.map(ce => ce.events)[0] || [],
+            options: collab.collaboration_options || [],
+            organization: collab.organizations,
+            profiles: [{
+              name: user.user_metadata?.name || 'Unknown',
+              avatar_url: user.user_metadata?.avatar_url
+            }]
+          })) || []);
+        } 
+        // For organizations, we fetch collaborations where they are the organization
+        else if (userType === 'organization' && organizationData?.id) {
+          const { data, error } = await supabase
+            .from('collaborations')
+            .select(`
+              *,
+              collaboration_events (
+                events:event_id (
+                  id,
+                  title,
+                  start_date,
+                  image_url
+                )
+              ),
+              collaboration_options (
+                id,
+                title,
+                description,
+                amount,
+                is_custom,
+                sponsorship_option_id
+              ),
+              profiles:sponsor_id (
+                id,
+                name,
+                avatar_url
+              )
+            `)
+            .eq('organization_id', organizationData.id)
+            .order('created_at', { ascending: false });
+            
+          if (error) {
+            console.error('Error fetching collaborations for organization:', error);
+            throw error;
+          }
+          
+          setCollaborations(data?.map(collab => ({
+            ...collab,
+            events: collab.collaboration_events?.map(ce => ce.events)[0] || [],
+            options: collab.collaboration_options || [],
+            organization: organizationData,
+            profiles: collab.profiles ? [collab.profiles] : []
+          })) || []);
+        }
+        
+        console.log('Fetched collaborations:', collaborations);
         
         // Setup real-time updates subscription
         if (userType === 'organization' && organizationData?.id) {
           const subscription = subscribeToUserCollaborations(
             'organization', 
             organizationData.id,
-            (payload) => {
-              console.log('Collaboration update received:', payload);
+            () => {
               // Refresh collaborations data when changes are detected
               getCollaborations();
             }
@@ -86,8 +176,7 @@ const Collaborations = () => {
           const subscription = subscribeToUserCollaborations(
             'sponsor', 
             user.id,
-            (payload) => {
-              console.log('Collaboration update received:', payload);
+            () => {
               // Refresh collaborations data when changes are detected
               getCollaborations();
             }

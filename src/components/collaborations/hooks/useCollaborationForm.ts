@@ -1,5 +1,4 @@
 
-import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationsData } from './useOrganizationsData';
 import { useEventsData } from './useEventsData';
@@ -9,7 +8,6 @@ import { useCollaborationSubmit } from './useCollaborationSubmit';
 
 export const useCollaborationForm = (initialEventId?: string, initialOrganizationId?: string) => {
   const { user } = useAuth();
-  const [message, setMessage] = useState<string>('');
   
   const {
     organizations,
@@ -45,8 +43,7 @@ export const useCollaborationForm = (initialEventId?: string, initialOrganizatio
       organizationId: selectedOrganizationId,
       totalAmount,
       selectedOptions,
-      selectedEventIds,
-      message
+      selectedEventIds
     });
   };
 
@@ -58,7 +55,6 @@ export const useCollaborationForm = (initialEventId?: string, initialOrganizatio
     events,
     selectedEventIds,
     selectedOrganizationId,
-    message,
     totalAmount,
     toggleOption,
     addCustomOption,
@@ -66,7 +62,6 @@ export const useCollaborationForm = (initialEventId?: string, initialOrganizatio
     updateCustomOption,
     toggleEvent,
     handleOrganizationChange,
-    setMessage,
     createNewCollaboration
   };
 };

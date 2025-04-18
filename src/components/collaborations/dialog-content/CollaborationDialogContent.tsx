@@ -15,7 +15,6 @@ const CollaborationDialogContent: React.FC<CollaborationDialogContentProps> = ({
   events,
   selectedEventIds,
   selectedOrganizationId,
-  message,
   totalAmount,
   toggleOption,
   addCustomOption,
@@ -23,7 +22,6 @@ const CollaborationDialogContent: React.FC<CollaborationDialogContentProps> = ({
   updateCustomOption,
   toggleEvent,
   handleOrganizationChange,
-  setMessage,
   handleSubmit,
   eventId
 }) => {
