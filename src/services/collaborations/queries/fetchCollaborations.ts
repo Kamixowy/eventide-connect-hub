@@ -67,7 +67,7 @@ export const fetchCollaborations = async (userType: 'organization' | 'sponsor') 
       // First get the organization ID for the current user
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
-        .select('id')
+        .select('id, name, logo_url, description') // Include all fields we need
         .eq('user_id', currentUserId)
         .single();
         
@@ -119,9 +119,9 @@ export const fetchCollaborations = async (userType: 'organization' | 'sponsor') 
         options: collab.collaboration_options || [],
         organization: { 
           id: orgData.id,
-          name: orgData.name || '',
-          logo_url: orgData.logo_url || '',
-          description: orgData.description || ''
+          name: orgData.name,
+          logo_url: orgData.logo_url,
+          description: orgData.description
         },
         sponsor: collab.profiles
       })) || [];
