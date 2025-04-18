@@ -31,7 +31,7 @@ export interface CollaborationType {
     name: string;
     avatar_url: string;
     [key: string]: any;
-  };
+  }[];
   status: string;
   createdAt?: string;
   lastUpdated?: string;
@@ -50,6 +50,14 @@ export interface CollaborationType {
     sender: string;
     text: string;
     date: string;
+  }[];
+  collaboration_options?: {
+    id: string;
+    title: string;
+    description?: string | null;
+    amount: number;
+    is_custom: boolean;
+    sponsorship_option_id?: string;
   }[];
 }
 

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { CollaborationType } from "@/types/collaboration";
 import { updateCollaborationStatus } from "@/services/collaborations";
+import { CollaborationStatus } from "@/services/collaborations/types";
 
 interface ManageCollaborationDialogProps {
   collaboration: CollaborationType;
@@ -37,7 +38,7 @@ export const ManageCollaborationDialog = ({
   const [counterOfferMessage, setCounterOfferMessage] = useState('');
   const { toast } = useToast();
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = async (newStatus: CollaborationStatus) => {
     try {
       await updateCollaborationStatus(collaboration.id, newStatus);
       toast({
@@ -225,7 +226,7 @@ export const ManageCollaborationDialog = ({
           <div>
             <h3 className="text-sm font-medium mb-2">Wybrane opcje sponsoringu</h3>
             <div className="space-y-2">
-              {collaboration.options?.map((option: any, index: number) => (
+              {collaboration.collaboration_options?.map((option: any, index: number) => (
                 <div key={index} className="p-4 border rounded-lg">
                   <div className="flex justify-between items-start">
                     <div>

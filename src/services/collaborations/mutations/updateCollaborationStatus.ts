@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { COLLABORATION_STATUSES } from '../types';
+import { CollaborationStatus, COLLABORATION_STATUSES } from '../types';
 
 /**
  * Updates collaboration status
@@ -9,7 +9,7 @@ import { COLLABORATION_STATUSES } from '../types';
  * @param status - New status
  * @returns Promise with updated collaboration
  */
-export const updateCollaborationStatus = async (id: string, status: keyof typeof COLLABORATION_STATUSES) => {
+export const updateCollaborationStatus = async (id: string, status: CollaborationStatus) => {
   try {
     const { data, error } = await supabase
       .from('collaborations')
