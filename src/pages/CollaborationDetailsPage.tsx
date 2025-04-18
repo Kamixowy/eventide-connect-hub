@@ -11,7 +11,6 @@ import { useToast } from '@/hooks/use-toast';
 import CollaborationOptions from '@/components/collaborations/CollaborationOptions';
 import CollaborationActions from '@/components/collaborations/CollaborationActions';
 import CollaborationInfo from '@/components/collaborations/CollaborationInfo';
-import CollaborationMessages from '@/components/collaborations/CollaborationMessages';
 import { getCollaborationById, updateCollaborationStatus } from '@/services/collaborations';
 import { 
   COLLABORATION_STATUS_NAMES, 
@@ -154,31 +153,9 @@ const CollaborationDetailsPage = () => {
             </div>
             
             <div className="md:col-span-2">
-              <Tabs 
-                value={activeTab} 
-                onValueChange={setActiveTab}
-                className="w-full"
-              >
-                <TabsList className="mb-4 w-full">
-                  <TabsTrigger value="details" className="flex-1">Szczegóły</TabsTrigger>
-                  <TabsTrigger value="messages" className="flex-1">Wiadomości</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="details">
-                  <Card className="p-4">
-                    <CollaborationOptions collaboration={collaboration} />
-                  </Card>
-                </TabsContent>
-                
-                <TabsContent value="messages">
-                  <Card className="p-4">
-                    <CollaborationMessages 
-                      collaboration={collaboration}
-                      userType={userType}
-                    />
-                  </Card>
-                </TabsContent>
-              </Tabs>
+              <Card className="p-4">
+                <CollaborationOptions collaboration={collaboration} />
+              </Card>
             </div>
           </div>
         </div>
