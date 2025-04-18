@@ -3,7 +3,6 @@ import { CollaborationType } from '@/types/collaboration';
 
 export interface Collaboration {
   id: string;
-  event_id: string;
   sponsor_id: string;
   organization_id: string;
   status: string;
@@ -23,10 +22,10 @@ export interface CollaborationOption {
 
 export interface CollaborationDetailsResponse extends CollaborationType {}
 
-// Add Message interface for collaboration messages
+// Message interface for collaboration messages
 export interface Message {
   id: string;
-  conversation_id: string;
+  collaboration_id: string;
   sender_id: string;
   content: string;
   created_at: string;

@@ -37,15 +37,12 @@ const CollaborationMessages = ({ collaboration, userType }: CollaborationMessage
       try {
         setIsLoading(true);
         
-        // Funkcjonalność wiadomości jest tymczasowo wyłączona
-        setMessages([]);
+        // Fetch messages from our new collaboration_messages table
+        const fetchedMessages = await getCollaborationMessages(collaboration.id);
+        setMessages(fetchedMessages);
         
-        // Komentujemy wywołanie do pobierania wiadomości
-        // const fetchedMessages = await getCollaborationMessages(collaboration.id);
-        // setMessages(fetchedMessages);
-        
-        // Komentujemy oznaczanie wiadomości jako przeczytanych
-        // await markCollaborationMessagesAsRead(collaboration.id);
+        // Mark messages as read
+        await markCollaborationMessagesAsRead(collaboration.id);
       } catch (error: any) {
         console.error('Error fetching collaboration messages:', error);
         toast({
@@ -76,18 +73,11 @@ const CollaborationMessages = ({ collaboration, userType }: CollaborationMessage
     try {
       setIsSending(true);
       
-      // Funkcjonalność wiadomości jest tymczasowo wyłączona
-      toast({
-        title: 'Informacja',
-        description: 'Funkcjonalność wiadomości jest tymczasowo wyłączona i zostanie włączona wkrótce.',
-      });
+      await sendCollaborationMessage(collaboration.id, newMessage);
       
-      // Komentujemy wysyłanie wiadomości
-      // await sendCollaborationMessage(collaboration.id, newMessage);
-      
-      // Komentujemy aktualizowanie listy wiadomości
-      // const updatedMessages = await getCollaborationMessages(collaboration.id);
-      // setMessages(updatedMessages);
+      // Refresh messages after sending
+      const updatedMessages = await getCollaborationMessages(collaboration.id);
+      setMessages(updatedMessages);
       
       // Clear input
       setNewMessage('');
@@ -110,21 +100,48 @@ const CollaborationMessages = ({ collaboration, userType }: CollaborationMessage
       </div>
     );
   }
+
+  const renderMessages = () => {
+    if (messages.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-full text-gray-500">
+          Brak wiadomości. Rozpocznij konwersację!
+        </div>
+      );
+    }
+
+    return messages.map((message) => {
+      const isCurrentUser = user?.id === message.sender_id;
+      
+      return (
+        <div 
+          key={message.id}
+          className={`flex mb-4 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+        >
+          <div 
+            className={`max-w-[80%] rounded-lg p-3 ${
+              isCurrentUser 
+                ? 'bg-primary text-primary-foreground' 
+                : 'bg-muted'
+            }`}
+          >
+            <div className="text-sm mb-1">
+              {message.content}
+            </div>
+            <div className="text-xs opacity-70 text-right">
+              {formatMessageDate(message.created_at)}
+            </div>
+          </div>
+        </div>
+      );
+    });
+  };
   
   return (
     <div className="flex flex-col h-[500px]">
-      <Alert variant="default" className="mb-4">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Funkcjonalność tymczasowo wyłączona</AlertTitle>
-        <AlertDescription>
-          Możliwość przesyłania wiadomości w ramach współpracy jest obecnie wyłączona i zostanie aktywowana w przyszłości.
-        </AlertDescription>
-      </Alert>
-      
       <div className="flex-grow overflow-y-auto mb-4 p-2 bg-gray-50 rounded-md">
-        <div className="flex items-center justify-center h-full text-gray-500">
-          Funkcjonalność wiadomości jest tymczasowo wyłączona.
-        </div>
+        {renderMessages()}
+        <div ref={messagesEndRef} />
       </div>
       
       <div className="flex items-center gap-2 mt-auto">
@@ -133,12 +150,18 @@ const CollaborationMessages = ({ collaboration, userType }: CollaborationMessage
           className="flex-grow"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          disabled={true}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSendMessage();
+            }
+          }}
         />
         <Button 
           onClick={handleSendMessage}
-          disabled={true}
+          disabled={isSending || !newMessage.trim()}
         >
+          {isSending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
           Wyślij
         </Button>
       </div>

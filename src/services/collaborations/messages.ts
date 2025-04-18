@@ -32,62 +32,11 @@ export const sendCollaborationMessage = async (
       throw new Error('User not authenticated');
     }
     
-    // Find the conversation for this collaboration
-    const { data: conversations, error: convError } = await supabase
-      .from('direct_conversations')
-      .select('id')
-      .eq('collaboration_id', collaborationId);
-      
-    if (convError) {
-      console.error('Error finding conversation:', convError);
-      throw new Error('Nie znaleziono konwersacji dla tej współpracy');
-    }
-    
-    let conversationId;
-    
-    if (conversations && conversations.length > 0) {
-      // Use existing conversation
-      conversationId = conversations[0].id;
-    } else {
-      // Create a new conversation for this collaboration
-      // First get the organization owner
-      const { data: orgData, error: orgError } = await supabase
-        .from('organizations')
-        .select('user_id')
-        .eq('id', collaboration.organization_id)
-        .single();
-        
-      if (orgError) {
-        console.error('Error fetching organization:', orgError);
-        throw new Error('Nie znaleziono organizacji');
-      }
-      
-      // Create conversation between sponsor and organization owner
-      const { data: conversationData, error: createError } = await supabase
-        .rpc('create_conversation_and_participants', {
-          user_one: collaboration.sponsor_id,
-          user_two: orgData.user_id
-        });
-        
-      if (createError) {
-        console.error('Error creating conversation:', createError);
-        throw new Error('Nie udało się utworzyć konwersacji');
-      }
-      
-      conversationId = conversationData[0].conversation_id;
-      
-      // Link the conversation to the collaboration
-      await supabase
-        .from('direct_conversations')
-        .update({ collaboration_id: collaborationId })
-        .eq('id', conversationId);
-    }
-
-    // Create a new message in direct_messages table
+    // Create a new message in collaboration_messages table
     const { data: message, error: messageError } = await supabase
-      .from('direct_messages')
+      .from('collaboration_messages')
       .insert({
-        conversation_id: conversationId,
+        collaboration_id: collaborationId,
         sender_id: user.id,
         content
       })
@@ -114,28 +63,18 @@ export const sendCollaborationMessage = async (
  */
 export const getCollaborationMessages = async (collaborationId: string): Promise<Message[]> => {
   try {
-    // Find the conversation for this collaboration
-    const { data: conversations, error: convError } = await supabase
-      .from('direct_conversations')
-      .select('id')
-      .eq('collaboration_id', collaborationId);
-      
-    if (convError) {
-      console.error('Error finding conversation:', convError);
-      throw new Error('Nie znaleziono konwersacji dla tej współpracy');
-    }
-    
-    if (!conversations || conversations.length === 0) {
-      return []; // No conversation yet
-    }
-    
-    const conversationId = conversations[0].id;
-
-    // Fetch messages
+    // Fetch messages directly from collaboration_messages
     const { data: messages, error: messagesError } = await supabase
-      .from('direct_messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
+      .from('collaboration_messages')
+      .select(`
+        id,
+        collaboration_id,
+        sender_id,
+        content,
+        created_at,
+        read_at
+      `)
+      .eq('collaboration_id', collaborationId)
       .order('created_at', { ascending: true });
 
     if (messagesError) {
@@ -158,27 +97,19 @@ export const getCollaborationMessages = async (collaborationId: string): Promise
  */
 export const markCollaborationMessagesAsRead = async (collaborationId: string) => {
   try {
-    // Find the conversation for this collaboration
-    const { data: conversations, error: convError } = await supabase
-      .from('direct_conversations')
-      .select('id')
-      .eq('collaboration_id', collaborationId);
-      
-    if (convError) {
-      console.error('Error finding conversation:', convError);
-      throw new Error('Nie znaleziono konwersacji dla tej współpracy');
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
     }
     
-    if (!conversations || conversations.length === 0) {
-      return { success: true }; // No conversation to mark
-    }
-    
-    const conversationId = conversations[0].id;
-    
-    // Call the RPC function to mark messages as read
-    const { data, error } = await supabase.rpc('mark_messages_as_read', {
-      conversation_id: conversationId
-    });
+    // Update all unread messages not sent by current user
+    const { error } = await supabase
+      .from('collaboration_messages')
+      .update({ read_at: new Date().toISOString() })
+      .eq('collaboration_id', collaborationId)
+      .neq('sender_id', user.id)
+      .is('read_at', null);
 
     if (error) {
       console.error('Error marking messages as read:', error);

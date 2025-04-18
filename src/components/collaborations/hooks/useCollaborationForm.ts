@@ -48,11 +48,8 @@ export const useCollaborationForm = (initialEventId?: string, initialOrganizatio
   const createNewCollaboration = async () => {
     console.log("Creating new collaboration with organization:", selectedOrganizationId);
     
-    // We don't pass sponsorId here as it will be determined from the current user in submitCollaboration
     return await submitCollaboration({
-      sponsorId: '', // This will be overridden in useCollaborationSubmit to use the current user ID
       organizationId: selectedOrganizationId,
-      eventId: selectedEventIds.length > 0 ? selectedEventIds[0] : '',
       message,
       totalAmount,
       selectedOptions,
