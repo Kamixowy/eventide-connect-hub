@@ -13,6 +13,7 @@ import { formatDate, formatMessageTime } from '@/components/messages/utils/dateU
 
 const MessagesContainer = () => {
   const { user } = useAuth();
+  const [selectedConversationId, setSelectedConversationIdLocal] = useState<string | null>(null);
 
   // Fetch conversations and messages data
   const {
@@ -24,14 +25,16 @@ const MessagesContainer = () => {
     refetchConversations,
     refetchMessages,
     sendMessageMutation,
-    selectedConversationId,
-    setSelectedConversationId
-  } = useMessagesData(null);
+  } = useMessagesData(selectedConversationId);
 
   // Message handling functionality
   const { handleNewMessage, handleConversationUpdate } = useMessageHandlers(
     selectedConversationId,
-    refetchConversations
+    () => {
+      console.log("Refreshing conversations after update");
+      refetchConversations();
+      return Promise.resolve();
+    }
   );
 
   // Setup realtime subscriptions
@@ -44,7 +47,7 @@ const MessagesContainer = () => {
   // Handler for selecting a conversation
   const handleConversationSelect = (conversationId: string) => {
     console.log('Selecting conversation:', conversationId);
-    setSelectedConversationId(conversationId);
+    setSelectedConversationIdLocal(conversationId);
   };
 
   // Handle sending a message
@@ -96,7 +99,10 @@ const MessagesContainer = () => {
               isLoading={isLoadingConversations}
               conversationsCount={conversations.length}
               isError={isConversationsError}
-              onRefetch={refetchConversations}
+              onRefetch={() => {
+                refetchConversations();
+                return Promise.resolve();
+              }}
             />
           )}
         </div>
