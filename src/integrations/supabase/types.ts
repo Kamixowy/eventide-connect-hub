@@ -45,41 +45,6 @@ export type Database = {
           },
         ]
       }
-      collaboration_messages: {
-        Row: {
-          collaboration_id: string
-          content: string
-          created_at: string
-          id: string
-          read_at: string | null
-          sender_id: string
-        }
-        Insert: {
-          collaboration_id: string
-          content: string
-          created_at?: string
-          id?: string
-          read_at?: string | null
-          sender_id: string
-        }
-        Update: {
-          collaboration_id?: string
-          content?: string
-          created_at?: string
-          id?: string
-          read_at?: string | null
-          sender_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "collaboration_messages_collaboration_id_fkey"
-            columns: ["collaboration_id"]
-            isOneToOne: false
-            referencedRelation: "collaborations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       collaboration_options: {
         Row: {
           amount: number
@@ -132,7 +97,6 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          message: string | null
           organization_id: string
           sponsor_id: string
           status: Database["public"]["Enums"]["collaboration_status"]
@@ -142,7 +106,6 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
-          message?: string | null
           organization_id: string
           sponsor_id: string
           status?: Database["public"]["Enums"]["collaboration_status"]
@@ -152,7 +115,6 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
-          message?: string | null
           organization_id?: string
           sponsor_id?: string
           status?: Database["public"]["Enums"]["collaboration_status"]

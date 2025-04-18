@@ -9,11 +9,9 @@ import {
   DialogTitle,
   DialogTrigger 
 } from "@/components/ui/dialog";
-import { Input } from '@/components/ui/input';
 import { Loader2, CheckCircle, Edit, XCircle } from 'lucide-react';
 import { CollaborationType } from '@/types/collaboration';
 import { ReactNode } from 'react';
-import { useToast } from '@/hooks/use-toast';
 
 interface CollaborationDialogProps {
   collaboration: CollaborationType;
@@ -22,9 +20,7 @@ interface CollaborationDialogProps {
 }
 
 export const CollaborationDialog = ({ collaboration, userType, children }: CollaborationDialogProps) => {
-  const [message, setMessage] = useState('');
-  const [isSending, setIsSending] = useState(false);
-  const { toast } = useToast();
+  // Removed message-related state and handlers
 
   // Get event details, accounting for different data structures
   const eventTitle = collaboration.events?.title || 
@@ -47,37 +43,11 @@ export const CollaborationDialog = ({ collaboration, userType, children }: Colla
     }
   }
 
-  const handleSendMessage = async () => {
-    if (!message.trim() || isSending) return;
-    
-    setIsSending(true);
-    try {
-      // Mock sending a message - in real implementation, this would send to Supabase
-      setTimeout(() => {
-        toast({
-          title: "Wiadomość wysłana",
-          description: "Twoja wiadomość została wysłana pomyślnie",
-        });
-        setMessage('');
-        setIsSending(false);
-      }, 1000);
-    } catch (error) {
-      console.error('Error sending collaboration message:', error);
-      toast({
-        title: "Błąd",
-        description: "Nie udało się wysłać wiadomości",
-        variant: "destructive"
-      });
-      setIsSending(false);
-    }
-  };
-
   // Safely get the total amount
   const totalAmount = collaboration.total_amount || collaboration.totalAmount || 0;
 
   // Provide empty arrays if sponsorshipOptions or conversation doesn't exist
   const sponsorshipOptions = collaboration.sponsorshipOptions || [];
-  const conversation = collaboration.conversation || [];
 
   return (
     <Dialog>
@@ -125,76 +95,28 @@ export const CollaborationDialog = ({ collaboration, userType, children }: Colla
           </div>
         </div>
         
-        <div>
-          <h3 className="font-semibold mb-2">Konwersacja</h3>
-          <div className="max-h-80 overflow-y-auto space-y-3 border rounded-md p-3">
-            {conversation.map((message) => (
-              <div 
-                key={message.id} 
-                className={`flex ${message.sender === 'sponsor' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div 
-                  className={`max-w-[80%] rounded-lg p-3 ${
-                    message.sender === 'sponsor' 
-                      ? 'bg-ngo text-white rounded-tr-none' 
-                      : 'bg-gray-100 text-gray-800 rounded-tl-none'
-                  }`}
-                >
-                  <p className="text-sm">{message.text}</p>
-                  <p className={`text-xs mt-1 ${
-                    message.sender === 'sponsor' ? 'text-blue-100' : 'text-gray-500'
-                  }`}>
-                    {message.date}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <div className="flex items-center gap-2 mt-4">
-            <Input 
-              placeholder="Napisz wiadomość..." 
-              className="flex-grow"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              disabled={isSending}
-            />
-            <Button 
-              onClick={handleSendMessage}
-              disabled={!message.trim() || isSending}
-            >
-              {isSending ? (
-                <>
-                  <Loader2 size={16} className="mr-2 animate-spin" />
-                  Wysyłanie...
-                </>
-              ) : 'Wyślij'}
-            </Button>
-          </div>
-          
-          <div className="flex justify-between mt-6">
-            {collaboration.status === 'Przesłana' && userType === 'organization' && (
-              <>
-                <Button variant="outline" className="flex items-center">
-                  <XCircle size={16} className="mr-2" /> Odrzuć
-                </Button>
-                <div className="space-x-2">
-                  <Button variant="outline" className="flex items-center">
-                    <Edit size={16} className="mr-2" /> Zaproponuj zmiany
-                  </Button>
-                  <Button className="flex items-center btn-gradient">
-                    <CheckCircle size={16} className="mr-2" /> Akceptuj
-                  </Button>
-                </div>
-              </>
-            )}
-            
-            {collaboration.status === 'Negocjacje' && (
-              <Button className="ml-auto btn-gradient">
-                <CheckCircle size={16} className="mr-2" /> Akceptuj warunki
+        <div className="flex justify-between mt-6">
+          {collaboration.status === 'Przesłana' && userType === 'organization' && (
+            <>
+              <Button variant="outline" className="flex items-center">
+                <XCircle size={16} className="mr-2" /> Odrzuć
               </Button>
-            )}
-          </div>
+              <div className="space-x-2">
+                <Button variant="outline" className="flex items-center">
+                  <Edit size={16} className="mr-2" /> Zaproponuj zmiany
+                </Button>
+                <Button className="flex items-center btn-gradient">
+                  <CheckCircle size={16} className="mr-2" /> Akceptuj
+                </Button>
+              </div>
+            </>
+          )}
+          
+          {collaboration.status === 'Negocjacje' && (
+            <Button className="ml-auto btn-gradient">
+              <CheckCircle size={16} className="mr-2" /> Akceptuj warunki
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
