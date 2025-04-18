@@ -51,6 +51,9 @@ export const ManageCollaborationDialog = ({
     }
   };
 
+  // Convert string status to CollaborationStatus type
+  const typedStatus = collaboration.status as CollaborationStatus;
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -72,12 +75,12 @@ export const ManageCollaborationDialog = ({
             <Clock className="w-4 h-4" />
             <span className="text-muted-foreground">Status:</span>
             <span className="font-medium">
-              {collaboration.status === 'pending' ? 'Oczekująca' :
-               collaboration.status === 'negotiation' ? 'W negocjacji' :
-               collaboration.status === 'accepted' ? 'Zaakceptowana' :
-               collaboration.status === 'rejected' ? 'Odrzucona' :
-               collaboration.status === 'completed' ? 'Zakończona' :
-               collaboration.status === 'canceled' ? 'Anulowana' : 
+              {typedStatus === 'pending' ? 'Oczekująca' :
+               typedStatus === 'negotiation' ? 'W negocjacji' :
+               typedStatus === 'accepted' ? 'Zaakceptowana' :
+               typedStatus === 'rejected' ? 'Odrzucona' :
+               typedStatus === 'completed' ? 'Zakończona' :
+               typedStatus === 'canceled' ? 'Anulowana' : 
                'Nieznany'}
             </span>
           </div>
@@ -94,7 +97,7 @@ export const ManageCollaborationDialog = ({
           {/* Actions */}
           <div className="pt-4 border-t">
             <CollaborationDialogActions
-              status={collaboration.status}
+              status={typedStatus}
               userType={userType}
               onStatusChange={handleStatusChange}
               counterOfferMessage={counterOfferMessage}
