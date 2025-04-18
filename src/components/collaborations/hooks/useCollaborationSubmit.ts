@@ -14,12 +14,14 @@ export const useCollaborationSubmit = () => {
     organizationId,
     totalAmount,
     selectedOptions,
-    selectedEventIds
+    selectedEventIds,
+    message
   }: {
     organizationId: string;
     totalAmount: number;
     selectedOptions: CollaborationOption[];
     selectedEventIds: string[];
+    message?: string;
   }) => {
     if (!user?.id) {
       toast({
@@ -47,7 +49,8 @@ export const useCollaborationSubmit = () => {
         organizationId,
         totalAmount,
         selectedOptions,
-        selectedEventIds
+        selectedEventIds,
+        message
       );
       
       toast({
