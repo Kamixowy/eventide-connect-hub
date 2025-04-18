@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, Building, User } from 'lucide-react';
 import { CollaborationType } from '@/types/collaboration';
 import { CollaborationDialog } from './CollaborationDialog';
-import { COLLABORATION_STATUS_NAMES, COLLABORATION_STATUS_COLORS } from '@/services/collaborations/utils';
+import { COLLABORATION_STATUS_NAMES, COLLABORATION_STATUS_COLORS } from '@/services/collaborations/types';
 
 interface CollaborationCardListProps {
   collaboration: CollaborationType;

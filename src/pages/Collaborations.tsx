@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus } from 'lucide-react';
 import NewCollaborationDialog from '@/components/collaborations/NewCollaborationDialog';
 import { fetchCollaborations, subscribeToUserCollaborations } from '@/services/collaborations';
-import { COLLABORATION_STATUS_NAMES } from '@/services/collaborations/utils';
+import { COLLABORATION_STATUS_NAMES } from '@/services/collaborations/types';
 import { supabase } from '@/lib/supabase';
 
 const Collaborations = () => {

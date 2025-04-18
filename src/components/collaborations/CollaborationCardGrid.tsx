@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { CollaborationType } from '@/types/collaboration';
 import { CollaborationDialog } from './CollaborationDialog';
-import { COLLABORATION_STATUS_COLORS, COLLABORATION_STATUS_NAMES } from '@/services/collaborations/utils';
+import { COLLABORATION_STATUS_COLORS, COLLABORATION_STATUS_NAMES } from '@/services/collaborations/types';
 import { Calendar, User, Building } from 'lucide-react';
 
 interface CollaborationCardGridProps {

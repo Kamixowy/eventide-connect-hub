@@ -31,14 +31,7 @@ const CollaborationActions = ({
           </Button>
         )}
         
-        {availableActions.includes('send') && (
-          <Button 
-            className="w-full" 
-            onClick={() => onStatusChange('sent')}
-          >
-            Wyślij
-          </Button>
-        )}
+        {/* Removed the 'send' action as it's not defined in the status types */}
         
         {availableActions.includes('accept') && (
           <Button 
@@ -83,7 +76,7 @@ const CollaborationActions = ({
           <Button 
             className="w-full" 
             variant="destructive"
-            onClick={() => onStatusChange('cancelled')}
+            onClick={() => onStatusChange('canceled')}
           >
             Anuluj
           </Button>

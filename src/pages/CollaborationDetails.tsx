@@ -15,8 +15,9 @@ import {
 import { 
   COLLABORATION_STATUS_NAMES, 
   COLLABORATION_STATUS_COLORS,
-  getAvailableActions 
-} from '@/services/collaborations/utils';
+  getAvailableActions,
+  CollaborationStatus 
+} from '@/services/collaborations/types';
 
 const CollaborationDetails = () => {
   const { id } = useParams();
@@ -58,7 +59,7 @@ const CollaborationDetails = () => {
     loadCollaboration();
   }, [id, user, toast]);
   
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = async (newStatus: CollaborationStatus) => {
     if (!id) return;
     
     try {
