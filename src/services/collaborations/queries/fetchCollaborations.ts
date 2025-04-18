@@ -38,7 +38,7 @@ export const fetchCollaborations = async (userType: 'organization' | 'sponsor') 
           logo_url,
           description
         ),
-        profiles:sponsor_id (
+        profiles (
           id,
           name,
           avatar_url

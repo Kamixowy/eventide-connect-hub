@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/layout/Layout';
@@ -8,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Plus } from 'lucide-react';
 import NewCollaborationDialog from '@/components/collaborations/NewCollaborationDialog';
-import { fetchCollaborations, subscribeToUserCollaborations } from '@/services/collaborations';
+import { fetchCollaborations } from '@/services/collaborations';
 import { COLLABORATION_STATUS_NAMES } from '@/services/collaborations/types';
 import { supabase } from '@/lib/supabase';
 
@@ -159,33 +158,37 @@ const Collaborations = () => {
         console.log('Fetched collaborations:', collaborations);
         
         // Setup real-time updates subscription
-        if (userType === 'organization' && organizationData?.id) {
-          const subscription = subscribeToUserCollaborations(
-            'organization', 
-            organizationData.id,
-            () => {
-              // Refresh collaborations data when changes are detected
-              getCollaborations();
-            }
-          );
+        // if (userType === 'organization' && organizationData?.id) {
+        //   const subscription = subscribeToUserCollaborations(
+        //     'organization', 
+        //     organizationData.id,
+        //     () => {
+        //       // Refresh collaborations data when changes are detected
+        //       getCollaborations();
+        //     }
+        //   );
           
-          return () => {
-            subscription.unsubscribe();
-          };
-        } else if (userType === 'sponsor' && user.id) {
-          const subscription = subscribeToUserCollaborations(
-            'sponsor', 
-            user.id,
-            () => {
-              // Refresh collaborations data when changes are detected
-              getCollaborations();
-            }
-          );
+        //   return () => {
+        //     subscription.unsubscribe();
+        //   };
+        // } else if (userType === 'sponsor' && user.id) {
+        //   const subscription = subscribeToUserCollaborations(
+        //     'sponsor', 
+        //     user.id,
+        //     () => {
+        //       // Refresh collaborations data when changes are detected
+        //       getCollaborations();
+        //     }
+        //   );
           
-          return () => {
-            subscription.unsubscribe();
-          };
-        }
+        //   return () => {
+        //     subscription.unsubscribe();
+        //   };
+        // }
+        const collabData = await fetchCollaborations(userType);
+        setCollaborations(collabData);
+        
+        console.log('Fetched collaborations:', collabData);
       } catch (error: any) {
         console.error('Error fetching collaborations:', error);
         toast({
