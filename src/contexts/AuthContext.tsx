@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
@@ -165,10 +164,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    console.log('Signing out...');
-    
     try {
-      // Try to sign out a regular Supabase user
+      console.log('Signing out...');
+      
       if (isSupabaseConfigured()) {
         console.log('Signing out Supabase user');
         const { error } = await supabase.auth.signOut();
@@ -186,14 +184,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Clear user state
         setUser(null);
         setSession(null);
+        
+        toast({
+          title: "Wylogowano pomyślnie",
+        });
+        
+        // Redirect to home page
+        window.location.href = '/';
       }
-      
-      toast({
-        title: "Wylogowano pomyślnie",
-      });
-      
-      // Redirect to home page
-      window.location.href = '/';
     } catch (error) {
       console.error('Unexpected error during sign out:', error);
       toast({

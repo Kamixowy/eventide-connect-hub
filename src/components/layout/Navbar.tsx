@@ -6,6 +6,7 @@ import NavLinks from '../navigation/NavLinks';
 import UserMenu from '../navigation/UserMenu';
 import AuthButtons from '../navigation/AuthButtons';
 import MobileMenu from '../navigation/MobileMenu';
+import UserTypeGuard from '../common/UserTypeGuard';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);

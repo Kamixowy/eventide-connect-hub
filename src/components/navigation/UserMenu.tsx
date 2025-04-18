@@ -46,9 +46,13 @@ const UserMenu = () => {
   const userName = user.user_metadata?.name || profileData?.name || 'Użytkownik';
   const companyName = user.user_metadata?.companyName || '';
   
-  const handleSignOut = () => {
-    // Call signOut directly without any event parameters
-    signOut();
+  const handleSignOut = async () => {
+    try {
+      // Call signOut function from AuthContext
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
   
   return <div className="flex items-center gap-2">
