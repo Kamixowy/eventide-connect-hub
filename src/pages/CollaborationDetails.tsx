@@ -15,9 +15,9 @@ import {
 import { 
   COLLABORATION_STATUS_NAMES, 
   COLLABORATION_STATUS_COLORS,
-  CollaborationStatus 
-} from '@/services/collaborations/types';
-import { getAvailableActions } from '@/services/collaborations/utils';
+  CollaborationStatus,
+  getAvailableActions
+} from '@/services/collaborations/utils';
 
 const CollaborationDetails = () => {
   const { id } = useParams();
