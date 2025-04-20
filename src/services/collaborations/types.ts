@@ -4,6 +4,9 @@ export const COLLABORATION_STATUSES = {
   accepted: 'accepted',
   rejected: 'rejected',
   negotiation: 'negotiation',
+  in_progress: 'in_progress',
+  settlement: 'settlement',
+  settlement_rejected: 'settlement_rejected',
   completed: 'completed',
   canceled: 'canceled'
 } as const;
@@ -46,7 +49,10 @@ export const COLLABORATION_STATUS_NAMES = {
   accepted: 'Zaakceptowana',
   rejected: 'Odrzucona',
   negotiation: 'W negocjacji',
-  completed: 'Zakończona',
+  in_progress: 'W realizacji',
+  settlement: 'W rozliczeniu',
+  settlement_rejected: 'Rozliczenie odrzucone',
+  completed: 'Zrealizowana',
   canceled: 'Anulowana'
 };
 
@@ -55,6 +61,9 @@ export const COLLABORATION_STATUS_COLORS = {
   accepted: 'green',
   rejected: 'red',
   negotiation: 'orange',
-  completed: 'blue',
+  in_progress: 'blue',
+  settlement: 'purple',
+  settlement_rejected: 'red',
+  completed: 'green',
   canceled: 'gray'
 };

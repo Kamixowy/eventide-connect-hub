@@ -47,6 +47,7 @@ export interface CollaborationType {
   totalAmount?: number;
   total_amount?: number;
   message: string;
+  settlement_file?: string;
   conversation?: {
     id: number | string;
     sender: string;

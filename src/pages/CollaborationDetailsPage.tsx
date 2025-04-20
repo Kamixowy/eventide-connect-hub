@@ -11,13 +11,19 @@ import { useToast } from '@/hooks/use-toast';
 import CollaborationOptions from '@/components/collaborations/CollaborationOptions';
 import CollaborationActions from '@/components/collaborations/CollaborationActions';
 import CollaborationInfo from '@/components/collaborations/CollaborationInfo';
-import { getCollaborationById, updateCollaborationStatus } from '@/services/collaborations';
+import { 
+  getCollaborationById, 
+  updateCollaborationStatus, 
+  uploadSettlementFile,
+  updateCollaborationOptions 
+} from '@/services/collaborations';
 import { 
   COLLABORATION_STATUS_NAMES, 
   COLLABORATION_STATUS_COLORS, 
   CollaborationStatus 
 } from '@/services/collaborations/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import CollaborationOptionsEdit from '@/components/collaborations/dialog/CollaborationOptionsEdit';
 
 const CollaborationDetailsPage = () => {
   const { id } = useParams();
@@ -29,51 +35,59 @@ const CollaborationDetailsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [userType, setUserType] = useState<'organization' | 'sponsor'>('sponsor');
   const [activeTab, setActiveTab] = useState('details');
+  const [isEditingOptions, setIsEditingOptions] = useState(false);
+  
+  const loadCollaboration = async () => {
+    if (!id) return;
+    
+    try {
+      setIsLoading(true);
+      const data = await getCollaborationById(id);
+      
+      setCollaboration(data);
+      
+      if (user?.user_metadata?.userType === 'organization') {
+        setUserType('organization');
+      } else {
+        setUserType('sponsor');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Błąd podczas ładowania współpracy",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   useEffect(() => {
-    const loadCollaboration = async () => {
-      if (!id) return;
-      
-      try {
-        setIsLoading(true);
-        const data = await getCollaborationById(id);
-        
-        setCollaboration(data);
-        
-        if (user?.user_metadata?.userType === 'organization') {
-          setUserType('organization');
-        } else {
-          setUserType('sponsor');
-        }
-      } catch (error: any) {
-        toast({
-          title: "Błąd podczas ładowania współpracy",
-          description: error.message,
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     loadCollaboration();
   }, [id, user, toast]);
   
-  const handleStatusChange = async (newStatus: CollaborationStatus) => {
+  const handleStatusChange = async (newStatus: CollaborationStatus, settlementFile?: File) => {
     if (!collaboration?.id) return;
     
     try {
-      await updateCollaborationStatus(collaboration.id, newStatus);
+      if (newStatus === 'settlement' && settlementFile) {
+        // Upload settlement file and update status
+        await uploadSettlementFile(collaboration.id, settlementFile);
+        toast({
+          title: "Rozliczenie przesłane",
+          description: "Plik rozliczenia został przesłany do sponsora."
+        });
+      } else {
+        // Just update the status
+        await updateCollaborationStatus(collaboration.id, newStatus);
+        toast({
+          title: "Status zaktualizowany",
+          description: `Status współpracy został zmieniony na: ${COLLABORATION_STATUS_NAMES[newStatus]}`,
+        });
+      }
       
-      setCollaboration((prev: any) => ({
-        ...prev,
-        status: newStatus
-      }));
-      
-      toast({
-        title: "Status zaktualizowany",
-        description: `Status współpracy został zmieniony na: ${COLLABORATION_STATUS_NAMES[newStatus]}`,
-      });
+      // Reload collaboration data
+      loadCollaboration();
     } catch (error: any) {
       toast({
         title: "Błąd podczas aktualizacji statusu",
@@ -81,6 +95,15 @@ const CollaborationDetailsPage = () => {
         variant: "destructive"
       });
     }
+  };
+  
+  const handleEditOptions = () => {
+    setIsEditingOptions(true);
+  };
+  
+  const handleSaveOptions = async () => {
+    await loadCollaboration();
+    setIsEditingOptions(false);
   };
   
   if (isLoading) {
@@ -149,12 +172,21 @@ const CollaborationDetailsPage = () => {
                 collaboration={collaboration} 
                 userType={userType}
                 onStatusChange={handleStatusChange}
+                onEditOptions={handleEditOptions}
               />
             </div>
             
             <div className="md:col-span-2">
               <Card className="p-4">
-                <CollaborationOptions collaboration={collaboration} />
+                {isEditingOptions ? (
+                  <CollaborationOptionsEdit
+                    collaboration={collaboration}
+                    onSave={handleSaveOptions}
+                    onCancel={() => setIsEditingOptions(false)}
+                  />
+                ) : (
+                  <CollaborationOptions collaboration={collaboration} />
+                )}
               </Card>
             </div>
           </div>

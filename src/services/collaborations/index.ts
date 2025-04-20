@@ -1,18 +1,6 @@
 
-// Export all services
-
-// Queries
+// Export all functions from the collaborations service
 export * from './queries';
-
-// Mutations 
 export * from './mutations';
-
-// Utils - fix the ambiguous exports by not re-exporting from here
-// We already export these from ./utils.ts
-// export * from './utils';
-
-// Types
+export * from './utils';
 export * from './types';
-
-// Subscriptions
-export * from './subscriptions';
