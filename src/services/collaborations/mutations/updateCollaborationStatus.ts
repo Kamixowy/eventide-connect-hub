@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { CollaborationStatus, COLLABORATION_STATUSES } from '../types';
+import { CollaborationStatus } from '../types';
 
 /**
  * Updates collaboration status

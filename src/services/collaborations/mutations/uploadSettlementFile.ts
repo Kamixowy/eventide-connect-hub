@@ -1,62 +1,61 @@
 
 import { supabase } from '@/lib/supabase';
-import { v4 as uuidv4 } from 'uuid';
+import { CollaborationStatus } from '../types';
 
 /**
- * Uploads settlement file and updates collaboration status
+ * Uploads settlement file for a collaboration and updates collaboration status
  * 
  * @param id - Collaboration ID
- * @param file - Settlement PDF file
+ * @param file - Settlement file (PDF)
  * @returns Promise with updated collaboration
  */
 export const uploadSettlementFile = async (id: string, file: File) => {
   try {
-    // Check if settlements bucket exists, create if not
-    const { data: buckets } = await supabase.storage.listBuckets();
-    
-    if (!buckets?.find(bucket => bucket.name === 'settlements')) {
-      const { error: bucketError } = await supabase.storage.createBucket('settlements', {
-        public: false
-      });
-      
-      if (bucketError) {
-        console.error('Error creating settlements bucket:', bucketError);
-        throw bucketError;
-      }
+    if (!file || file.type !== 'application/pdf') {
+      throw new Error('Plik musi być w formacie PDF');
     }
-    
+
     // Upload file to storage
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${id}/${uuidv4()}.${fileExt}`;
-    
-    const { error: uploadError, data } = await supabase.storage
+    const fileName = `${id}/${Date.now()}-rozliczenie.pdf`;
+    const { data: uploadData, error: uploadError } = await supabase
+      .storage
       .from('settlements')
-      .upload(fileName, file);
-      
+      .upload(fileName, file, {
+        contentType: 'application/pdf',
+        upsert: true
+      });
+
     if (uploadError) {
       console.error('Error uploading settlement file:', uploadError);
-      throw uploadError;
+      throw new Error('Nie udało się przesłać pliku. Spróbuj ponownie.');
     }
-    
-    // Get public URL
-    const filePath = data?.path;
-    
-    // Update collaboration with file path and settlement status
-    const { error: updateError } = await supabase
+
+    // Get public URL for the uploaded file
+    const { data: publicURLData } = await supabase
+      .storage
+      .from('settlements')
+      .getPublicUrl(uploadData.path);
+
+    const publicURL = publicURLData?.publicUrl;
+
+    // Update collaboration with file URL and change status to settlement
+    const { data, error } = await supabase
       .from('collaborations')
       .update({ 
-        status: 'settlement',
-        settlement_file: filePath,
+        settlement_file: publicURL,
+        status: 'settlement' as CollaborationStatus,
         updated_at: new Date().toISOString()
       })
-      .eq('id', id);
-      
-    if (updateError) {
-      console.error('Error updating collaboration status:', updateError);
-      throw updateError;
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating collaboration with settlement file:', error);
+      throw new Error('Nie udało się zaktualizować danych rozliczenia');
     }
-    
-    return { success: true, filePath };
+
+    return data;
   } catch (error) {
     console.error('Failed to upload settlement file:', error);
     throw error;

@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { CollaborationOption } from '../types';
+import { CollaborationOption, CollaborationStatus } from '../types';
 
 /**
  * Updates collaboration options and total amount
@@ -22,7 +22,7 @@ export const updateCollaborationOptions = async (
       .from('collaborations')
       .update({ 
         total_amount: totalAmount,
-        status: 'negotiation', // Set status to negotiation when options are updated
+        status: 'negotiation' as CollaborationStatus, // Set status to negotiation when options are updated
         updated_at: new Date().toISOString()
       })
       .eq('id', id);
