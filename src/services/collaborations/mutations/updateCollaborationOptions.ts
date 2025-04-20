@@ -22,7 +22,7 @@ export const updateCollaborationOptions = async (
       .from('collaborations')
       .update({ 
         total_amount: totalAmount,
-        status: 'negotiation' as CollaborationStatus, // Set status to negotiation when options are updated
+        status: 'negotiation' as CollaborationStatus,
         updated_at: new Date().toISOString()
       })
       .eq('id', id);
