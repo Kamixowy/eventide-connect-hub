@@ -11,7 +11,7 @@ export const COLLABORATION_STATUSES = {
   canceled: 'canceled'
 } as const;
 
-export type CollaborationStatus = keyof typeof COLLABORATION_STATUSES;
+export type CollaborationStatus = (typeof COLLABORATION_STATUSES)[keyof typeof COLLABORATION_STATUSES];
 
 export interface CollaborationOption {
   title: string;
