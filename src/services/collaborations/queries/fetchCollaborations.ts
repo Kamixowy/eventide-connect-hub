@@ -100,11 +100,6 @@ export const fetchCollaborations = async (userType: 'organization' | 'sponsor') 
             amount,
             is_custom,
             sponsorship_option_id
-          ),
-          profiles:sponsor_id (
-            id,
-            name,
-            avatar_url
           )
         `)
         .eq('organization_id', orgData.id)
@@ -115,22 +110,18 @@ export const fetchCollaborations = async (userType: 'organization' | 'sponsor') 
         throw error;
       }
       
-      // For each collaboration, fetch sponsor profiles (now included as alias)
-      const collaborationsWithSponsors = (data ?? []).map(collab => {
-        const eventObj = Array.isArray(collab.collaboration_events) && collab.collaboration_events.length > 0
-          ? collab.collaboration_events[0].events
-          : undefined;
-
-        // Use event title and date if present (for organization view)
-        const eventTitle = eventObj?.title || null;
-        const eventDate = eventObj?.start_date || null;
-
-        // Use sponsor name from the profiles alias
-        const sponsorObj = collab.profiles || { id: collab.sponsor_id };
-
+      // For each collaboration, fetch sponsor profiles separately
+      const collaborationsWithProfiles = await Promise.all(data?.map(async (collab) => {
+        // Get sponsor profile information
+        const { data: sponsorData } = await supabase
+          .from('profiles')
+          .select('id, name, avatar_url')
+          .eq('id', collab.sponsor_id)
+          .single();
+          
         return {
           ...collab,
-          events: eventObj, // flatten for easier consumption
+          events: collab.collaboration_events?.map(ce => ce.events) || [],
           options: collab.collaboration_options || [],
           organization: { 
             id: orgData.id,
@@ -138,13 +129,12 @@ export const fetchCollaborations = async (userType: 'organization' | 'sponsor') 
             logo_url: orgData.logo_url,
             description: orgData.description
           },
-          sponsor: sponsorObj,
-          eventTitle,
-          eventDate
+          sponsor: sponsorData || { id: collab.sponsor_id },
+          profiles: sponsorData ? [sponsorData] : []
         };
-      });
+      }) || []);
       
-      return collaborationsWithSponsors;
+      return collaborationsWithProfiles;
     }
   } catch (error) {
     console.error('Error fetching collaborations:', error);

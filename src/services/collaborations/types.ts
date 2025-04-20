@@ -11,16 +11,7 @@ export const COLLABORATION_STATUSES = {
   canceled: 'canceled'
 } as const;
 
-export type CollaborationStatus =
-  | 'pending'
-  | 'accepted'
-  | 'rejected'
-  | 'negotiation'
-  | 'in_progress'
-  | 'settlement'
-  | 'settlement_rejected'
-  | 'completed'
-  | 'canceled';
+export type CollaborationStatus = (typeof COLLABORATION_STATUSES)[keyof typeof COLLABORATION_STATUSES];
 
 export interface CollaborationOption {
   title: string;
