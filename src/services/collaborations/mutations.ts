@@ -4,3 +4,5 @@
 
 export * from './mutations/createCollaboration';
 export * from './mutations/updateCollaborationStatus';
+export * from './mutations/updateCollaborationOptions';
+export * from './mutations/uploadSettlementFile';
