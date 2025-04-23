@@ -11,8 +11,10 @@ import {
 const FAQ = () => {
   return (
     <Layout>
-      <div className="container py-8">
-        <h1 className="text-3xl font-bold mb-6">Często zadawane pytania (FAQ)</h1>
+      <article className="container py-8">
+        <header>
+          <h1 className="text-3xl font-bold mb-6">Często zadawane pytania (FAQ)</h1>
+        </header>
         
         <div className="max-w-3xl mx-auto">
           <Accordion type="single" collapsible className="w-full">
@@ -134,7 +136,7 @@ const FAQ = () => {
             </AccordionItem>
           </Accordion>
         </div>
-      </div>
+      </article>
     </Layout>
   );
 };

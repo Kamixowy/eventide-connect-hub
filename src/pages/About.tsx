@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { MoveRight, Award, Users, Target, Zap, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,14 +7,14 @@ import Layout from '@/components/layout/Layout';
 const About = () => {
   return (
     <Layout>
-      <div className="relative py-12 bg-gradient-to-b from-blue-50 to-transparent">
+      <article className="relative py-12 bg-gradient-to-b from-blue-50 to-transparent">
         <div className="container">
-          <div className="text-center max-w-3xl mx-auto mb-16">
+          <header className="text-center max-w-3xl mx-auto mb-16">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">O nas</h1>
             <p className="text-lg text-muted-foreground">
               N-GO to platforma łącząca organizacje pozarządowe ze sponsorami, ułatwiająca nawiązywanie współpracy i realizację wartościowych projektów.
             </p>
-          </div>
+          </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-20">
             <div>
@@ -116,7 +115,7 @@ const About = () => {
             </div>
           </div>
         </div>
-      </div>
+      </article>
     </Layout>
   );
 };

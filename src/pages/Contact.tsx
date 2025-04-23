@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   MapPin, 
@@ -30,13 +29,13 @@ const Contact = () => {
 
   return (
     <Layout>
-      <div className="container py-12">
-        <div className="text-center max-w-3xl mx-auto mb-12">
+      <article className="container py-12">
+        <header className="text-center max-w-3xl mx-auto mb-12">
           <h1 className="text-4xl font-bold mb-4">Kontakt</h1>
           <p className="text-lg text-muted-foreground">
             Masz pytania? Jesteśmy tutaj, aby pomóc. Skontaktuj się z nami w dowolny sposób.
           </p>
-        </div>
+        </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
           <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
@@ -150,7 +149,7 @@ const Contact = () => {
             title="Mapa lokalizacji"
           ></iframe>
         </div>
-      </div>
+      </article>
     </Layout>
   );
 };
